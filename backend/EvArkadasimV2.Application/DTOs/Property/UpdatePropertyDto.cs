@@ -2,11 +2,12 @@ using EvArkadasimV2.Domain.Enums;
 
 namespace EvArkadasimV2.Application.DTOs.Property
 {
-    public class PropertyDto
+    public class UpdatePropertyDto
     {
-        public int Id { get; set; }
         public string Title { get; set; } = string.Empty;
-        public string Price { get; set; } = string.Empty; // "$2,800/month" formatında
+        public decimal PriceAmount { get; set; }
+        public string Currency { get; set; } = "$";
+        public string PricePeriod { get; set; } = "month";
         public string Location { get; set; } = string.Empty;
         public int Bedrooms { get; set; }
         public int Bathrooms { get; set; }
@@ -18,7 +19,5 @@ namespace EvArkadasimV2.Application.DTOs.Property
         public bool Furnished { get; set; }
         public bool PetsAllowed { get; set; }
         public bool SmokingAllowed { get; set; }
-        public string OwnerId { get; set; } = string.Empty;
-        public string OwnerName { get; set; } = string.Empty;
     }
 }
