@@ -66,3 +66,9 @@ graphify-out/
 backend/graphify-out/
 frontend/graphify-out/
 .graphify/
+backend/_query*.py
+
+# =====================
+# Documentation (Local Only)
+# =====================
+backend/docs/
