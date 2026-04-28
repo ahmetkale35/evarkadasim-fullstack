@@ -17,18 +17,18 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status 201 Created veya 400 (zaten kayÄ±tlÄ±)', () => {",
+                  "pm.test('Status 201 Created veya 400 (zaten kayıtlı)', () => {",
                   "    pm.expect(pm.response.code).to.be.oneOf([201, 400]);",
                   "});",
                   "",
                   "if (pm.response.code === 201) {",
                   "    const r = pm.response.json();",
-                  "    pm.test('Token dÃ¶ndÃ¼', () => pm.expect(r.token).to.be.a('string').and.not.empty);",
-                  "    pm.test('UserId dÃ¶ndÃ¼', () => pm.expect(r.userId).to.be.a('string').and.not.empty);",
+                  "    pm.test('Token döndü', () => pm.expect(r.token).to.be.a('string').and.not.empty);",
+                  "    pm.test('UserId döndü', () => pm.expect(r.userId).to.be.a('string').and.not.empty);",
                   "    pm.collectionVariables.set('TOKEN1', r.token);",
                   "    pm.collectionVariables.set('USER1_ID', r.userId);",
                   "} else {",
-                  "    pm.test('400 ise DomainException mesajÄ± var', () => {",
+                  "    pm.test('400 ise DomainException mesajı var', () => {",
                   "        pm.expect(pm.response.json().message).to.exist;",
                   "    });",
                   "}"
@@ -73,11 +73,11 @@
                   "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
                   "",
                   "const r = pm.response.json();",
-                  "pm.test('Token dÃ¶ndÃ¼', () => pm.expect(r.token).to.be.a('string').and.not.empty);",
-                  "pm.test('UserId dÃ¶ndÃ¼', () => pm.expect(r.userId).to.be.a('string').and.not.empty);",
-                  "pm.test('Expiration dÃ¶ndÃ¼', () => pm.expect(r.expiration).to.exist);",
+                  "pm.test('Token döndü', () => pm.expect(r.token).to.be.a('string').and.not.empty);",
+                  "pm.test('UserId döndü', () => pm.expect(r.userId).to.be.a('string').and.not.empty);",
+                  "pm.test('Expiration döndü', () => pm.expect(r.expiration).to.exist);",
                   "",
-                  "// Sonraki istekler iÃ§in token + userId'yi koleksiyon deÄŸiÅŸkenlerine yaz",
+                  "// Sonraki istekler için token + userId'yi koleksiyon değişkenlerine yaz",
                   "pm.collectionVariables.set('TOKEN1', r.token);",
                   "pm.collectionVariables.set('USER1_ID', r.userId);"
                 ]
@@ -119,7 +119,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));",
-                  "pm.test('DomainException mesajÄ± dÃ¶ndÃ¼', () => {",
+                  "pm.test('DomainException mesajı döndü', () => {",
                   "    pm.expect(pm.response.json().message).to.exist;",
                   "});"
                 ]
@@ -198,6 +198,86 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Register geçersiz email → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 - geçersiz email', () => pm.response.to.have.status(400));",
+                  "pm.test('Validation errors var', () => pm.expect(pm.response.json().errors).to.exist);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"bozuk-email\",\n  \"password\": \"Test1234!\",\n  \"name\": \"Test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register kısa şifre → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 - şifre çok kısa', () => pm.response.to.have.status(400));",
+                  "pm.test('Validation errors var', () => pm.expect(pm.response.json().errors).to.exist);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"valid@test.com\",\n  \"password\": \"kisa\",\n  \"name\": \"Test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -215,18 +295,18 @@
                   "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
                   "",
                   "const p = pm.response.json();",
-                  "pm.test('Profile DTO alanlarÄ± geliyor', () => {",
+                  "pm.test('Profile DTO alanları geliyor', () => {",
                   "    pm.expect(p).to.have.property('age');",
                   "    pm.expect(p).to.have.property('initialBasicTestResults');",
                   "    pm.expect(p).to.have.property('finalScores');",
                   "});",
                   "",
-                  "// DataSeeder fix doÄŸrulamasÄ±: owned type'larÄ±n ikisi de null olmamalÄ±",
+                  "// DataSeeder fix doğrulaması: owned type'ların ikisi de null olmamalı",
                   "pm.test('InitialBasicTestResults dolu (DataSeeder fix)', () => {",
-                  "    pm.expect(p.initialBasicTestResults, 'InitialBasicTestResults null olmamalÄ±').to.not.be.null;",
+                  "    pm.expect(p.initialBasicTestResults, 'InitialBasicTestResults null olmamalı').to.not.be.null;",
                   "});",
                   "pm.test('FinalScores dolu (DataSeeder fix)', () => {",
-                  "    pm.expect(p.finalScores, 'FinalScores null olmamalÄ±').to.not.be.null;",
+                  "    pm.expect(p.finalScores, 'FinalScores null olmamalı').to.not.be.null;",
                   "});"
                 ]
               }
@@ -299,8 +379,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
-                  "pm.test('BaÅŸarÄ± mesajÄ± dÃ¶ndÃ¼', () => {",
-                  "    pm.expect(pm.response.json().message).to.include('gÃ¼ncellendi');",
+                  "pm.test('Başarı mesajı döndü', () => {",
+                  "    pm.expect(pm.response.json().message).to.include('güncellendi');",
                   "});"
                 ]
               }
@@ -321,7 +401,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"bio\": \"Merhaba, dÃ¼zenli ve uyumlu bir ev arkadaÅŸÄ± arÄ±yorum.\",\r\n  \"budget\": \"5000-8000 TL\",\r\n  \"moveInDate\": \"2026-09-01\",\r\n  \"lifestyle\": [\"Erken Kalkar\", \"Sigara Ä°Ã§mez\", \"Spor Yapar\"],\r\n  \"interests\": [\"MÃ¼zik\", \"Sinema\", \"Yemek Yapmak\"],\r\n  \"photos\": [\"foto1_url\", \"foto2_url\"],\r\n  \"cleanliness\": 8,\r\n  \"socialLevel\": 6,\r\n  \"isOnlineStatusVisible\": true,\r\n  \"notificationsEnabled\": true\r\n}",
+              "raw": "{\r\n  \"bio\": \"Merhaba, düzenli ve uyumlu bir ev arkadaşı arıyorum.\",\r\n  \"budget\": \"5000-8000 TL\",\r\n  \"moveInDate\": \"2026-09-01\",\r\n  \"lifestyle\": [\"Erken Kalkar\", \"Sigara İçmez\", \"Spor Yapar\"],\r\n  \"interests\": [\"Müzik\", \"Sinema\", \"Yemek Yapmak\"],\r\n  \"photos\": [\"foto1_url\", \"foto2_url\"],\r\n  \"cleanliness\": 8,\r\n  \"socialLevel\": 6,\r\n  \"isOnlineStatusVisible\": true,\r\n  \"notificationsEnabled\": true\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -391,6 +471,55 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Profile update geçersiz Cleanliness (10) → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 - cleanliness 1-5 dışında', () => pm.response.to.have.status(400));",
+                  "pm.test('Validation errors var', () => pm.expect(pm.response.json().errors).to.exist);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cleanliness\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "profile"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN1}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -406,7 +535,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
-                  "pm.test('BaÅŸarÄ± mesajÄ± dÃ¶ndÃ¼', () => {",
+                  "pm.test('Başarı mesajı döndü', () => {",
                   "    pm.expect(pm.response.json().message).to.include('Temel test');",
                   "});"
                 ]
@@ -458,8 +587,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
-                  "pm.test('BaÅŸarÄ± mesajÄ± dÃ¶ndÃ¼', () => {",
-                  "    pm.expect(pm.response.json().message).to.include('DetaylÄ± test');",
+                  "pm.test('Başarı mesajı döndü', () => {",
+                  "    pm.expect(pm.response.json().message).to.include('Detaylı test');",
                   "});"
                 ]
               }
@@ -517,7 +646,7 @@
                   "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
                   "",
                   "const r = pm.response.json();",
-                  "pm.test('SwipeResultDto.IsMatch alanÄ± var', () => {",
+                  "pm.test('SwipeResultDto.IsMatch alanı var', () => {",
                   "    pm.expect(r).to.have.property('isMatch');",
                   "});"
                 ]
@@ -567,7 +696,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status 200 veya 400 (mÃ¼kerrer swipe ise)', () => {",
+                  "pm.test('Status 200 veya 400 (mükerrer swipe ise)', () => {",
                   "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
                   "});"
                 ]
@@ -617,7 +746,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status 200 veya 400 (mÃ¼kerrer swipe ise)', () => {",
+                  "pm.test('Status 200 veya 400 (mükerrer swipe ise)', () => {",
                   "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
                   "});"
                 ]
@@ -710,10 +839,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status 400 BadRequest (kendine swipe atÄ±lamaz)', () => {",
+                  "pm.test('Status 400 BadRequest (kendine swipe atılamaz)', () => {",
                   "    pm.response.to.have.status(400);",
                   "});",
-                  "pm.test('DomainException mesajÄ±', () => {",
+                  "pm.test('DomainException mesajı', () => {",
                   "    pm.expect(pm.response.json().message).to.exist;",
                   "});"
                 ]
@@ -763,7 +892,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status 400 BadRequest (geÃ§ersiz swipe tipi)', () => {",
+                  "pm.test('Status 400 BadRequest (geçersiz swipe tipi)', () => {",
                   "    pm.response.to.have.status(400);",
                   "});"
                 ]
@@ -809,7 +938,7 @@
     },
     {
       "name": "Match (Faz 3)",
-      "description": "GET /api/Swipe/matches â€” zenginleÅŸtirilmiÅŸ MatchDto testleri.\n\nYeni alanlar: isNewMatch, matchedUser (UserSummaryDto), lastMessage (null â€” Faz 5'te dolar).\nSÄ±ralÄ± Ã§alÄ±ÅŸtÄ±rÄ±n. user1 â†” user2 karÅŸÄ±lÄ±klÄ± Like ile match oluÅŸturulur.",
+      "description": "GET /api/Swipe/matches — zenginleştirilmiş MatchDto testleri.\n\nYeni alanlar: isNewMatch, matchedUser (UserSummaryDto), lastMessage (null — Faz 5'te dolar).\nSıralı çalıştırın. user1 ↔ user2 karşılıklı Like ile match oluşturulur.",
       "item": [
         {
           "name": "01 - Login user1",
@@ -898,14 +1027,14 @@
           "response": []
         },
         {
-          "name": "03 - user1 â†’ user2 Like (match setup, idempotent)",
+          "name": "03 - user1 → user2 Like (match setup, idempotent)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('200 (Like baÅŸarÄ±lÄ±) veya 400 (zaten swipe edildi)', () => {",
+                  "pm.test('200 (Like başarılı) veya 400 (zaten swipe edildi)', () => {",
                   "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
                   "});"
                 ]
@@ -948,14 +1077,14 @@
           "response": []
         },
         {
-          "name": "04 - user2 â†’ user1 Like (match oluÅŸtur, idempotent)",
+          "name": "04 - user2 → user1 Like (match oluştur, idempotent)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('200 (match oluÅŸtu) veya 400 (zaten swipe edildi)', () => {",
+                  "pm.test('200 (match oluştu) veya 400 (zaten swipe edildi)', () => {",
                   "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
                   "});"
                 ]
@@ -998,7 +1127,7 @@
           "response": []
         },
         {
-          "name": "05 - user1 matches â†’ zenginleÅŸtirilmiÅŸ MatchDto",
+          "name": "05 - user1 matches → zenginleştirilmiş MatchDto",
           "event": [
             {
               "listen": "test",
@@ -1014,7 +1143,7 @@
                   "const user2Id = pm.collectionVariables.get('USER2_ID');",
                   "const match = matches.find(m => m.matchedUser && m.matchedUser.id === user2Id);",
                   "pm.test('user2 ile match mevcut', () => {",
-                  "    pm.expect(match, 'user2 ile match bulunamadi â€” karsilikli Like yapildi mi?').to.not.be.undefined;",
+                  "    pm.expect(match, 'user2 ile match bulunamadi — karsilikli Like yapildi mi?').to.not.be.undefined;",
                   "});",
                   "",
                   "if (match) {",
@@ -1067,7 +1196,7 @@
     },
     {
       "name": "DataSeeder Validation",
-      "description": "DataSeeder.cs:180-181 InitialBasicTestResults/FinalScores aynÄ± C# referansÄ±nÄ± paylaÅŸÄ±yor â†’ EF 'principal entity is not known' hatasÄ± veriyordu. Fix: NewScores() lokal fonksiyonu ile her property iÃ§in ayrÄ± instance Ã¼retildi. AÅŸaÄŸÄ±daki step'ler hem owned type'larÄ±n doÄŸru kaydedildiÄŸini hem de seed user'lar arasÄ±nda karÅŸÄ±lÄ±klÄ± eÅŸleÅŸmenin iÅŸlediÄŸini doÄŸrular. SÄ±rayla Ã§alÄ±ÅŸtÄ±rÄ±n.",
+      "description": "DataSeeder.cs:180-181 InitialBasicTestResults/FinalScores aynı C# referansını paylaşıyor → EF 'principal entity is not known' hatası veriyordu. Fix: NewScores() lokal fonksiyonu ile her property için ayrı instance üretildi. Aşağıdaki step'ler hem owned type'ların doğru kaydedildiğini hem de seed user'lar arasında karşılıklı eşleşmenin işlediğini doğrular. Sırayla çalıştırın.",
       "item": [
         {
           "name": "01 - Login user1 (seed)",
@@ -1077,7 +1206,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status 200 OK (seed kullanÄ±cÄ±sÄ± login olabiliyor)', () => pm.response.to.have.status(200));",
+                  "pm.test('Status 200 OK (seed kullanıcısı login olabiliyor)', () => pm.response.to.have.status(200));",
                   "",
                   "const r = pm.response.json();",
                   "pm.collectionVariables.set('TOKEN1', r.token);",
@@ -1118,7 +1247,7 @@
           "response": []
         },
         {
-          "name": "02 - Verify Both Owned Scores Present (KRÄ°TÄ°K FIX TESTI)",
+          "name": "02 - Verify Both Owned Scores Present (KRİTİK FIX TESTI)",
           "event": [
             {
               "listen": "test",
@@ -1129,31 +1258,31 @@
                   "",
                   "const p = pm.response.json();",
                   "",
-                  "// --- Owned type'larÄ±n ikisi de DB'ye yazÄ±lmÄ±ÅŸ olmalÄ± ---",
-                  "pm.test('InitialBasicTestResults null deÄŸil (owned type yazÄ±ldÄ±)', () => {",
-                  "    pm.expect(p.initialBasicTestResults, 'Seed sÄ±rasÄ±nda ayrÄ± instance Ã¼retilmediyse EF SaveChanges patlardÄ±').to.not.be.null;",
+                  "// --- Owned type'ların ikisi de DB'ye yazılmış olmalı ---",
+                  "pm.test('InitialBasicTestResults null değil (owned type yazıldı)', () => {",
+                  "    pm.expect(p.initialBasicTestResults, 'Seed sırasında ayrı instance üretilmediyse EF SaveChanges patlardı').to.not.be.null;",
                   "    pm.expect(p.initialBasicTestResults).to.not.be.undefined;",
                   "});",
                   "",
-                  "pm.test('FinalScores null deÄŸil (owned type yazÄ±ldÄ±)', () => {",
-                  "    pm.expect(p.finalScores, 'Seed sÄ±rasÄ±nda ayrÄ± instance Ã¼retilmediyse EF SaveChanges patlardÄ±').to.not.be.null;",
+                  "pm.test('FinalScores null değil (owned type yazıldı)', () => {",
+                  "    pm.expect(p.finalScores, 'Seed sırasında ayrı instance üretilmediyse EF SaveChanges patlardı').to.not.be.null;",
                   "    pm.expect(p.finalScores).to.not.be.undefined;",
                   "});",
                   "",
-                  "// --- Skor alanlarÄ± valid range'de olmalÄ± (1-10) ---",
+                  "// --- Skor alanları valid range'de olmalı (1-10) ---",
                   "const ibtr = p.initialBasicTestResults || {};",
                   "const fs = p.finalScores || {};",
                   "['socialEnergy', 'orderApproach', 'conflictManagement', 'sharingStyle', 'lifeRhythm', 'communicationStyle'].forEach(k => {",
-                  "    pm.test(`InitialBasicTestResults.${k} 1-10 aralÄ±ÄŸÄ±nda`, () => {",
+                  "    pm.test(`InitialBasicTestResults.${k} 1-10 aralığında`, () => {",
                   "        pm.expect(ibtr[k]).to.be.a('number').within(1, 10);",
                   "    });",
-                  "    pm.test(`FinalScores.${k} 1-10 aralÄ±ÄŸÄ±nda`, () => {",
+                  "    pm.test(`FinalScores.${k} 1-10 aralığında`, () => {",
                   "        pm.expect(fs[k]).to.be.a('number').within(1, 10);",
                   "    });",
                   "});",
                   "",
-                  "// --- DataSeeder.NewScores() aynÄ± skorlarÄ± Ã¼retiyor (referans farklÄ±, deÄŸer aynÄ±) ---",
-                  "pm.test('InitialBasicTestResults ve FinalScores AYNI skorlarÄ± taÅŸÄ±yor (NewScores() kontratÄ±)', () => {",
+                  "// --- DataSeeder.NewScores() aynı skorları üretiyor (referans farklı, değer aynı) ---",
+                  "pm.test('InitialBasicTestResults ve FinalScores AYNI skorları taşıyor (NewScores() kontratı)', () => {",
                   "    pm.expect(ibtr.socialEnergy).to.equal(fs.socialEnergy);",
                   "    pm.expect(ibtr.orderApproach).to.equal(fs.orderApproach);",
                   "    pm.expect(ibtr.conflictManagement).to.equal(fs.conflictManagement);",
@@ -1162,8 +1291,8 @@
                   "    pm.expect(ibtr.communicationStyle).to.equal(fs.communicationStyle);",
                   "});",
                   "",
-                  "// --- Seed-only alanlar dolu olmalÄ± ---",
-                  "pm.test('Seed alanlarÄ± dolu (Age 20-35, Bio var)', () => {",
+                  "// --- Seed-only alanlar dolu olmalı ---",
+                  "pm.test('Seed alanları dolu (Age 20-35, Bio var)', () => {",
                   "    pm.expect(p.age).to.be.within(20, 35);",
                   "    pm.expect(p.bio).to.be.a('string').and.not.empty;",
                   "});"
@@ -1216,7 +1345,7 @@
                   "    pm.expect(pm.collectionVariables.get('USER2_ID')).to.not.be.empty;",
                   "});",
                   "",
-                  "pm.test('USER1 ile USER2 farklÄ±', () => {",
+                  "pm.test('USER1 ile USER2 farklı', () => {",
                   "    pm.expect(pm.collectionVariables.get('USER2_ID')).to.not.equal(pm.collectionVariables.get('USER1_ID'));",
                   "});"
                 ]
@@ -1250,7 +1379,7 @@
           "response": []
         },
         {
-          "name": "04 - user1 â†’ user2 Like (Match yok, IsMatch=false)",
+          "name": "04 - user1 → user2 Like (Match yok, IsMatch=false)",
           "event": [
             {
               "listen": "test",
@@ -1260,7 +1389,7 @@
                   "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
                   "",
                   "const r = pm.response.json();",
-                  "pm.test('IsMatch=false (henÃ¼z tek taraflÄ±)', () => {",
+                  "pm.test('IsMatch=false (henüz tek taraflı)', () => {",
                   "    pm.expect(r.isMatch).to.equal(false);",
                   "});"
                 ]
@@ -1303,7 +1432,7 @@
           "response": []
         },
         {
-          "name": "05 - user2 â†’ user1 Like (KarÅŸÄ±lÄ±klÄ±, IsMatch=true)",
+          "name": "05 - user2 → user1 Like (Karşılıklı, IsMatch=true)",
           "event": [
             {
               "listen": "test",
@@ -1313,7 +1442,7 @@
                   "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
                   "",
                   "const r = pm.response.json();",
-                  "pm.test('IsMatch=true (karÅŸÄ±lÄ±klÄ± Like â†’ match)', () => {",
+                  "pm.test('IsMatch=true (karşılıklı Like → match)', () => {",
                   "    pm.expect(r.isMatch).to.equal(true);",
                   "});"
                 ]
@@ -1356,7 +1485,7 @@
           "response": []
         },
         {
-          "name": "06 - user1 matches list (user2 dahil olmalÄ±)",
+          "name": "06 - user1 matches list (user2 dahil olmalı)",
           "event": [
             {
               "listen": "test",
@@ -1370,9 +1499,9 @@
                   "pm.test('En az 1 match var', () => pm.expect(matches.length).to.be.greaterThan(0));",
                   "",
                   "const user2Id = pm.collectionVariables.get('USER2_ID');",
-                  "pm.test('user2 matches iÃ§inde', () => {",
+                  "pm.test('user2 matches içinde', () => {",
                   "    const found = matches.some(m => JSON.stringify(m).includes(user2Id));",
-                  "    pm.expect(found, `Beklenen USER2_ID=${user2Id} matches[] iÃ§inde deÄŸil`).to.be.true;",
+                  "    pm.expect(found, `Beklenen USER2_ID=${user2Id} matches[] içinde değil`).to.be.true;",
                   "});"
                 ]
               }
@@ -1409,7 +1538,7 @@
     },
     {
       "name": "Feed (Faz 2)",
-      "description": "GET /api/users â€” swipe iÃ§in aday kullanÄ±cÄ± listesi.\n\nHard filter: kendisi + daha Ã¶nce swipe attÄ±klarÄ± hariÃ§.\nSoft sort: bana Like/SuperLike atanlar Ã¼stte, sonra LastActive DESC.\nPagination: ?skip=N&take=M (take default 20, max 50 â€” clamp).\n\nÃ‡alÄ±ÅŸtÄ±rma: SÄ±ralÄ± Ã§alÄ±ÅŸtÄ±rÄ±n. user1 ile user3'Ã¼ kullanÄ±r (user2 DataSeeder Validation tarafÄ±ndan kullanÄ±lÄ±yor). Fresh DB Ã¶nerilir.",
+      "description": "GET /api/users — swipe için aday kullanıcı listesi.\n\nHard filter: kendisi + daha önce swipe attıkları hariç.\nSoft sort: bana Like/SuperLike atanlar üstte, sonra LastActive DESC.\nPagination: ?skip=N&take=M (take default 20, max 50 — clamp).\n\nÇalıştırma: Sıralı çalıştırın. user1 ile user3'ü kullanır (user2 DataSeeder Validation tarafından kullanılıyor). Fresh DB önerilir.",
       "item": [
         {
           "name": "01 - Login user1 (Feed setup)",
@@ -1478,7 +1607,7 @@
                   "    pm.expect(pm.collectionVariables.get('USER3_ID')).to.not.be.empty;",
                   "});",
                   "",
-                  "pm.test('user1 ve user3 farklÄ±', () => {",
+                  "pm.test('user1 ve user3 farklı', () => {",
                   "    pm.expect(pm.collectionVariables.get('USER3_ID')).to.not.equal(pm.collectionVariables.get('USER1_ID'));",
                   "});"
                 ]
@@ -1512,7 +1641,7 @@
           "response": []
         },
         {
-          "name": "03 - GET /api/users (basic) - 200 + array + â‰¤20 + alanlar + FLOW_TARGET capture",
+          "name": "03 - GET /api/users (basic) - 200 + array + ≤20 + alanlar + FLOW_TARGET capture",
           "event": [
             {
               "listen": "test",
@@ -1523,19 +1652,19 @@
                   "",
                   "const feed = pm.response.json();",
                   "pm.test('Response array', () => pm.expect(feed).to.be.an('array'));",
-                  "pm.test('Default take=20 â†’ â‰¤20 item', () => {",
+                  "pm.test('Default take=20 → ≤20 item', () => {",
                   "    pm.expect(feed.length).to.be.at.most(20);",
                   "});",
                   "",
                   "const user1Id = pm.collectionVariables.get('USER1_ID');",
                   "pm.test(\"Kendisi (user1) feed'de yok (hard filter)\", () => {",
                   "    const containsSelf = feed.some(u => u.id === user1Id);",
-                  "    pm.expect(containsSelf, \"currentUser kendi feed'inde olmamalÄ±\").to.be.false;",
+                  "    pm.expect(containsSelf, \"currentUser kendi feed'inde olmamalı\").to.be.false;",
                   "});",
                   "",
                   "if (feed.length > 0) {",
                   "    const u = feed[0];",
-                  "    pm.test('UserSummaryDto temel alanlarÄ± mevcut', () => {",
+                  "    pm.test('UserSummaryDto temel alanları mevcut', () => {",
                   "        pm.expect(u).to.have.property('id');",
                   "        pm.expect(u).to.have.property('name');",
                   "        pm.expect(u).to.have.property('age');",
@@ -1548,26 +1677,26 @@
                   "    pm.test(\"CharacterProfile feed'de YOK (lite DTO)\", () => {",
                   "        pm.expect(u).to.not.have.property('characterProfile');",
                   "    });",
-                  "    pm.test('compatibility alanÄ± mevcut (Faz 2.5)', () => {",
+                  "    pm.test('compatibility alanı mevcut (Faz 2.5)', () => {",
                   "        pm.expect(u).to.have.property('compatibility');",
                   "    });",
                   "}",
                   "",
-                  "// FLOW_TARGET_ID: user2 ve user3 hariÃ§ ilk kullanÄ±cÄ±.",
-                  "// Bu, akÄ±ÅŸ testinde Pass atÄ±lacak hedef. user2 (DataSeeder Validation kullanÄ±yor) ve",
-                  "// user3 (priority testi iÃ§in saklÄ±) hariÃ§ tutulur.",
-                  "// Stale variable korumasÄ±: her zaman Ã¶nce temizliyoruz, sonra yeniden set ediyoruz.",
+                  "// FLOW_TARGET_ID: user2 ve user3 hariç ilk kullanıcı.",
+                  "// Bu, akış testinde Pass atılacak hedef. user2 (DataSeeder Validation kullanıyor) ve",
+                  "// user3 (priority testi için saklı) hariç tutulur.",
+                  "// Stale variable koruması: her zaman önce temizliyoruz, sonra yeniden set ediyoruz.",
                   "pm.collectionVariables.unset('FLOW_TARGET_ID');",
                   "",
                   "const user2Id = pm.collectionVariables.get('USER2_ID') || '';",
                   "const user3Id = pm.collectionVariables.get('USER3_ID') || '';",
                   "const flowTarget = feed.find(u => u.id && u.id !== user2Id && u.id !== user3Id);",
                   "",
-                  "pm.test('FLOW_TARGET_ID capture edildi (akÄ±ÅŸ testi iÃ§in)', () => {",
-                  "    pm.expect(flowTarget, 'Feed boÅŸ veya sadece user2/user3 iÃ§eriyor â€” fresh DB kontrolÃ¼ yap').to.not.be.undefined;",
+                  "pm.test('FLOW_TARGET_ID capture edildi (akış testi için)', () => {",
+                  "    pm.expect(flowTarget, 'Feed boş veya sadece user2/user3 içeriyor — fresh DB kontrolü yap').to.not.be.undefined;",
                   "    pm.expect(flowTarget.id).to.be.a('string').and.not.empty;",
                   "    pm.collectionVariables.set('FLOW_TARGET_ID', flowTarget.id);",
-                  "    console.log('FLOW_TARGET_ID set â†’', flowTarget.id, '(', flowTarget.name, ')');",
+                  "    console.log('FLOW_TARGET_ID set →', flowTarget.id, '(', flowTarget.name, ')');",
                   "});"
                 ]
               }
@@ -1643,7 +1772,7 @@
                   "",
                   "const feed = pm.response.json();",
                   "pm.test('Response array', () => pm.expect(feed).to.be.an('array'));",
-                  "pm.test('take=5 â†’ â‰¤5 item', () => {",
+                  "pm.test('take=5 → ≤5 item', () => {",
                   "    pm.expect(feed.length).to.be.at.most(5);",
                   "});"
                 ]
@@ -1687,7 +1816,7 @@
           "response": []
         },
         {
-          "name": "06 - GET /api/users?take=100 (Clamp - DoS korumasÄ±)",
+          "name": "06 - GET /api/users?take=100 (Clamp - DoS koruması)",
           "event": [
             {
               "listen": "test",
@@ -1697,7 +1826,7 @@
                   "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
                   "",
                   "const feed = pm.response.json();",
-                  "pm.test('take=100 â†’ server clamp â‰¤50 (DoS korumasÄ±)', () => {",
+                  "pm.test('take=100 → server clamp ≤50 (DoS koruması)', () => {",
                   "    pm.expect(feed.length).to.be.at.most(50);",
                   "});"
                 ]
@@ -1737,14 +1866,14 @@
           "response": []
         },
         {
-          "name": "07 - AkÄ±ÅŸ setup: user1 â†’ FLOW_TARGET Pass swipe",
+          "name": "07 - Akış setup: user1 → FLOW_TARGET Pass swipe",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status 200 veya 400 (mÃ¼kerrer)', () => {",
+                  "pm.test('Status 200 veya 400 (mükerrer)', () => {",
                   "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
                   "});"
                 ]
@@ -1787,7 +1916,7 @@
           "response": []
         },
         {
-          "name": "08 - AkÄ±ÅŸ verify: feed'de FLOW_TARGET YOK (hard filter)",
+          "name": "08 - Akış verify: feed'de FLOW_TARGET YOK (hard filter)",
           "event": [
             {
               "listen": "test",
@@ -1799,9 +1928,9 @@
                   "const feed = pm.response.json();",
                   "const targetId = pm.collectionVariables.get('FLOW_TARGET_ID');",
                   "",
-                  "pm.test(\"Swipe edilen kullanÄ±cÄ± feed'de gÃ¶rÃ¼nmÃ¼yor\", () => {",
+                  "pm.test(\"Swipe edilen kullanıcı feed'de görünmüyor\", () => {",
                   "    const stillThere = feed.some(u => u.id === targetId);",
-                  "    pm.expect(stillThere, `FLOW_TARGET_ID=${targetId} hÃ¢lÃ¢ feed'de â€” hard filter Ã§alÄ±ÅŸmÄ±yor`).to.be.false;",
+                  "    pm.expect(stillThere, `FLOW_TARGET_ID=${targetId} hâlâ feed'de — hard filter çalışmıyor`).to.be.false;",
                   "});"
                 ]
               }
@@ -1840,14 +1969,14 @@
           "response": []
         },
         {
-          "name": "09 - Priority setup: user3 â†’ user1 Like (TOKEN3)",
+          "name": "09 - Priority setup: user3 → user1 Like (TOKEN3)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status 200 veya 400 (mÃ¼kerrer)', () => {",
+                  "pm.test('Status 200 veya 400 (mükerrer)', () => {",
                   "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
                   "});"
                 ]
@@ -1902,14 +2031,14 @@
                   "const feed = pm.response.json();",
                   "const user3Id = pm.collectionVariables.get('USER3_ID');",
                   "",
-                  "pm.test(\"user3 feed'de mevcut (henÃ¼z swipe atÄ±lmadÄ±)\", () => {",
+                  "pm.test(\"user3 feed'de mevcut (henüz swipe atılmadı)\", () => {",
                   "    const found = feed.some(u => u.id === user3Id);",
-                  "    pm.expect(found, `USER3_ID=${user3Id} feed'de deÄŸil â€” Like attÄ±ÄŸÄ± halde filtrelenmiÅŸ olamaz`).to.be.true;",
+                  "    pm.expect(found, `USER3_ID=${user3Id} feed'de değil — Like attığı halde filtrelenmiş olamaz`).to.be.true;",
                   "});",
                   "",
-                  "pm.test(\"user3 feed'in ilk 10'unda (Like boost Ã¶ne almalÄ±)\", () => {",
+                  "pm.test(\"user3 feed'in ilk 10'unda (Like boost öne almalı)\", () => {",
                   "    const idx = feed.findIndex(u => u.id === user3Id);",
-                  "    pm.expect(idx, `user3 indeks=${idx}, beklenen <10 (boost baÅŸarÄ±sÄ±z)`).to.be.below(10);",
+                  "    pm.expect(idx, `user3 indeks=${idx}, beklenen <10 (boost başarısız)`).to.be.below(10);",
                   "});"
                 ]
               }
@@ -1951,7 +2080,7 @@
     },
     {
       "name": "Compatibility (Faz 2.5)",
-      "description": "Uyumluluk skoru testleri.\n\nSÄ±ralÄ± Ã§alÄ±ÅŸtÄ±rÄ±n. user1 ve user3 seeded kullanÄ±cÄ±.\ntestsiz@test.com fresh kayÄ±t (FinalScores yok).\n\nMantÄ±k: Like-boost Ã¶nce gelir, sonra compatibility sÄ±ralama.\nFinalScores null kullanÄ±cÄ± tÃ¼m adaylar iÃ§in 50.0 alÄ±r.",
+      "description": "Uyumluluk skoru testleri.\n\nSıralı çalıştırın. user1 ve user3 seeded kullanıcı.\ntestsiz@test.com fresh kayıt (FinalScores yok).\n\nMantık: Like-boost önce gelir, sonra compatibility sıralama.\nFinalScores null kullanıcı tüm adaylar için 50.0 alır.",
       "item": [
         {
           "name": "01 - Login user1",
@@ -2050,14 +2179,14 @@
           "response": []
         },
         {
-          "name": "03 - Like-boost kurulumu: user3 â†’ user1 Like",
+          "name": "03 - Like-boost kurulumu: user3 → user1 Like",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('200 (Like baÅŸarÄ±lÄ±) veya 400 (zaten swipe edildi â€” idempotent)', () => {",
+                  "pm.test('200 (Like başarılı) veya 400 (zaten swipe edildi — idempotent)', () => {",
                   "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
                   "});"
                 ]
@@ -2100,7 +2229,7 @@
           "response": []
         },
         {
-          "name": "04 - user1 Feed â†’ compatibility alanÄ± var ve 0-100 arasÄ±",
+          "name": "04 - user1 Feed → compatibility alanı var ve 0-100 arası",
           "event": [
             {
               "listen": "test",
@@ -2110,18 +2239,18 @@
                   "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
                   "",
                   "const feed = pm.response.json();",
-                  "pm.test('Feed boÅŸ deÄŸil', () => pm.expect(feed.length).to.be.above(0));",
+                  "pm.test('Feed boş değil', () => pm.expect(feed.length).to.be.above(0));",
                   "",
-                  "pm.test('Her kullanÄ±cÄ±da compatibility alanÄ± var (sayÄ±, 0-100 arasÄ±)', () => {",
+                  "pm.test('Her kullanıcıda compatibility alanı var (sayı, 0-100 arası)', () => {",
                   "    feed.forEach(u => {",
-                  "        pm.expect(u.compatibility, u.id + ' iÃ§in compatibility eksik').to.be.a('number');",
+                  "        pm.expect(u.compatibility, u.id + ' için compatibility eksik').to.be.a('number');",
                   "        pm.expect(u.compatibility).to.be.within(0, 100);",
                   "    });",
                   "});",
                   "",
-                  "pm.test('Seeded kullanÄ±cÄ±larda Ã§eÅŸitli uyum (hepsi 50.0 deÄŸil)', () => {",
+                  "pm.test('Seeded kullanıcılarda çeşitli uyum (hepsi 50.0 değil)', () => {",
                   "    const allFifty = feed.every(u => u.compatibility === 50);",
-                  "    pm.expect(allFifty, 'TÃ¼m kullanÄ±cÄ±lar 50.0 dÃ¶ndÃ¼ â€” FinalScores include edilmemiÅŸ olabilir').to.be.false;",
+                  "    pm.expect(allFifty, 'Tüm kullanıcılar 50.0 döndü — FinalScores include edilmemiş olabilir').to.be.false;",
                   "});"
                 ]
               }
@@ -2154,7 +2283,7 @@
           "response": []
         },
         {
-          "name": "05 - user1 Feed â†’ user3 ilk sÄ±rada (Like-boost Ã¶nceliÄŸi)",
+          "name": "05 - user1 Feed → user3 ilk sırada (Like-boost önceliği)",
           "event": [
             {
               "listen": "test",
@@ -2166,14 +2295,14 @@
                   "const feed = pm.response.json();",
                   "const user3Id = pm.collectionVariables.get('USER3_ID');",
                   "",
-                  "pm.test(\"user3 feed'de mevcut (henÃ¼z swipe atÄ±lmadÄ±)\", () => {",
+                  "pm.test(\"user3 feed'de mevcut (henüz swipe atılmadı)\", () => {",
                   "    const found = feed.some(u => u.id === user3Id);",
                   "    pm.expect(found, 'USER3_ID=' + user3Id + \" feed'de yok\").to.be.true;",
                   "});",
                   "",
-                  "pm.test(\"user3 feed'in ilk sÄ±rasÄ±nda (Like-boost)\", () => {",
+                  "pm.test(\"user3 feed'in ilk sırasında (Like-boost)\", () => {",
                   "    const idx = feed.findIndex(u => u.id === user3Id);",
-                  "    pm.expect(idx, 'user3 indeks=' + idx + ', beklenen 0 (Like-boost ilk sÄ±raya almalÄ±)').to.equal(0);",
+                  "    pm.expect(idx, 'user3 indeks=' + idx + ', beklenen 0 (Like-boost ilk sıraya almalı)').to.equal(0);",
                   "});"
                 ]
               }
@@ -2212,14 +2341,14 @@
           "response": []
         },
         {
-          "name": "06 - Register testsiz kullanÄ±cÄ± (FinalScores yok)",
+          "name": "06 - Register testsiz kullanıcı (FinalScores yok)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('201 Created veya 400 (zaten kayÄ±tlÄ±)', () => {",
+                  "pm.test('201 Created veya 400 (zaten kayıtlı)', () => {",
                   "    pm.expect(pm.response.code).to.be.oneOf([201, 400]);",
                   "});"
                 ]
@@ -2299,7 +2428,7 @@
           "response": []
         },
         {
-          "name": "08 - testsiz Feed â†’ tÃ¼m compatibility 50.0 (FinalScores null)",
+          "name": "08 - testsiz Feed → tüm compatibility 50.0 (FinalScores null)",
           "event": [
             {
               "listen": "test",
@@ -2309,11 +2438,11 @@
                   "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
                   "",
                   "const feed = pm.response.json();",
-                  "pm.test('Feed boÅŸ deÄŸil', () => pm.expect(feed.length).to.be.above(0));",
+                  "pm.test('Feed boş değil', () => pm.expect(feed.length).to.be.above(0));",
                   "",
-                  "pm.test('FinalScores yok â†’ tÃ¼m compatibility 50.0 (varsayÄ±lan)', () => {",
+                  "pm.test('FinalScores yok → tüm compatibility 50.0 (varsayılan)', () => {",
                   "    const allFifty = feed.every(u => u.compatibility === 50);",
-                  "    pm.expect(allFifty, 'BazÄ± adaylar 50.0 dÄ±ÅŸÄ± uyum dÃ¶ndÃ¼ â€” CompatibilityService default 50.0 olmalÄ±').to.be.true;",
+                  "    pm.expect(allFifty, 'Bazı adaylar 50.0 dışı uyum döndü — CompatibilityService default 50.0 olmalı').to.be.true;",
                   "});"
                 ]
               }
@@ -2349,7 +2478,7 @@
     },
     {
       "name": "Property",
-      "description": "GET /api/property â€” filtreli ilan listesi ve CRUD testleri.\n\nSÄ±ralÄ± Ã§alÄ±ÅŸtÄ±rÄ±n. Login ile token alÄ±nÄ±r, tÃ¼m testler bu token'Ä± kullanÄ±r.",
+      "description": "GET /api/property — filtreli ilan listesi ve CRUD testleri.\n\nSıralı çalıştırın. Login ile token alınır, tüm testler bu token'ı kullanır.",
       "item": [
         {
           "name": "01 - Login (token al)",
@@ -2395,7 +2524,7 @@
           "response": []
         },
         {
-          "name": "02 - TÃ¼m ilanlarÄ± listele",
+          "name": "02 - Tüm ilanları listele",
           "event": [
             {
               "listen": "test",
@@ -2447,7 +2576,7 @@
           "response": []
         },
         {
-          "name": "03 - Token yok â†’ 401",
+          "name": "03 - Token yok → 401",
           "event": [
             {
               "listen": "test",
@@ -2766,7 +2895,7 @@
           "response": []
         },
         {
-          "name": "10 - Olmayan id â†’ 404",
+          "name": "10 - Olmayan id → 404",
           "event": [
             {
               "listen": "test",
@@ -2806,7 +2935,7 @@
           "response": []
         },
         {
-          "name": "11 - Yeni ilan oluÅŸtur (POST)",
+          "name": "11 - Yeni ilan oluştur (POST)",
           "event": [
             {
               "listen": "test",
@@ -2840,7 +2969,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"title\": \"Test Dairesi\",\r\n  \"priceAmount\": 7500,\r\n  \"currency\": \"â‚º\",\r\n  \"pricePeriod\": \"ay\",\r\n  \"location\": \"Ä°stanbul, Maltepe\",\r\n  \"bedrooms\": 1,\r\n  \"bathrooms\": 1,\r\n  \"images\": [],\r\n  \"description\": \"Postman test ilanÄ±.\",\r\n  \"amenities\": [\"Wi-Fi\"],\r\n  \"availableFrom\": \"2026-06-01T00:00:00Z\",\r\n  \"propertyType\": \"Apartment\",\r\n  \"furnished\": true,\r\n  \"petsAllowed\": false,\r\n  \"smokingAllowed\": false\r\n}",
+              "raw": "{\r\n  \"title\": \"Test Dairesi\",\r\n  \"priceAmount\": 7500,\r\n  \"currency\": \"₺\",\r\n  \"pricePeriod\": \"ay\",\r\n  \"location\": \"İstanbul, Maltepe\",\r\n  \"bedrooms\": 1,\r\n  \"bathrooms\": 1,\r\n  \"images\": [],\r\n  \"description\": \"Postman test ilanı.\",\r\n  \"amenities\": [\"Wi-Fi\"],\r\n  \"availableFrom\": \"2026-06-01T00:00:00Z\",\r\n  \"propertyType\": \"Apartment\",\r\n  \"furnished\": true,\r\n  \"petsAllowed\": false,\r\n  \"smokingAllowed\": false\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2861,7 +2990,105 @@
           "response": []
         },
         {
-          "name": "12 - Ä°lanÄ± gÃ¼ncelle (PUT - owner)",
+          "name": "12 - Property create başlık boş → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 - başlık zorunlu', () => pm.response.to.have.status(400));",
+                  "pm.test('Validation errors var', () => pm.expect(pm.response.json().errors).to.exist);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"\",\n  \"priceAmount\": 5000,\n  \"currency\": \"₺\",\n  \"pricePeriod\": \"ay\",\n  \"location\": \"İstanbul\",\n  \"bedrooms\": 2,\n  \"bathrooms\": 1,\n  \"propertyType\": \"Apartment\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/property",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "property"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN1}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "13 - Property create negatif fiyat → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 - fiyat negatif olamaz', () => pm.response.to.have.status(400));",
+                  "pm.test('Validation errors var', () => pm.expect(pm.response.json().errors).to.exist);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Test İlan\",\n  \"priceAmount\": -500,\n  \"currency\": \"₺\",\n  \"pricePeriod\": \"ay\",\n  \"location\": \"İstanbul\",\n  \"bedrooms\": 2,\n  \"bathrooms\": 1,\n  \"propertyType\": \"Apartment\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/property",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "property"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN1}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "14 - İlanı güncelle (PUT - owner)",
           "event": [
             {
               "listen": "test",
@@ -2890,7 +3117,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"title\": \"Guncellenmis Test Dairesi\",\r\n  \"priceAmount\": 8000,\r\n  \"currency\": \"â‚º\",\r\n  \"pricePeriod\": \"ay\",\r\n  \"location\": \"Ä°stanbul, Maltepe\",\r\n  \"bedrooms\": 1,\r\n  \"bathrooms\": 1,\r\n  \"images\": [],\r\n  \"description\": \"Guncellenmis aciklama.\",\r\n  \"amenities\": [\"Wi-Fi\", \"Klima\"],\r\n  \"availableFrom\": \"2026-06-01T00:00:00Z\",\r\n  \"propertyType\": \"Apartment\",\r\n  \"furnished\": true,\r\n  \"petsAllowed\": false,\r\n  \"smokingAllowed\": false\r\n}",
+              "raw": "{\r\n  \"title\": \"Guncellenmis Test Dairesi\",\r\n  \"priceAmount\": 8000,\r\n  \"currency\": \"₺\",\r\n  \"pricePeriod\": \"ay\",\r\n  \"location\": \"İstanbul, Maltepe\",\r\n  \"bedrooms\": 1,\r\n  \"bathrooms\": 1,\r\n  \"images\": [],\r\n  \"description\": \"Guncellenmis aciklama.\",\r\n  \"amenities\": [\"Wi-Fi\", \"Klima\"],\r\n  \"availableFrom\": \"2026-06-01T00:00:00Z\",\r\n  \"propertyType\": \"Apartment\",\r\n  \"furnished\": true,\r\n  \"petsAllowed\": false,\r\n  \"smokingAllowed\": false\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2912,7 +3139,7 @@
           "response": []
         },
         {
-          "name": "13 - Login user3 (yetki testi için)",
+          "name": "15 - Login user3 (yetki testi için)",
           "event": [
             {
               "listen": "test",
@@ -2954,7 +3181,7 @@
           "response": []
         },
         {
-          "name": "14 - Başka kullanıcı güncellemeye çalışıyor → 403",
+          "name": "16 - Başka kullanıcı güncellemeye çalışıyor → 403",
           "event": [
             {
               "listen": "test",
@@ -2981,7 +3208,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"title\": \"Hack denemesi\",\r\n  \"priceAmount\": 1,\r\n  \"currency\": \"â‚º\",\r\n  \"pricePeriod\": \"ay\",\r\n  \"location\": \"x\",\r\n  \"bedrooms\": 1,\r\n  \"bathrooms\": 1,\r\n  \"images\": [],\r\n  \"amenities\": [],\r\n  \"availableFrom\": \"2026-06-01T00:00:00Z\",\r\n  \"propertyType\": \"Room\",\r\n  \"furnished\": false,\r\n  \"petsAllowed\": false,\r\n  \"smokingAllowed\": false\r\n}",
+              "raw": "{\r\n  \"title\": \"Hack denemesi\",\r\n  \"priceAmount\": 1,\r\n  \"currency\": \"₺\",\r\n  \"pricePeriod\": \"ay\",\r\n  \"location\": \"x\",\r\n  \"bedrooms\": 1,\r\n  \"bathrooms\": 1,\r\n  \"images\": [],\r\n  \"amenities\": [],\r\n  \"availableFrom\": \"2026-06-01T00:00:00Z\",\r\n  \"propertyType\": \"Room\",\r\n  \"furnished\": false,\r\n  \"petsAllowed\": false,\r\n  \"smokingAllowed\": false\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3003,7 +3230,7 @@
           "response": []
         },
         {
-          "name": "15 - İlanı sil (DELETE - owner)",
+          "name": "17 - İlanı sil (DELETE - owner)",
           "event": [
             {
               "listen": "test",
@@ -3043,7 +3270,7 @@
           "response": []
         },
         {
-          "name": "16 - Silinen ilan artık yok → 404",
+          "name": "18 - Silinen ilan artık yok → 404",
           "event": [
             {
               "listen": "test",

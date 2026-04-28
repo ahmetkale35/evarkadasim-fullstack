@@ -1,14 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace EvArkadasimV2.Application.DTOs.User
 {
     public class SwipeRequestDto
     {
-        public string ReceiverId { get; set; }
-        public string SwipeType { get; set; } // "Like", "Pass", "SuperLike"
+        [Required]
+        public string ReceiverId { get; set; } = string.Empty;
+
+        [Required]
+        [RegularExpression("^(Like|Pass|SuperLike)$", ErrorMessage = "SwipeType 'Like', 'Pass' veya 'SuperLike' olmalıdır.")]
+        public string SwipeType { get; set; } = string.Empty;
     }
 }
