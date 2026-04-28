@@ -1,0 +1,2283 @@
+{
+  "info": {
+    "_postman_id": "66bf408e-23a2-4a2f-a9dd-12bf6ebdbc3a",
+    "name": "EvArkadasim V2 API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "33533500"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201 Created veya 400 (zaten kayıtlı)', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([201, 400]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    const r = pm.response.json();",
+                  "    pm.test('Token döndü', () => pm.expect(r.token).to.be.a('string').and.not.empty);",
+                  "    pm.test('UserId döndü', () => pm.expect(r.userId).to.be.a('string').and.not.empty);",
+                  "    pm.collectionVariables.set('TOKEN1', r.token);",
+                  "    pm.collectionVariables.set('USER1_ID', r.userId);",
+                  "} else {",
+                  "    pm.test('400 ise DomainException mesajı var', () => {",
+                  "        pm.expect(pm.response.json().message).to.exist;",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"ahmet@test.com\",\r\n  \"password\": \"Test1234!\",\r\n  \"name\": \"Ahmet\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const r = pm.response.json();",
+                  "pm.test('Token döndü', () => pm.expect(r.token).to.be.a('string').and.not.empty);",
+                  "pm.test('UserId döndü', () => pm.expect(r.userId).to.be.a('string').and.not.empty);",
+                  "pm.test('Expiration döndü', () => pm.expect(r.expiration).to.exist);",
+                  "",
+                  "// Sonraki istekler için token + userId'yi koleksiyon değişkenlerine yaz",
+                  "pm.collectionVariables.set('TOKEN1', r.token);",
+                  "pm.collectionVariables.set('USER1_ID', r.userId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"ahmet@test.com\",\r\n  \"password\": \"Test1234!\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login (Wrong Password - Negative)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "pm.test('DomainException mesajı döndü', () => {",
+                  "    pm.expect(pm.response.json().message).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"user1@test.com\",\r\n  \"password\": \"yanlissifre\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login as Seed User 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set('TOKEN1', r.token);",
+                  "pm.collectionVariables.set('USER1_ID', r.userId);",
+                  "",
+                  "pm.test('Token capture edildi', () => {",
+                  "    pm.expect(pm.collectionVariables.get('TOKEN1')).to.not.be.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"user1@test.com\",\r\n  \"password\": \"Test1234!\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "User Profile",
+      "item": [
+        {
+          "name": "Current User Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const p = pm.response.json();",
+                  "pm.test('Profile DTO alanları geliyor', () => {",
+                  "    pm.expect(p).to.have.property('age');",
+                  "    pm.expect(p).to.have.property('initialBasicTestResults');",
+                  "    pm.expect(p).to.have.property('finalScores');",
+                  "});",
+                  "",
+                  "// DataSeeder fix doğrulaması: owned type'ların ikisi de null olmamalı",
+                  "pm.test('InitialBasicTestResults dolu (DataSeeder fix)', () => {",
+                  "    pm.expect(p.initialBasicTestResults, 'InitialBasicTestResults null olmamalı').to.not.be.null;",
+                  "});",
+                  "pm.test('FinalScores dolu (DataSeeder fix)', () => {",
+                  "    pm.expect(p.finalScores, 'FinalScores null olmamalı').to.not.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN1}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/Profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "Profile"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Current User Profile (Unauthorized - Negative)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 401 Unauthorized (token yok)', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/Profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "Profile"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Başarı mesajı döndü', () => {",
+                  "    pm.expect(pm.response.json().message).to.include('güncellendi');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN1}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"bio\": \"Merhaba, düzenli ve uyumlu bir ev arkadaşı arıyorum.\",\r\n  \"budget\": \"5000-8000 TL\",\r\n  \"moveInDate\": \"2026-09-01\",\r\n  \"lifestyle\": [\"Erken Kalkar\", \"Sigara İçmez\", \"Spor Yapar\"],\r\n  \"interests\": [\"Müzik\", \"Sinema\", \"Yemek Yapmak\"],\r\n  \"photos\": [\"foto1_url\", \"foto2_url\"],\r\n  \"cleanliness\": 8,\r\n  \"socialLevel\": 6,\r\n  \"isOnlineStatusVisible\": true,\r\n  \"notificationsEnabled\": true\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/Profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "Profile"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User Profile - Partial (only bio)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Partial update kabul edildi (UpdateProfileDto nullable alanlar)', () => {",
+                  "    pm.expect(pm.response.json().message).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN1}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"bio\": \"Postman partial update testi.\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/Profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "Profile"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Character Tests",
+      "item": [
+        {
+          "name": "Submit Basic Test",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Başarı mesajı döndü', () => {",
+                  "    pm.expect(pm.response.json().message).to.include('Temel test');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN1}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"socialEnergy\": 4.5,\r\n    \"orderApproach\": 2.0,\r\n    \"conflictManagement\": 3.5,\r\n    \"sharingStyle\": 4.0,\r\n    \"lifeRhythm\": 1.5,\r\n    \"communicationStyle\": 5.0\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/Test/Basic",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "Test",
+                "Basic"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Detailed Test",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Başarı mesajı döndü', () => {",
+                  "    pm.expect(pm.response.json().message).to.include('Detaylı test');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN1}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"detailedSocialEnergy\": [5, 4, 5, 3, 5, 4, 5, 4, 3, 5],\r\n    \"detailedOrderApproach\": [2, 1, 3, 2, 2, 1, 2, 3, 1, 2],\r\n    \"detailedConflictManagement\": [4, 4, 3, 5, 4, 4, 3, 4, 5, 4],\r\n    \"detailedSharingStyle\": [5, 5, 4, 5, 5, 4, 5, 5, 4, 5],\r\n    \"detailedLifeRhythm\": [1, 2, 1, 1, 2, 1, 2, 1, 1, 2],\r\n    \"detailedCommunicationStyle\": [5, 5, 5, 4, 5, 5, 4, 5, 5, 5]\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/Test/Detailed",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "Test",
+                "Detailed"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Swipe & Matching",
+      "item": [
+        {
+          "name": "Swipe Like (USER2'ye)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const r = pm.response.json();",
+                  "pm.test('SwipeResultDto.IsMatch alanı var', () => {",
+                  "    pm.expect(r).to.have.property('isMatch');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN1}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"receiverId\": \"{{USER2_ID}}\",\r\n  \"swipeType\": \"Like\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/Swipe",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "Swipe"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Swipe Pass (USER2'ye)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 veya 400 (mükerrer swipe ise)', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN1}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"receiverId\": \"{{USER2_ID}}\",\r\n  \"swipeType\": \"Pass\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/Swipe",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "Swipe"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Swipe SuperLike (USER2'ye)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 veya 400 (mükerrer swipe ise)', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN1}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"receiverId\": \"{{USER2_ID}}\",\r\n  \"swipeType\": \"SuperLike\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/Swipe",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "Swipe"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Matches",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response array', () => {",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN1}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/Swipe/matches",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "Swipe",
+                "matches"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Swipe Self (Negative - 400 bekleniyor)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 BadRequest (kendine swipe atılamaz)', () => {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('DomainException mesajı', () => {",
+                  "    pm.expect(pm.response.json().message).to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN1}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"receiverId\": \"{{USER1_ID}}\",\r\n  \"swipeType\": \"Like\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/Swipe",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "Swipe"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Swipe Invalid Type (Negative - 400 bekleniyor)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 BadRequest (geçersiz swipe tipi)', () => {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN1}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"receiverId\": \"{{USER2_ID}}\",\r\n  \"swipeType\": \"NotARealType\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/Swipe",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "Swipe"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Match (Faz 3)",
+      "description": "GET /api/Swipe/matches — zenginleştirilmiş MatchDto testleri.\n\nYeni alanlar: isNewMatch, matchedUser (UserSummaryDto), lastMessage (null — Faz 5'te dolar).\nSıralı çalıştırın. user1 ↔ user2 karşılıklı Like ile match oluşturulur.",
+      "item": [
+        {
+          "name": "01 - Login user1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set('TOKEN1', r.token);",
+                  "pm.collectionVariables.set('USER1_ID', r.userId);",
+                  "pm.test('TOKEN1 set edildi', () => pm.expect(r.token).to.not.be.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"user1@test.com\",\r\n  \"password\": \"Test1234!\"\r\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "02 - Login user2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set('TOKEN2', r.token);",
+                  "pm.collectionVariables.set('USER2_ID', r.userId);",
+                  "pm.test('TOKEN2 set edildi', () => pm.expect(r.token).to.not.be.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"user2@test.com\",\r\n  \"password\": \"Test1234!\"\r\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "03 - user1 → user2 Like (match setup, idempotent)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 (Like başarılı) veya 400 (zaten swipe edildi)', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{TOKEN1}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"receiverId\": \"{{USER2_ID}}\",\r\n  \"swipeType\": \"Like\"\r\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/Swipe",
+              "host": ["{{base_url}}"],
+              "path": ["api", "Swipe"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "04 - user2 → user1 Like (match oluştur, idempotent)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 (match oluştu) veya 400 (zaten swipe edildi)', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{TOKEN2}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"receiverId\": \"{{USER1_ID}}\",\r\n  \"swipeType\": \"Like\"\r\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/Swipe",
+              "host": ["{{base_url}}"],
+              "path": ["api", "Swipe"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "05 - user1 matches → zenginleştirilmiş MatchDto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const matches = pm.response.json();",
+                  "pm.test('Response array', () => pm.expect(matches).to.be.an('array'));",
+                  "pm.test('En az 1 match var', () => pm.expect(matches.length).to.be.above(0));",
+                  "",
+                  "const user2Id = pm.collectionVariables.get('USER2_ID');",
+                  "const match = matches.find(m => m.matchedUser && m.matchedUser.id === user2Id);",
+                  "pm.test('user2 ile match mevcut', () => {",
+                  "    pm.expect(match, 'user2 ile match bulunamadi — karsilikli Like yapildi mi?').to.not.be.undefined;",
+                  "});",
+                  "",
+                  "if (match) {",
+                  "    pm.test('matchId var', () => pm.expect(match.matchId).to.be.a('number'));",
+                  "    pm.test('matchedAt var', () => pm.expect(match.matchedAt).to.be.a('string'));",
+                  "    pm.test('isNewMatch boolean', () => pm.expect(match.isNewMatch).to.be.a('boolean'));",
+                  "    pm.test('isNewMatch true (yeni match)', () => pm.expect(match.isNewMatch).to.be.true);",
+                  "    pm.test('lastMessage null (Faz 5 bekleniyor)', () => pm.expect(match.lastMessage).to.be.null);",
+                  "    pm.test('matchedUser objesi var', () => pm.expect(match.matchedUser).to.be.an('object'));",
+                  "    pm.test('matchedUser.id dogru', () => pm.expect(match.matchedUser.id).to.equal(user2Id));",
+                  "    pm.test('matchedUser.name var', () => pm.expect(match.matchedUser.name).to.be.a('string').and.not.empty);",
+                  "    pm.test('matchedUser.compatibility 0-100 arasi', () => {",
+                  "        pm.expect(match.matchedUser.compatibility).to.be.a('number');",
+                  "        pm.expect(match.matchedUser.compatibility).to.be.within(0, 100);",
+                  "    });",
+                  "    pm.test('matchedUser.photos array', () => pm.expect(match.matchedUser.photos).to.be.an('array'));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{TOKEN1}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/Swipe/matches",
+              "host": ["{{base_url}}"],
+              "path": ["api", "Swipe", "matches"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "DataSeeder Validation",
+      "description": "DataSeeder.cs:180-181 InitialBasicTestResults/FinalScores aynı C# referansını paylaşıyor → EF 'principal entity is not known' hatası veriyordu. Fix: NewScores() lokal fonksiyonu ile her property için ayrı instance üretildi. Aşağıdaki step'ler hem owned type'ların doğru kaydedildiğini hem de seed user'lar arasında karşılıklı eşleşmenin işlediğini doğrular. Sırayla çalıştırın.",
+      "item": [
+        {
+          "name": "01 - Login user1 (seed)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK (seed kullanıcısı login olabiliyor)', () => pm.response.to.have.status(200));",
+                  "",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set('TOKEN1', r.token);",
+                  "pm.collectionVariables.set('USER1_ID', r.userId);",
+                  "",
+                  "pm.test('TOKEN1 ve USER1_ID set edildi', () => {",
+                  "    pm.expect(pm.collectionVariables.get('TOKEN1')).to.not.be.empty;",
+                  "    pm.expect(pm.collectionVariables.get('USER1_ID')).to.not.be.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"user1@test.com\",\r\n  \"password\": \"Test1234!\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "02 - Verify Both Owned Scores Present (KRİTİK FIX TESTI)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const p = pm.response.json();",
+                  "",
+                  "// --- Owned type'ların ikisi de DB'ye yazılmış olmalı ---",
+                  "pm.test('InitialBasicTestResults null değil (owned type yazıldı)', () => {",
+                  "    pm.expect(p.initialBasicTestResults, 'Seed sırasında ayrı instance üretilmediyse EF SaveChanges patlardı').to.not.be.null;",
+                  "    pm.expect(p.initialBasicTestResults).to.not.be.undefined;",
+                  "});",
+                  "",
+                  "pm.test('FinalScores null değil (owned type yazıldı)', () => {",
+                  "    pm.expect(p.finalScores, 'Seed sırasında ayrı instance üretilmediyse EF SaveChanges patlardı').to.not.be.null;",
+                  "    pm.expect(p.finalScores).to.not.be.undefined;",
+                  "});",
+                  "",
+                  "// --- Skor alanları valid range'de olmalı (1-10) ---",
+                  "const ibtr = p.initialBasicTestResults || {};",
+                  "const fs = p.finalScores || {};",
+                  "['socialEnergy', 'orderApproach', 'conflictManagement', 'sharingStyle', 'lifeRhythm', 'communicationStyle'].forEach(k => {",
+                  "    pm.test(`InitialBasicTestResults.${k} 1-10 aralığında`, () => {",
+                  "        pm.expect(ibtr[k]).to.be.a('number').within(1, 10);",
+                  "    });",
+                  "    pm.test(`FinalScores.${k} 1-10 aralığında`, () => {",
+                  "        pm.expect(fs[k]).to.be.a('number').within(1, 10);",
+                  "    });",
+                  "});",
+                  "",
+                  "// --- DataSeeder.NewScores() aynı skorları üretiyor (referans farklı, değer aynı) ---",
+                  "pm.test('InitialBasicTestResults ve FinalScores AYNI skorları taşıyor (NewScores() kontratı)', () => {",
+                  "    pm.expect(ibtr.socialEnergy).to.equal(fs.socialEnergy);",
+                  "    pm.expect(ibtr.orderApproach).to.equal(fs.orderApproach);",
+                  "    pm.expect(ibtr.conflictManagement).to.equal(fs.conflictManagement);",
+                  "    pm.expect(ibtr.sharingStyle).to.equal(fs.sharingStyle);",
+                  "    pm.expect(ibtr.lifeRhythm).to.equal(fs.lifeRhythm);",
+                  "    pm.expect(ibtr.communicationStyle).to.equal(fs.communicationStyle);",
+                  "});",
+                  "",
+                  "// --- Seed-only alanlar dolu olmalı ---",
+                  "pm.test('Seed alanları dolu (Age 20-35, Bio var)', () => {",
+                  "    pm.expect(p.age).to.be.within(20, 35);",
+                  "    pm.expect(p.bio).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN1}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/Profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "Profile"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "03 - Login user2 (seed)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set('TOKEN2', r.token);",
+                  "pm.collectionVariables.set('USER2_ID', r.userId);",
+                  "",
+                  "pm.test('TOKEN2 ve USER2_ID set edildi', () => {",
+                  "    pm.expect(pm.collectionVariables.get('TOKEN2')).to.not.be.empty;",
+                  "    pm.expect(pm.collectionVariables.get('USER2_ID')).to.not.be.empty;",
+                  "});",
+                  "",
+                  "pm.test('USER1 ile USER2 farklı', () => {",
+                  "    pm.expect(pm.collectionVariables.get('USER2_ID')).to.not.equal(pm.collectionVariables.get('USER1_ID'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"user2@test.com\",\r\n  \"password\": \"Test1234!\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "04 - user1 → user2 Like (Match yok, IsMatch=false)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const r = pm.response.json();",
+                  "pm.test('IsMatch=false (henüz tek taraflı)', () => {",
+                  "    pm.expect(r.isMatch).to.equal(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN1}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"receiverId\": \"{{USER2_ID}}\",\r\n  \"swipeType\": \"Like\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/Swipe",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "Swipe"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "05 - user2 → user1 Like (Karşılıklı, IsMatch=true)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const r = pm.response.json();",
+                  "pm.test('IsMatch=true (karşılıklı Like → match)', () => {",
+                  "    pm.expect(r.isMatch).to.equal(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN2}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"receiverId\": \"{{USER1_ID}}\",\r\n  \"swipeType\": \"Like\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/Swipe",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "Swipe"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "06 - user1 matches list (user2 dahil olmalı)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const matches = pm.response.json();",
+                  "pm.test('Matches array', () => pm.expect(matches).to.be.an('array'));",
+                  "pm.test('En az 1 match var', () => pm.expect(matches.length).to.be.greaterThan(0));",
+                  "",
+                  "const user2Id = pm.collectionVariables.get('USER2_ID');",
+                  "pm.test('user2 matches içinde', () => {",
+                  "    const found = matches.some(m => JSON.stringify(m).includes(user2Id));",
+                  "    pm.expect(found, `Beklenen USER2_ID=${user2Id} matches[] içinde değil`).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN1}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/Swipe/matches",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "Swipe",
+                "matches"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Feed (Faz 2)",
+      "description": "GET /api/users — swipe için aday kullanıcı listesi.\n\nHard filter: kendisi + daha önce swipe attıkları hariç.\nSoft sort: bana Like/SuperLike atanlar üstte, sonra LastActive DESC.\nPagination: ?skip=N&take=M (take default 20, max 50 — clamp).\n\nÇalıştırma: Sıralı çalıştırın. user1 ile user3'ü kullanır (user2 DataSeeder Validation tarafından kullanılıyor). Fresh DB önerilir.",
+      "item": [
+        {
+          "name": "01 - Login user1 (Feed setup)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set('TOKEN1', r.token);",
+                  "pm.collectionVariables.set('USER1_ID', r.userId);",
+                  "",
+                  "pm.test('TOKEN1 ve USER1_ID set edildi', () => {",
+                  "    pm.expect(pm.collectionVariables.get('TOKEN1')).to.not.be.empty;",
+                  "    pm.expect(pm.collectionVariables.get('USER1_ID')).to.not.be.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"user1@test.com\",\r\n  \"password\": \"Test1234!\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "02 - Login user3 (Priority test setup)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set('TOKEN3', r.token);",
+                  "pm.collectionVariables.set('USER3_ID', r.userId);",
+                  "",
+                  "pm.test('TOKEN3 ve USER3_ID set edildi', () => {",
+                  "    pm.expect(pm.collectionVariables.get('TOKEN3')).to.not.be.empty;",
+                  "    pm.expect(pm.collectionVariables.get('USER3_ID')).to.not.be.empty;",
+                  "});",
+                  "",
+                  "pm.test('user1 ve user3 farklı', () => {",
+                  "    pm.expect(pm.collectionVariables.get('USER3_ID')).to.not.equal(pm.collectionVariables.get('USER1_ID'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"user3@test.com\",\r\n  \"password\": \"Test1234!\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "03 - GET /api/users (basic) - 200 + array + ≤20 + alanlar + FLOW_TARGET capture",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const feed = pm.response.json();",
+                  "pm.test('Response array', () => pm.expect(feed).to.be.an('array'));",
+                  "pm.test('Default take=20 → ≤20 item', () => {",
+                  "    pm.expect(feed.length).to.be.at.most(20);",
+                  "});",
+                  "",
+                  "const user1Id = pm.collectionVariables.get('USER1_ID');",
+                  "pm.test(\"Kendisi (user1) feed'de yok (hard filter)\", () => {",
+                  "    const containsSelf = feed.some(u => u.id === user1Id);",
+                  "    pm.expect(containsSelf, \"currentUser kendi feed'inde olmamalı\").to.be.false;",
+                  "});",
+                  "",
+                  "if (feed.length > 0) {",
+                  "    const u = feed[0];",
+                  "    pm.test('UserSummaryDto temel alanları mevcut', () => {",
+                  "        pm.expect(u).to.have.property('id');",
+                  "        pm.expect(u).to.have.property('name');",
+                  "        pm.expect(u).to.have.property('age');",
+                  "        pm.expect(u).to.have.property('photos');",
+                  "        pm.expect(u).to.have.property('lastActive');",
+                  "        pm.expect(u).to.have.property('isVerified');",
+                  "        pm.expect(u).to.have.property('cleanliness');",
+                  "        pm.expect(u).to.have.property('socialLevel');",
+                  "    });",
+                  "    pm.test(\"CharacterProfile feed'de YOK (lite DTO)\", () => {",
+                  "        pm.expect(u).to.not.have.property('characterProfile');",
+                  "    });",
+                  "    pm.test('compatibility alanı mevcut (Faz 2.5)', () => {",
+                  "        pm.expect(u).to.have.property('compatibility');",
+                  "    });",
+                  "}",
+                  "",
+                  "// FLOW_TARGET_ID: user2 ve user3 hariç ilk kullanıcı.",
+                  "// Bu, akış testinde Pass atılacak hedef. user2 (DataSeeder Validation kullanıyor) ve",
+                  "// user3 (priority testi için saklı) hariç tutulur.",
+                  "// Stale variable koruması: her zaman önce temizliyoruz, sonra yeniden set ediyoruz.",
+                  "pm.collectionVariables.unset('FLOW_TARGET_ID');",
+                  "",
+                  "const user2Id = pm.collectionVariables.get('USER2_ID') || '';",
+                  "const user3Id = pm.collectionVariables.get('USER3_ID') || '';",
+                  "const flowTarget = feed.find(u => u.id && u.id !== user2Id && u.id !== user3Id);",
+                  "",
+                  "pm.test('FLOW_TARGET_ID capture edildi (akış testi için)', () => {",
+                  "    pm.expect(flowTarget, 'Feed boş veya sadece user2/user3 içeriyor — fresh DB kontrolü yap').to.not.be.undefined;",
+                  "    pm.expect(flowTarget.id).to.be.a('string').and.not.empty;",
+                  "    pm.collectionVariables.set('FLOW_TARGET_ID', flowTarget.id);",
+                  "    console.log('FLOW_TARGET_ID set →', flowTarget.id, '(', flowTarget.name, ')');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN1}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "04 - GET /api/users (Unauthorized - Negative)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 401 Unauthorized (token yok)', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "05 - GET /api/users?skip=0&take=5 (Pagination)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const feed = pm.response.json();",
+                  "pm.test('Response array', () => pm.expect(feed).to.be.an('array'));",
+                  "pm.test('take=5 → ≤5 item', () => {",
+                  "    pm.expect(feed.length).to.be.at.most(5);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN1}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users?skip=0&take=5",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "skip",
+                  "value": "0"
+                },
+                {
+                  "key": "take",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "06 - GET /api/users?take=100 (Clamp - DoS koruması)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const feed = pm.response.json();",
+                  "pm.test('take=100 → server clamp ≤50 (DoS koruması)', () => {",
+                  "    pm.expect(feed.length).to.be.at.most(50);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN1}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users?take=100",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "take",
+                  "value": "100"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "07 - Akış setup: user1 → FLOW_TARGET Pass swipe",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 veya 400 (mükerrer)', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN1}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"receiverId\": \"{{FLOW_TARGET_ID}}\",\r\n  \"swipeType\": \"Pass\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/Swipe",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "Swipe"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "08 - Akış verify: feed'de FLOW_TARGET YOK (hard filter)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const feed = pm.response.json();",
+                  "const targetId = pm.collectionVariables.get('FLOW_TARGET_ID');",
+                  "",
+                  "pm.test(\"Swipe edilen kullanıcı feed'de görünmüyor\", () => {",
+                  "    const stillThere = feed.some(u => u.id === targetId);",
+                  "    pm.expect(stillThere, `FLOW_TARGET_ID=${targetId} hâlâ feed'de — hard filter çalışmıyor`).to.be.false;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN1}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users?take=50",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "take",
+                  "value": "50"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "09 - Priority setup: user3 → user1 Like (TOKEN3)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 veya 400 (mükerrer)', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN3}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"receiverId\": \"{{USER1_ID}}\",\r\n  \"swipeType\": \"Like\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/Swipe",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "Swipe"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "10 - Priority verify: user1 feed'inde user3 ilk 10'da (soft sort boost)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const feed = pm.response.json();",
+                  "const user3Id = pm.collectionVariables.get('USER3_ID');",
+                  "",
+                  "pm.test(\"user3 feed'de mevcut (henüz swipe atılmadı)\", () => {",
+                  "    const found = feed.some(u => u.id === user3Id);",
+                  "    pm.expect(found, `USER3_ID=${user3Id} feed'de değil — Like attığı halde filtrelenmiş olamaz`).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test(\"user3 feed'in ilk 10'unda (Like boost öne almalı)\", () => {",
+                  "    const idx = feed.findIndex(u => u.id === user3Id);",
+                  "    pm.expect(idx, `user3 indeks=${idx}, beklenen <10 (boost başarısız)`).to.be.below(10);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN1}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users?take=50",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "take",
+                  "value": "50"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Compatibility (Faz 2.5)",
+      "description": "Uyumluluk skoru testleri.\n\nSıralı çalıştırın. user1 ve user3 seeded kullanıcı.\ntestsiz@test.com fresh kayıt (FinalScores yok).\n\nMantık: Like-boost önce gelir, sonra compatibility sıralama.\nFinalScores null kullanıcı tüm adaylar için 50.0 alır.",
+      "item": [
+        {
+          "name": "01 - Login user1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set('TOKEN1', r.token);",
+                  "pm.collectionVariables.set('USER1_ID', r.userId);",
+                  "",
+                  "pm.test('TOKEN1 ve USER1_ID set edildi', () => {",
+                  "    pm.expect(pm.collectionVariables.get('TOKEN1')).to.not.be.empty;",
+                  "    pm.expect(pm.collectionVariables.get('USER1_ID')).to.not.be.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"user1@test.com\",\r\n  \"password\": \"Test1234!\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "02 - Login user3",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set('TOKEN3', r.token);",
+                  "pm.collectionVariables.set('USER3_ID', r.userId);",
+                  "",
+                  "pm.test('TOKEN3 ve USER3_ID set edildi', () => {",
+                  "    pm.expect(pm.collectionVariables.get('TOKEN3')).to.not.be.empty;",
+                  "    pm.expect(pm.collectionVariables.get('USER3_ID')).to.not.be.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"user3@test.com\",\r\n  \"password\": \"Test1234!\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "03 - Like-boost kurulumu: user3 → user1 Like",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 (Like başarılı) veya 400 (zaten swipe edildi — idempotent)', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN3}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"receiverId\": \"{{USER1_ID}}\",\r\n  \"swipeType\": \"Like\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/Swipe",
+              "host": ["{{base_url}}"],
+              "path": ["api", "Swipe"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "04 - user1 Feed → compatibility alanı var ve 0-100 arası",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const feed = pm.response.json();",
+                  "pm.test('Feed boş değil', () => pm.expect(feed.length).to.be.above(0));",
+                  "",
+                  "pm.test('Her kullanıcıda compatibility alanı var (sayı, 0-100 arası)', () => {",
+                  "    feed.forEach(u => {",
+                  "        pm.expect(u.compatibility, u.id + ' için compatibility eksik').to.be.a('number');",
+                  "        pm.expect(u.compatibility).to.be.within(0, 100);",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('Seeded kullanıcılarda çeşitli uyum (hepsi 50.0 değil)', () => {",
+                  "    const allFifty = feed.every(u => u.compatibility === 50);",
+                  "    pm.expect(allFifty, 'Tüm kullanıcılar 50.0 döndü — FinalScores include edilmemiş olabilir').to.be.false;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN1}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "05 - user1 Feed → user3 ilk sırada (Like-boost önceliği)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const feed = pm.response.json();",
+                  "const user3Id = pm.collectionVariables.get('USER3_ID');",
+                  "",
+                  "pm.test(\"user3 feed'de mevcut (henüz swipe atılmadı)\", () => {",
+                  "    const found = feed.some(u => u.id === user3Id);",
+                  "    pm.expect(found, 'USER3_ID=' + user3Id + \" feed'de yok\").to.be.true;",
+                  "});",
+                  "",
+                  "pm.test(\"user3 feed'in ilk sırasında (Like-boost)\", () => {",
+                  "    const idx = feed.findIndex(u => u.id === user3Id);",
+                  "    pm.expect(idx, 'user3 indeks=' + idx + ', beklenen 0 (Like-boost ilk sıraya almalı)').to.equal(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN1}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users?take=50",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users"],
+              "query": [
+                {
+                  "key": "take",
+                  "value": "50"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "06 - Register testsiz kullanıcı (FinalScores yok)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created veya 400 (zaten kayıtlı)', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([201, 400]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"testsiz@test.com\",\r\n  \"password\": \"Test1234!\",\r\n  \"name\": \"Testsiz\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "07 - Login testsiz",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set('TOKEN_TESTSIZ', r.token);",
+                  "",
+                  "pm.test('TOKEN_TESTSIZ set edildi', () => {",
+                  "    pm.expect(pm.collectionVariables.get('TOKEN_TESTSIZ')).to.not.be.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"testsiz@test.com\",\r\n  \"password\": \"Test1234!\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "08 - testsiz Feed → tüm compatibility 50.0 (FinalScores null)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const feed = pm.response.json();",
+                  "pm.test('Feed boş değil', () => pm.expect(feed.length).to.be.above(0));",
+                  "",
+                  "pm.test('FinalScores yok → tüm compatibility 50.0 (varsayılan)', () => {",
+                  "    const allFifty = feed.every(u => u.compatibility === 50);",
+                  "    pm.expect(allFifty, 'Bazı adaylar 50.0 dışı uyum döndü — CompatibilityService default 50.0 olmalı').to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN_TESTSIZ}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://localhost:7142"
+    },
+    {
+      "key": "TOKEN_TESTSIZ",
+      "value": ""
+    },
+    {
+      "key": "TOKEN1",
+      "value": ""
+    },
+    {
+      "key": "TOKEN2",
+      "value": ""
+    },
+    {
+      "key": "USER1_ID",
+      "value": ""
+    },
+    {
+      "key": "USER2_ID",
+      "value": ""
+    },
+    {
+      "key": "TOKEN3",
+      "value": ""
+    },
+    {
+      "key": "USER3_ID",
+      "value": ""
+    },
+    {
+      "key": "FLOW_TARGET_ID",
+      "value": ""
+    }
+  ]
+}

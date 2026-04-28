@@ -1,0 +1,25 @@
+{
+  "runs": [
+    {
+      "date": "2026-04-25T17:32:58.082616+00:00",
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "files": 64
+    },
+    {
+      "date": "2026-04-25T18:13:35.800224+00:00",
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "files": 69,
+      "mode": "incremental_ast_only"
+    },
+    {
+      "date": "2026-04-28T06:23:05.514189+00:00",
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "files": 32
+    }
+  ],
+  "total_input_tokens": 0,
+  "total_output_tokens": 0
+}

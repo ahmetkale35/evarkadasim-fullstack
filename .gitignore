@@ -1,0 +1,62 @@
+# =====================
+# .NET / Backend
+# =====================
+## Build output
+backend/**/bin/
+backend/**/obj/
+
+## User-specific files
+backend/**/.vs/
+backend/**/*.user
+backend/**/*.suo
+
+## SQLite database (geliştirme verisi, her ortamda yeniden oluşur)
+backend/**/*.db
+backend/**/*.db-shm
+backend/**/*.db-wal
+
+## Secrets (ASLA commit'leme!)
+backend/**/appsettings.*.local.json
+
+# =====================
+# Node.js / Frontend
+# =====================
+frontend/**/node_modules/
+frontend/**/.expo/
+frontend/**/dist/
+frontend/**/web-build/
+
+## Environment
+frontend/**/.env
+frontend/**/.env.local
+frontend/**/.env.*.local
+
+## Logs
+frontend/**/npm-debug.log*
+frontend/**/yarn-error.log*
+
+# =====================
+# IDE / Editor / Tools
+# =====================
+.vs/
+.vscode/
+.idea/
+.cursor/
+.claude/
+.claudecode/
+claude.json
+*.swp
+*.swo
+*~
+
+# =====================
+# OS
+# =====================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# =====================
+# Misc
+# =====================
+*.log
