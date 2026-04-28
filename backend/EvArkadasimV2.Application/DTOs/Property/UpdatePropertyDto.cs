@@ -1,18 +1,40 @@
+using System.ComponentModel.DataAnnotations;
 using EvArkadasimV2.Domain.Enums;
 
 namespace EvArkadasimV2.Application.DTOs.Property
 {
     public class UpdatePropertyDto
     {
+        [Required]
+        [StringLength(200, MinimumLength = 3)]
         public string Title { get; set; } = string.Empty;
+
+        [Range(0, 1_000_000)]
         public decimal PriceAmount { get; set; }
-        public string Currency { get; set; } = "$";
-        public string PricePeriod { get; set; } = "month";
+
+        [Required]
+        [MaxLength(10)]
+        public string Currency { get; set; } = "₺";
+
+        [Required]
+        [MaxLength(20)]
+        public string PricePeriod { get; set; } = "ay";
+
+        [Required]
+        [StringLength(200, MinimumLength = 2)]
         public string Location { get; set; } = string.Empty;
+
+        [Range(0, 20)]
         public int Bedrooms { get; set; }
+
+        [Range(0, 20)]
         public int Bathrooms { get; set; }
+
         public List<string> Images { get; set; } = new();
+
+        [MaxLength(2000)]
         public string? Description { get; set; }
+
         public List<string> Amenities { get; set; } = new();
         public DateTime AvailableFrom { get; set; }
         public PropertyType PropertyType { get; set; }
