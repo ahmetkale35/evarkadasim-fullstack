@@ -77,6 +77,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ISwipeService, SwipeService>();
 builder.Services.AddScoped<IFeedService, FeedService>();
 builder.Services.AddScoped<ICompatibilityService, CompatibilityService>();
+builder.Services.AddScoped<IPropertyRepository, PropertyRepository>();
+builder.Services.AddScoped<IPropertyService, PropertyService>();
 
 // --- API ARAÇLARI ---
 // JsonStringEnumConverter: enum'ları JSON'da int yerine string olarak serialize/deserialize eder.
