@@ -60,3 +60,9 @@ Desktop.ini
 # Misc
 # =====================
 *.log
+
+# Graphify (Code analysis cache)
+graphify-out/
+backend/graphify-out/
+frontend/graphify-out/
+.graphify/
