@@ -11,15 +11,23 @@ namespace EvArkadasimV2.Infrastructure.Repositories
         {
         }
 
-        public async Task<List<Message>> GetByMatchIdAsync(int matchId)
+        public async Task<(List<Message> Messages, int TotalCount)> GetByMatchIdAsync(int matchId, int page, int pageSize)
         {
-            // AsNoTracking: mesajları sadece okuyoruz, EF'in değişiklik takibi gereksiz → RAM tasarrufu.
-            // OrderBy(Timestamp): sohbet ekranı mesajları kronolojik sıralar, DB'den sıralı gelmesi N+1 önler.
-            return await _dbSet
+            // AsNoTracking: salt okunur sorgu, change tracker gereksiz.
+            var query = _dbSet
                 .AsNoTracking()
                 .Where(m => m.UserMatchId == matchId)
-                .OrderBy(m => m.Timestamp)
+                .OrderBy(m => m.Timestamp);
+
+            // CountAsync ve ToListAsync ayrı ayrı çalışır ama aynı transaction'da;
+            // EF her ikisini de tek DB bağlantısında sırayla çalıştırır.
+            var totalCount = await query.CountAsync();
+            var messages = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
+
+            return (messages, totalCount);
         }
 
         public async Task MarkAsReadAsync(int matchId, string currentUserId)
