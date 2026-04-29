@@ -16,6 +16,8 @@ EvArkadaşım is a smart, personality-driven matchmaking platform designed to he
 - **📈 Intelligent Feed**: Uses a dynamic sorting algorithm that prioritizes `SuperLikes` and `Likes`, followed by the highest compatibility score.
 - **🔐 Secure Authentication**: JWT Bearer token implementation with robust security practices.
 - **🏗️ Clean Architecture**: Highly maintainable, decoupled backend architecture separating Domain, Application, Infrastructure, and API layers.
+- **💬 In-App Messaging**: Match-scoped REST chat API with read receipts and authorization guard.
+- **🏠 Property Listings**: Full CRUD property API with filtering by location, type, price, and amenities.
 - **📱 Cross-Platform App**: Mobile application built with React Native and Expo.
 
 ## 🛠️ Technology Stack
@@ -41,7 +43,7 @@ EvArkadaşım is a smart, personality-driven matchmaking platform designed to he
 │   ├── EvArkadasimV2.Infrastructure/  # EF Core DbContext, Repositories, JWT Setup
 │   ├── EvArkadasimV2.API/             # Controllers, Middlewares, DI Registration
 │   ├── docs/                          # Extensive technical documentation
-│   └── postman/                       # 45+ API integration tests
+│   └── postman/                       # 78 API integration tests
 └── frontend/
     └── evarkadasim-yeni-main/         # Expo mobile application
 ```

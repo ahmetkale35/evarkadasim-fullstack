@@ -5,7 +5,7 @@
   <img src="https://img.shields.io/badge/Architecture-Clean_Architecture-brightgreen" />
   <img src="https://img.shields.io/badge/Database-SQLite_%26_EF_Core-003B57?style=flat&logo=sqlite" />
   <img src="https://img.shields.io/badge/Auth-JWT_Bearer-orange?style=flat&logo=jsonwebtokens" />
-  <img src="https://img.shields.io/badge/Tests-Postman_80%2B-EF5B25?style=flat&logo=postman" />
+  <img src="https://img.shields.io/badge/Tests-Postman_78-EF5B25?style=flat&logo=postman" />
 </p>
 
 ASP.NET Core 6 Web API for a personality-driven roommate matchmaking platform. Built with Clean Architecture, Repository Pattern, and JWT authentication.
@@ -96,7 +96,7 @@ All protected endpoints require `Authorization: Bearer <token>`.
 | `JwtSettings__Audience` | Token audience identifier |
 | `ConnectionStrings__DefaultConnection` | SQLite file path |
 
-Development defaults are in `appsettings.Development.json` (not committed).
+Development defaults are in `appsettings.Development.json` (not committed). Create this file locally with a `JwtSettings.Secret` value of at least 32 characters to run the project.
 
 ---
 
@@ -104,7 +104,7 @@ Development defaults are in `appsettings.Development.json` (not committed).
 
 Import `postman/EvArkadasim V2 API.postman_collection.json` into Postman.
 
-The collection includes 80+ tests covering happy paths, validation errors, authorization checks, and edge cases across all endpoint groups.
+The collection includes 78 tests across 10 groups, covering happy paths, validation errors, authorization checks, and edge cases.
 
 ---
 
