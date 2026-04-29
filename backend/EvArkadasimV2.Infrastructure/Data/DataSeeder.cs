@@ -141,6 +141,9 @@ namespace EvArkadasimV2.Infrastructure.Data
 
             // --- PROPERTY SEED ---
             await SeedPropertiesAsync(context, logger);
+
+            // --- MATCH & MESSAGE SEED ---
+            await SeedMatchesAndMessagesAsync(context, logger);
         }
 
         private static async Task SeedPropertiesAsync(AppDbContext context, ILogger logger)
@@ -302,6 +305,77 @@ namespace EvArkadasimV2.Infrastructure.Data
             await context.Properties.AddRangeAsync(properties);
             await context.SaveChangesAsync();
             logger.LogInformation("Property seed tamamlandı: {Count} ilan eklendi.", properties.Count);
+        }
+
+        private static async Task SeedMatchesAndMessagesAsync(AppDbContext context, ILogger logger)
+        {
+            // İdempotent: herhangi bir match varsa atla.
+            if (await context.Set<UserMatch>().AnyAsync())
+            {
+                logger.LogInformation("Match/Message seed atlandı: kayıtlar zaten mevcut.");
+                return;
+            }
+
+            // user1-user6 arası seed kullanıcıları çek.
+            var seedEmails = Enumerable.Range(1, 6).Select(i => $"user{i}{EmailDomain}").ToList();
+            var users = await context.Users
+                .Where(u => seedEmails.Contains(u.Email!))
+                .OrderBy(u => u.Email)
+                .ToListAsync();
+
+            if (users.Count < 6)
+            {
+                logger.LogWarning("Match seed atlandı: yeterli seed kullanıcı bulunamadı ({Count}/6).", users.Count);
+                return;
+            }
+
+            // 3 match: (user1,user2), (user3,user4), (user5,user6)
+            var matchPairs = new[]
+            {
+                (users[0], users[1]),
+                (users[2], users[3]),
+                (users[4], users[5]),
+            };
+
+            var now = DateTime.UtcNow;
+
+            foreach (var (userA, userB) in matchPairs)
+            {
+                // MatchedAt: 1-7 gün önce, gerçekçi geçmiş.
+                var matchedAt = now.AddDays(-new Random(userA.Email!.GetHashCode()).Next(1, 8));
+
+                var match = new UserMatch
+                {
+                    User1Id = userA.Id,
+                    User2Id = userB.Id,
+                    MatchedAt = matchedAt,
+                    CompatibilityScore = Math.Round(new Random(userB.Email!.GetHashCode()).NextDouble() * 40 + 55, 1),
+                    User1HasSeen = true,
+                    User2HasSeen = true,
+                    Messages = BuildSeedMessages(userA.Id, userB.Id, matchedAt)
+                };
+
+                await context.Set<UserMatch>().AddAsync(match);
+            }
+
+            await context.SaveChangesAsync();
+            logger.LogInformation("Match/Message seed tamamlandı: 3 match ve mesajlar eklendi.");
+        }
+
+        private static List<Message> BuildSeedMessages(string user1Id, string user2Id, DateTime matchedAt)
+        {
+            // Mesajlar matchedAt'ten başlayarak 1-2 saatlik aralıklarla ilerler.
+            // Son 2 mesaj okunmamış — MarkAsRead endpoint'ini test etmek için.
+            var t = matchedAt.AddHours(1);
+            return new List<Message>
+            {
+                new() { SenderId = user1Id, Content = "Merhaba! Eşleştik, çok sevindim 😊", Type = MessageType.Text, Timestamp = t, IsRead = true },
+                new() { SenderId = user2Id, Content = "Selam! Ben de 🙂 Ne zamandır ev arkadaşı arıyorsun?", Type = MessageType.Text, Timestamp = t.AddHours(1), IsRead = true },
+                new() { SenderId = user1Id, Content = "Yaklaşık 3 haftadır. Bütçem uygun mu sana?", Type = MessageType.Text, Timestamp = t.AddHours(2), IsRead = true },
+                new() { SenderId = user2Id, Content = "Evet gayet uygun. Hangi semtlere bakıyorsun?", Type = MessageType.Text, Timestamp = t.AddHours(3), IsRead = true },
+                new() { SenderId = user1Id, Content = "Kadıköy veya Beşiktaş tercihim ama esnek olabilirim.", Type = MessageType.Text, Timestamp = t.AddHours(20), IsRead = false },
+                new() { SenderId = user2Id, Content = "Harika, benim de Kadıköy'de baktığım bir yer var. Sana atayım!", Type = MessageType.Text, Timestamp = t.AddHours(21), IsRead = false },
+            };
         }
 
         private static UserProfile BuildProfile(Random random, string firstName)
