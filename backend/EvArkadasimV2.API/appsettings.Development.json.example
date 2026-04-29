@@ -1,0 +1,5 @@
+{
+  "JwtSettings": {
+    "Secret": "REPLACE_WITH_A_RANDOM_STRING_OF_AT_LEAST_32_CHARACTERS"
+  }
+}

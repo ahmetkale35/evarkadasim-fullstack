@@ -16,6 +16,7 @@ backend/**/*.db-shm
 backend/**/*.db-wal
 
 ## Secrets (ASLA commit'leme!)
+backend/**/appsettings.Development.json
 backend/**/appsettings.*.local.json
 
 # =====================
@@ -66,6 +67,9 @@ graphify-out/
 backend/graphify-out/
 frontend/graphify-out/
 .graphify/
+.graphifyignore
+backend/.graphifyignore
+frontend/.graphifyignore
 backend/_query*.py
 
 # =====================
