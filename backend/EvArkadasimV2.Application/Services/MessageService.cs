@@ -18,12 +18,20 @@ namespace EvArkadasimV2.Application.Services
             _matchRepository = matchRepository;
         }
 
-        public async Task<List<MessageDto>> GetMessagesAsync(int matchId, string currentUserId)
+        public async Task<PagedMessagesDto> GetMessagesAsync(int matchId, string currentUserId, int page, int pageSize)
         {
             await AuthorizeMatchAccessAsync(matchId, currentUserId);
 
-            var messages = await _messageRepository.GetByMatchIdAsync(matchId);
-            return messages.Select(MapToDto).ToList();
+            var (messages, totalCount) = await _messageRepository.GetByMatchIdAsync(matchId, page, pageSize);
+
+            return new PagedMessagesDto
+            {
+                Messages = messages.Select(MapToDto).ToList(),
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                HasMore = page * pageSize < totalCount
+            };
         }
 
         public async Task<MessageDto> SendMessageAsync(SendMessageDto dto, string senderId)

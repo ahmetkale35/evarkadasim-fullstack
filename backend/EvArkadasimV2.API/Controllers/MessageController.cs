@@ -21,17 +21,20 @@ namespace EvArkadasimV2.API.Controllers
             _logger = logger;
         }
 
-        // GET: api/message/{matchId}
-        // Bir match'e ait tüm mesajları kronolojik sırayla döner.
+        // GET: api/message/{matchId}?page=1&pageSize=50
+        // Bir match'e ait mesajları kronolojik sırayla sayfalı döner.
         [HttpGet("{matchId}")]
-        public async Task<IActionResult> GetMessages(int matchId)
+        public async Task<IActionResult> GetMessages(int matchId, [FromQuery] int page = 1, [FromQuery] int pageSize = 50)
         {
+            if (page < 1) page = 1;
+            if (pageSize < 1 || pageSize > 100) pageSize = 50;
+
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
             try
             {
-                var messages = await _messageService.GetMessagesAsync(matchId, currentUserId);
-                return Ok(messages);
+                var result = await _messageService.GetMessagesAsync(matchId, currentUserId, page, pageSize);
+                return Ok(result);
             }
             catch (NotFoundException ex)
             {
