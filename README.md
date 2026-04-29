@@ -46,6 +46,15 @@ EvArkadaşım is a smart, personality-driven matchmaking platform designed to he
     └── evarkadasim-yeni-main/         # Expo mobile application
 ```
 
+## 📖 Documentation
+
+Comprehensive documentation is available in the `backend/docs` directory:
+- [Architecture Overview](backend/docs/01-OVERVIEW.md)
+- [API Reference](backend/docs/02-API-REFERENCE.md)
+- [Database Schema & ER](backend/docs/03-DATABASE.md)
+- [Business Logic & Algorithms](backend/docs/04-BUSINESS-LOGIC.md)
+- [Security & Development Guide](backend/docs/05-SECURITY-AND-DEV-GUIDE.md)
+
 ## 🚀 Getting Started
 
 ### Prerequisites
