@@ -13,6 +13,8 @@ namespace EvArkadasimV2.Infrastructure.Repositories
 
         public async Task<List<Message>> GetByMatchIdAsync(int matchId)
         {
+            // AsNoTracking: mesajları sadece okuyoruz, EF'in değişiklik takibi gereksiz → RAM tasarrufu.
+            // OrderBy(Timestamp): sohbet ekranı mesajları kronolojik sıralar, DB'den sıralı gelmesi N+1 önler.
             return await _dbSet
                 .AsNoTracking()
                 .Where(m => m.UserMatchId == matchId)
@@ -22,14 +24,16 @@ namespace EvArkadasimV2.Infrastructure.Repositories
 
         public async Task MarkAsReadAsync(int matchId, string currentUserId)
         {
-            // Karşı tarafın gönderdiği, henüz okunmamış mesajları çek.
-            // AsNoTracking kullanmıyoruz — güncelleme yapacağız, EF change tracker gerekli.
+            // AsNoTracking YOK — güncelleme yapacağız, EF change tracker satırları takip etmeli.
+            // SenderId != currentUserId: kendi gönderdiğin mesajları "okundu" yapmak anlamsız,
+            // sadece karşı tarafın mesajları işaretlenir.
             var unread = await _dbSet
                 .Where(m => m.UserMatchId == matchId
                          && m.SenderId != currentUserId
                          && !m.IsRead)
                 .ToListAsync();
 
+            // Zaten okunmuşsa DB'ye gereksiz round-trip yapma.
             if (unread.Count == 0) return;
 
             foreach (var msg in unread)

@@ -3310,6 +3310,500 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "Messaging (Faz 5)",
+      "item": [
+        {
+          "name": "01 - Login (TOKEN1 al)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set('TOKEN1', r.token);",
+                  "pm.collectionVariables.set('USER1_ID', r.userId);",
+                  "pm.test('Token alindi', () => pm.expect(r.token).to.not.be.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"email\": \"user1@test.com\",\r\n  \"password\": \"Test1234!\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "02 - Match ID Al",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "const matches = pm.response.json();",
+                  "pm.test('En az 1 match var', () => pm.expect(matches.length).to.be.greaterThan(0));",
+                  "if (matches.length > 0) {",
+                  "  pm.collectionVariables.set('MATCH_ID', matches[0].matchId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN1}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/Swipe/matches",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "Swipe",
+                "matches"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "03 - Mesajlari Getir (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
+                  "const msgs = pm.response.json();",
+                  "pm.test('Response bir array', () => pm.expect(msgs).to.be.an('array'));",
+                  "if (msgs.length > 0) {",
+                  "  const m = msgs[0];",
+                  "  pm.test('id alani var (int)', () => pm.expect(m.id).to.be.a('number'));",
+                  "  pm.test('senderId alani var', () => pm.expect(m.senderId).to.be.a('string'));",
+                  "  pm.test('content alani var', () => pm.expect(m.content).to.be.a('string'));",
+                  "  pm.test('type gecerli deger', () => pm.expect(m.type).to.be.oneOf(['text', 'image', 'gif']));",
+                  "  pm.test('isRead alani var', () => pm.expect(m.isRead).to.be.a('boolean'));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN1}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/message/{{MATCH_ID}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "message",
+                "{{MATCH_ID}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "04 - Mesajlari Getir - Auth Yok (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/message/{{MATCH_ID}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "message",
+                "{{MATCH_ID}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "05 - Mesajlari Getir - Gecersiz Match (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404 Not Found', () => pm.response.to.have.status(404));",
+                  "pm.test('Hata mesaji var', () => pm.expect(pm.response.json().message).to.exist);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN1}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/message/999999",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "message",
+                "999999"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "06 - Mesaj Gonder (201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
+                  "const m = pm.response.json();",
+                  "pm.test('id alani var (int)', () => pm.expect(m.id).to.be.a('number'));",
+                  "pm.test('senderId dogru', () => pm.expect(m.senderId).to.equal(pm.collectionVariables.get('USER1_ID')));",
+                  "pm.test('content dogru dondu', () => pm.expect(m.content).to.equal('Merhaba, ev arkadasi olabilir miyiz?'));",
+                  "pm.test('type text', () => pm.expect(m.type).to.equal('text'));",
+                  "pm.test('isRead false (yeni mesaj)', () => pm.expect(m.isRead).to.be.false);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN1}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"matchId\": {{MATCH_ID}},\r\n  \"content\": \"Merhaba, ev arkadasi olabilir miyiz?\",\r\n  \"type\": \"text\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/message",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "message"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "07 - Mesaj Gonder - Bos Icerik (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 BadRequest (validation hatasi)', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN1}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"matchId\": {{MATCH_ID}},\r\n  \"content\": \"\",\r\n  \"type\": \"text\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/message",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "message"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "08 - Mesaj Gonder - Gecersiz Tip (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 BadRequest (gecersiz type)', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN1}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"matchId\": {{MATCH_ID}},\r\n  \"content\": \"Test mesaj\",\r\n  \"type\": \"video\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/message",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "message"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "09 - Mesaj Gonder - Auth Yok (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"matchId\": {{MATCH_ID}},\r\n  \"content\": \"Test\",\r\n  \"type\": \"text\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/message",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "message"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "10 - Okundu Isaretleme (204)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 204 No Content', () => pm.response.to.have.status(204));",
+                  "pm.test('Body bos (204 body donmez)', () => pm.expect(pm.response.text()).to.be.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN1}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/message/{{MATCH_ID}}/read",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "message",
+                "{{MATCH_ID}}",
+                "read"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "11 - Okundu Isaretleme - Auth Yok (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/message/{{MATCH_ID}}/read",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "message",
+                "{{MATCH_ID}}",
+                "read"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "12 - Okundu Isaretleme - Gecersiz Match (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404 Not Found', () => pm.response.to.have.status(404));",
+                  "pm.test('Hata mesaji var', () => pm.expect(pm.response.json().message).to.exist);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN1}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/message/999999/read",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "message",
+                "999999",
+                "read"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
     }
   ],
   "variable": [
@@ -3355,6 +3849,10 @@
     },
     {
       "key": "NEW_PROPERTY_ID",
+      "value": ""
+    },
+    {
+      "key": "MATCH_ID",
       "value": ""
     }
   ]
