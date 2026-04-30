@@ -1649,54 +1649,36 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
-                  "",
-                  "const feed = pm.response.json();",
-                  "pm.test('Response array', () => pm.expect(feed).to.be.an('array'));",
-                  "pm.test('Default take=20 → ≤20 item', () => {",
-                  "    pm.expect(feed.length).to.be.at.most(20);",
-                  "});",
-                  "",
+                  "const r = pm.response.json();",
+                  "pm.test('users alani array', () => pm.expect(r.users).to.be.an('array'));",
+                  "pm.test('totalCount alani var', () => pm.expect(r.totalCount).to.be.a('number'));",
+                  "pm.test('hasMore alani var', () => pm.expect(r.hasMore).to.be.a('boolean'));",
+                  "pm.test('Default take=20', () => pm.expect(r.users.length).to.be.at.most(20));",
+                  "const feed = r.users;",
                   "const user1Id = pm.collectionVariables.get('USER1_ID');",
-                  "pm.test(\"Kendisi (user1) feed'de yok (hard filter)\", () => {",
-                  "    const containsSelf = feed.some(u => u.id === user1Id);",
-                  "    pm.expect(containsSelf, \"currentUser kendi feed'inde olmamalı\").to.be.false;",
-                  "});",
-                  "",
+                  "pm.test(\"Kendisi feed'de yok\", () => { pm.expect(feed.some(u => u.id === user1Id)).to.be.false; });",
                   "if (feed.length > 0) {",
-                  "    const u = feed[0];",
-                  "    pm.test('UserSummaryDto temel alanları mevcut', () => {",
-                  "        pm.expect(u).to.have.property('id');",
-                  "        pm.expect(u).to.have.property('name');",
-                  "        pm.expect(u).to.have.property('age');",
-                  "        pm.expect(u).to.have.property('photos');",
-                  "        pm.expect(u).to.have.property('lastActive');",
-                  "        pm.expect(u).to.have.property('isVerified');",
-                  "        pm.expect(u).to.have.property('cleanliness');",
-                  "        pm.expect(u).to.have.property('socialLevel');",
-                  "    });",
-                  "    pm.test(\"CharacterProfile feed'de YOK (lite DTO)\", () => {",
-                  "        pm.expect(u).to.not.have.property('characterProfile');",
-                  "    });",
-                  "    pm.test('compatibility alanı mevcut (Faz 2.5)', () => {",
-                  "        pm.expect(u).to.have.property('compatibility');",
-                  "    });",
+                  "  const u = feed[0];",
+                  "  pm.test('UserSummaryDto alanlari mevcut', () => {",
+                  "    pm.expect(u).to.have.property('id');",
+                  "    pm.expect(u).to.have.property('name');",
+                  "    pm.expect(u).to.have.property('age');",
+                  "    pm.expect(u).to.have.property('photos');",
+                  "    pm.expect(u).to.have.property('lastActive');",
+                  "    pm.expect(u).to.have.property('isVerified');",
+                  "    pm.expect(u).to.have.property('cleanliness');",
+                  "    pm.expect(u).to.have.property('socialLevel');",
+                  "  });",
+                  "  pm.test(\"CharacterProfile feed'de YOK\", () => { pm.expect(u).to.not.have.property('characterProfile'); });",
+                  "  pm.test('compatibility alani mevcut', () => { pm.expect(u).to.have.property('compatibility'); });",
                   "}",
-                  "",
-                  "// FLOW_TARGET_ID: user2 ve user3 hariç ilk kullanıcı.",
-                  "// Bu, akış testinde Pass atılacak hedef. user2 (DataSeeder Validation kullanıyor) ve",
-                  "// user3 (priority testi için saklı) hariç tutulur.",
-                  "// Stale variable koruması: her zaman önce temizliyoruz, sonra yeniden set ediyoruz.",
                   "pm.collectionVariables.unset('FLOW_TARGET_ID');",
-                  "",
                   "const user2Id = pm.collectionVariables.get('USER2_ID') || '';",
                   "const user3Id = pm.collectionVariables.get('USER3_ID') || '';",
                   "const flowTarget = feed.find(u => u.id && u.id !== user2Id && u.id !== user3Id);",
-                  "",
-                  "pm.test('FLOW_TARGET_ID capture edildi (akış testi için)', () => {",
-                  "    pm.expect(flowTarget, 'Feed boş veya sadece user2/user3 içeriyor — fresh DB kontrolü yap').to.not.be.undefined;",
-                  "    pm.expect(flowTarget.id).to.be.a('string').and.not.empty;",
-                  "    pm.collectionVariables.set('FLOW_TARGET_ID', flowTarget.id);",
-                  "    console.log('FLOW_TARGET_ID set →', flowTarget.id, '(', flowTarget.name, ')');",
+                  "pm.test('FLOW_TARGET_ID capture edildi', () => {",
+                  "  pm.expect(flowTarget).to.not.be.undefined;",
+                  "  pm.collectionVariables.set('FLOW_TARGET_ID', flowTarget.id);",
                   "});"
                 ]
               }
@@ -1769,12 +1751,11 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
-                  "",
-                  "const feed = pm.response.json();",
-                  "pm.test('Response array', () => pm.expect(feed).to.be.an('array'));",
-                  "pm.test('take=5 → ≤5 item', () => {",
-                  "    pm.expect(feed.length).to.be.at.most(5);",
-                  "});"
+                  "const r = pm.response.json();",
+                  "pm.test('users alani array', () => pm.expect(r.users).to.be.an('array'));",
+                  "pm.test('take=5 clamp', () => pm.expect(r.users.length).to.be.at.most(5));",
+                  "pm.test('skip alani dogrulandi', () => pm.expect(r.skip).to.equal(0));",
+                  "pm.test('take alani dogrulandi', () => pm.expect(r.take).to.equal(5));"
                 ]
               }
             }
@@ -1824,11 +1805,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
-                  "",
-                  "const feed = pm.response.json();",
-                  "pm.test('take=100 → server clamp ≤50 (DoS koruması)', () => {",
-                  "    pm.expect(feed.length).to.be.at.most(50);",
-                  "});"
+                  "const r = pm.response.json();",
+                  "pm.test('take=100 -> clamp <=50 (DoS korumasi)', () => { pm.expect(r.users.length).to.be.at.most(50); });"
                 ]
               }
             }
@@ -1924,14 +1902,9 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
-                  "",
-                  "const feed = pm.response.json();",
+                  "const r = pm.response.json();",
                   "const targetId = pm.collectionVariables.get('FLOW_TARGET_ID');",
-                  "",
-                  "pm.test(\"Swipe edilen kullanıcı feed'de görünmüyor\", () => {",
-                  "    const stillThere = feed.some(u => u.id === targetId);",
-                  "    pm.expect(stillThere, `FLOW_TARGET_ID=${targetId} hâlâ feed'de — hard filter çalışmıyor`).to.be.false;",
-                  "});"
+                  "pm.test(\"Swipe edilen kullanici feed'de gorunmuyor\", () => { pm.expect(r.users.some(u => u.id === targetId)).to.be.false; });"
                 ]
               }
             }
@@ -2027,19 +2000,10 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
-                  "",
-                  "const feed = pm.response.json();",
+                  "const r = pm.response.json();",
                   "const user3Id = pm.collectionVariables.get('USER3_ID');",
-                  "",
-                  "pm.test(\"user3 feed'de mevcut (henüz swipe atılmadı)\", () => {",
-                  "    const found = feed.some(u => u.id === user3Id);",
-                  "    pm.expect(found, `USER3_ID=${user3Id} feed'de değil — Like attığı halde filtrelenmiş olamaz`).to.be.true;",
-                  "});",
-                  "",
-                  "pm.test(\"user3 feed'in ilk 10'unda (Like boost öne almalı)\", () => {",
-                  "    const idx = feed.findIndex(u => u.id === user3Id);",
-                  "    pm.expect(idx, `user3 indeks=${idx}, beklenen <10 (boost başarısız)`).to.be.below(10);",
-                  "});"
+                  "pm.test(\"user3 feed'de mevcut\", () => { pm.expect(r.users.some(u => u.id === user3Id)).to.be.true; });",
+                  "pm.test(\"user3 ilk 10'da (Like boost)\", () => { pm.expect(r.users.findIndex(u => u.id === user3Id)).to.be.below(10); });"
                 ]
               }
             }
@@ -3406,10 +3370,14 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
-                  "const msgs = pm.response.json();",
-                  "pm.test('Response bir array', () => pm.expect(msgs).to.be.an('array'));",
-                  "if (msgs.length > 0) {",
-                  "  const m = msgs[0];",
+                  "const r = pm.response.json();",
+                  "pm.test('messages alani bir array', () => pm.expect(r.messages).to.be.an('array'));",
+                  "pm.test('page alani var', () => pm.expect(r.page).to.be.a('number'));",
+                  "pm.test('pageSize alani var', () => pm.expect(r.pageSize).to.be.a('number'));",
+                  "pm.test('totalCount alani var', () => pm.expect(r.totalCount).to.be.a('number'));",
+                  "pm.test('hasMore alani var', () => pm.expect(r.hasMore).to.be.a('boolean'));",
+                  "if (r.messages.length > 0) {",
+                  "  const m = r.messages[0];",
                   "  pm.test('id alani var (int)', () => pm.expect(m.id).to.be.a('number'));",
                   "  pm.test('senderId alani var', () => pm.expect(m.senderId).to.be.a('string'));",
                   "  pm.test('content alani var', () => pm.expect(m.content).to.be.a('string'));",
