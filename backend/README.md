@@ -5,7 +5,8 @@
   <img src="https://img.shields.io/badge/Architecture-Clean_Architecture-brightgreen" />
   <img src="https://img.shields.io/badge/Database-SQLite_%26_EF_Core-003B57?style=flat&logo=sqlite" />
   <img src="https://img.shields.io/badge/Auth-JWT_Bearer-orange?style=flat&logo=jsonwebtokens" />
-  <img src="https://img.shields.io/badge/Tests-Postman_78-EF5B25?style=flat&logo=postman" />
+  <img src="https://img.shields.io/badge/Postman-78_Tests-EF5B25?style=flat&logo=postman" />
+  <img src="https://img.shields.io/badge/xUnit-23_Tests-512BD4?style=flat&logo=dotnet" />
 </p>
 
 ASP.NET Core 6 Web API for a personality-driven roommate matchmaking platform. Built with Clean Architecture, Repository Pattern, and JWT authentication.
@@ -38,7 +39,7 @@ dotnet restore
 dotnet run
 ```
 
-On first run, the database is created automatically and seeded with 50 mock users and 10 property listings.
+On first run, the database is created automatically and seeded with 50 mock users, 10 property listings, 3 pre-built matches, and 18 messages (6 per match).
 
 **Swagger UI:** `https://localhost:7xxx/swagger`
 
@@ -53,8 +54,9 @@ EvArkadasimV2.Domain/          # Entities, Enums, Value Objects
 EvArkadasimV2.Application/     # Services, DTOs, Interfaces, Exceptions
 EvArkadasimV2.Infrastructure/  # EF Core, Repositories, JWT, DataSeeder
 EvArkadasimV2.API/             # Controllers, Program.cs, DI Registration
+EvArkadasimV2.Tests/           # xUnit unit tests (xUnit + Moq, 23 tests)
 docs/                          # Technical documentation
-postman/                       # API test collection (80+ tests)
+postman/                       # Postman integration test collection (78 tests)
 ```
 
 ---
@@ -102,9 +104,28 @@ Development defaults are in `appsettings.Development.json` (not committed). Crea
 
 ## Testing
 
+### Integration Tests (Postman)
+
 Import `postman/EvArkadasim V2 API.postman_collection.json` into Postman.
 
-The collection includes 78 tests across 10 groups, covering happy paths, validation errors, authorization checks, and edge cases.
+The collection includes 78 tests across 10 groups (Auth, Profile, Feed, Swipe, Test, Property, Messaging), covering happy paths, validation errors, authorization checks, and edge cases.
+
+### Unit Tests (xUnit)
+
+```bash
+cd ..   # backend/ root
+dotnet test EvArkadasimV2.Tests
+```
+
+23 tests across 3 service classes:
+
+| Test Class | Tests | What It Covers |
+|------------|-------|----------------|
+| `CompatibilityServiceTests` | 8 | Manhattan Distance algorithm, null inputs, boundary values, symmetry |
+| `FeedServiceTests` | 7 | Sorting priority (likers first), pagination (skip/take), DoS clamp, edge cases |
+| `SwipeServiceTests` | 8 | Self-swipe guard, invalid type, duplicate swipe, mutual match creation, MatchesCount increment |
+
+All repository and service dependencies are mocked with Moq — no database required.
 
 ---
 

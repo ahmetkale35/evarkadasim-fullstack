@@ -187,30 +187,46 @@ Swipe edilecek aday kullanıcı listesini döndürür.
 
 **200 OK**:
 ```json
-[
-  {
-    "id": "b2c3d4e5-f6a7-...",
-    "name": "Zeynep",
-    "age": 23,
-    "bio": "Ev arkadaşı arıyorum.",
-    "budget": "4000 TL",
-    "moveInDate": "2026-05-15",
-    "lifestyle": ["Evcil hayvan sever"],
-    "photos": [],
-    "location": { "city": "İstanbul", "distance": 12 },
-    "interests": ["Yoga", "Sinema"],
-    "occupation": "Tasarımcı",
-    "education": "Yüksek Lisans",
-    "roomType": "Shared",
-    "lookingFor": "Room",
-    "isVerified": false,
-    "lastActive": "2026-04-28T09:00:00Z",
-    "cleanliness": 5,
-    "socialLevel": 4,
-    "compatibility": 78.3
-  }
-]
+{
+  "users": [
+    {
+      "id": "b2c3d4e5-f6a7-...",
+      "name": "Zeynep",
+      "age": 23,
+      "bio": "Ev arkadaşı arıyorum.",
+      "budget": "4000 TL",
+      "moveInDate": "2026-05-15",
+      "lifestyle": ["Evcil hayvan sever"],
+      "photos": [],
+      "location": { "city": "İstanbul", "distance": 12 },
+      "interests": ["Yoga", "Sinema"],
+      "occupation": "Tasarımcı",
+      "education": "Yüksek Lisans",
+      "roomType": "Shared",
+      "lookingFor": "Room",
+      "isVerified": false,
+      "lastActive": "2026-04-28T09:00:00Z",
+      "cleanliness": 5,
+      "socialLevel": 4,
+      "compatibility": 78.3
+    }
+  ],
+  "skip": 0,
+  "take": 20,
+  "totalCount": 45,
+  "hasMore": true
+}
 ```
+
+**Alan Açıklamaları**:
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| `users` | `UserSummaryDto[]` | Sayfalanmış kullanıcı listesi |
+| `skip` | int | Bu sayfada atlanan kayıt sayısı |
+| `take` | int | İstenen kayıt sayısı (clamp edilmiş) |
+| `totalCount` | int | Filtreleme sonrası toplam aday sayısı |
+| `hasMore` | bool | `skip + take < totalCount` ise `true` — daha fazla sayfa var |
 
 ---
 
@@ -482,25 +498,48 @@ Tüm endpoint'ler `[Authorize]` gerektirir. Kullanıcı o match'e dahil değilse
 
 ---
 
-### GET `/api/message/{matchId}`
+### GET `/api/message/{matchId}?page=1&pageSize=50`
 
-Bir match'e ait tüm mesajları kronolojik sırayla döner.
+Bir match'e ait mesajları kronolojik sırayla döner. Sayfalama desteklenir.
 
 **Auth**: Bearer Token (Zorunlu)
 
+**Query Parameters**:
+
+| Parametre | Tip | Varsayılan | Max | Açıklama |
+|-----------|-----|------------|-----|----------|
+| `page` | int | 1 | — | Sayfa numarası (1-tabanlı). 1'den küçük değerler 1 olarak işlenir |
+| `pageSize` | int | 50 | 100 | Sayfa başına mesaj sayısı. 100'den büyük veya 1'den küçük değerler 50'ye sıfırlanır |
+
 **200 OK**:
 ```json
-[
-  {
-    "id": 1,
-    "senderId": "a1b2c3d4-...",
-    "content": "Merhaba, ev arkadaşı olabilir miyiz?",
-    "timestamp": "2026-04-29T10:00:00Z",
-    "type": "text",
-    "isRead": false
-  }
-]
+{
+  "messages": [
+    {
+      "id": 1,
+      "senderId": "a1b2c3d4-...",
+      "content": "Merhaba, ev arkadaşı olabilir miyiz?",
+      "timestamp": "2026-04-29T10:00:00Z",
+      "type": "text",
+      "isRead": false
+    }
+  ],
+  "page": 1,
+  "pageSize": 50,
+  "totalCount": 6,
+  "hasMore": false
+}
 ```
+
+**Alan Açıklamaları**:
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| `messages` | `MessageDto[]` | Kronolojik sırayla mesaj listesi |
+| `page` | int | Mevcut sayfa numarası |
+| `pageSize` | int | Sayfa başına kayıt sayısı |
+| `totalCount` | int | Bu match'e ait toplam mesaj sayısı |
+| `hasMore` | bool | `page * pageSize < totalCount` ise `true` — önceki sayfalar var |
 
 **403 Forbidden**: Kullanıcı bu match'e dahil değil.
 

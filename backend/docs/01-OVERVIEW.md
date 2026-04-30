@@ -69,13 +69,25 @@ dotnet run
 
 ### Seed Verileri (Geliştirme Ortamı)
 
-| Bilgi | Değer | Açıklama |
-|-------|-------|----------|
+| Veri | Değer | Açıklama |
+|------|-------|----------|
 | E-posta formatı | `user1@test.com` ... `user50@test.com` | Sayısal son ek ile kolay test |
 | Ortak şifre | `Test1234!` | Identity şifre politikasını karşılar |
 | Random seed | `42` (sabit) | Her çalıştırmada aynı veriler üretilir |
 | Profil verileri | Rastgele yaş (20-35), şehir, meslek | Gerçekçi test verisi |
 | Kişilik skorları | 1-5 arası rastgele | Uyumluluk hesaplaması test edilebilir |
+| İlan verileri | 10 ilan (user1..user10 sahipliğinde) | Türk gayrimenkul verileriyle gerçekçi içerik |
+| Eşleşmeler | 3 match | user1↔user2, user3↔user4, user5↔user6 çifti |
+| Mesajlar | 6 mesaj/eşleşme (toplam 18) | 4 okunmuş + 2 okunmamış — `PUT MarkAsRead` testi için |
+
+**Seeding sırası ve idempotency**: DataSeeder her tablo için `AnyAsync()` kontrolü yapar. Veritabanı silinmeden ikinci kez başlatıldığında seed atlanır — mükerrer veri oluşmaz.
+
+```
+İlk çalıştırma:
+1. SeedUsersAsync      → 50 kullanıcı + profil + kişilik skoru
+2. SeedPropertiesAsync → 10 ilan (user1..user10 sahipliğinde)
+3. SeedMatchesAndMessagesAsync → 3 match + 18 mesaj
+```
 
 ---
 

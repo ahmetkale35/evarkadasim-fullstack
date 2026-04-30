@@ -16,8 +16,9 @@ EvArkadaşım is a smart, personality-driven matchmaking platform designed to he
 - **📈 Intelligent Feed**: Uses a dynamic sorting algorithm that prioritizes `SuperLikes` and `Likes`, followed by the highest compatibility score.
 - **🔐 Secure Authentication**: JWT Bearer token implementation with robust security practices.
 - **🏗️ Clean Architecture**: Highly maintainable, decoupled backend architecture separating Domain, Application, Infrastructure, and API layers.
-- **💬 In-App Messaging**: Match-scoped REST chat API with read receipts and authorization guard.
+- **💬 In-App Messaging**: Match-scoped REST chat API with pagination, read receipts, and authorization guard.
 - **🏠 Property Listings**: Full CRUD property API with filtering by location, type, price, and amenities.
+- **🧪 Unit Tested**: 23 xUnit tests (Moq) covering compatibility algorithm, feed sorting, and swipe business rules.
 - **📱 Cross-Platform App**: Mobile application built with React Native and Expo.
 
 ## 🛠️ Technology Stack
@@ -42,8 +43,9 @@ EvArkadaşım is a smart, personality-driven matchmaking platform designed to he
 │   ├── EvArkadasimV2.Application/     # Business logic, DTOs, Service Interfaces
 │   ├── EvArkadasimV2.Infrastructure/  # EF Core DbContext, Repositories, JWT Setup
 │   ├── EvArkadasimV2.API/             # Controllers, Middlewares, DI Registration
+│   ├── EvArkadasimV2.Tests/           # xUnit unit tests — 23 tests, no DB required
 │   ├── docs/                          # Extensive technical documentation
-│   └── postman/                       # 78 API integration tests
+│   └── postman/                       # 78 Postman integration tests
 └── frontend/
     └── evarkadasim-yeni-main/         # Expo mobile application
 ```
@@ -69,7 +71,7 @@ cd backend/EvArkadasimV2.API
 dotnet restore
 dotnet run
 ```
-*The database will be automatically created and seeded with mock data on the first run. Access Swagger UI at `https://localhost:7xxx/swagger`.*
+*The database will be automatically created and seeded on the first run: 50 users, 10 property listings, 3 pre-built matches, and 18 messages. Access Swagger UI at `https://localhost:7xxx/swagger`.*
 
 ### Frontend Setup
 ```bash

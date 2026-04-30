@@ -329,12 +329,12 @@ public double Calculate(BasicTestResults? current, BasicTestResults? candidate)
 ## 4. Feed Sıralama Algoritması — Detaylı
 
 ```csharp
-public async Task<IEnumerable<UserSummaryDto>> GetFeedAsync(string currentUserId, int skip, int take)
+public async Task<PagedFeedDto> GetFeedAsync(string currentUserId, int skip, int take)
 {
     // Güvenlik: Sayfalama parametrelerini clamp et
-    if (skip < 0) skip = 0;           // Negatif skip anlamsız
+    if (skip < 0) skip = 0;           // Negatif skip anlamsız → 0 olarak işle
     if (take <= 0) take = 20;         // Varsayılan
-    if (take > 50) take = 50;         // DoS koruması: max 50
+    if (take > 50) take = 50;         // DoS koruması: max 50 kayıt
 
     // Mevcut kullanıcının FinalScores'unu al (uyumluluk hesabı için)
     var currentUser = await _userRepository.GetUserWithProfileAsync(currentUserId, tracking: false);
@@ -343,8 +343,8 @@ public async Task<IEnumerable<UserSummaryDto>> GetFeedAsync(string currentUserId
     // TÜM adayları çek (filtrelenmiş: kendisi ve swipe edilenler hariç)
     var candidates = await _userRepository.GetFeedCandidatesWithLikeStatusAsync(currentUserId);
 
-    // Her aday için: DTO'ya dönüştür + uyumluluk hesapla + sırala + sayfala
-    return candidates
+    // Her aday için: DTO'ya dönüştür + uyumluluk hesapla + in-memory sırala
+    var sorted = candidates
         .Select(item =>
         {
             var dto = MapToDto(item.User);
@@ -355,9 +355,23 @@ public async Task<IEnumerable<UserSummaryDto>> GetFeedAsync(string currentUserId
         .OrderByDescending(x => x.HasLikedCurrentUser)  // 1. SIRALAMA: Beni beğenenler ÖNCE
         .ThenByDescending(x => x.Dto.Compatibility)       // 2. SIRALAMA: Uyumluluk yüksek → önce
         .ThenByDescending(x => x.Dto.LastActive)           // 3. SIRALAMA: Son aktif → önce
-        .Skip(skip)   // Sayfalama: ilk N kaydı atla
-        .Take(take)   // Sayfalama: sonraki M kaydı al
-        .Select(x => x.Dto);  // Sadece DTO'yu döndür (HasLikedCurrentUser artık gerekli değil)
+        .ToList();
+
+    // Neden in-memory sıralama?
+    // Sayfalama SQL'de yapılsaydı, farklı sayfalar farklı sıralama kuralları uygulayabilirdi.
+    // Tüm adaylar in-memory sıralanır, ardından .Skip/.Take uygulanır — tutarlı sıra garantisi.
+
+    var totalCount = sorted.Count;
+    var users = sorted.Skip(skip).Take(take).Select(x => x.Dto).ToList();
+
+    return new PagedFeedDto
+    {
+        Users = users,
+        Skip = skip,
+        Take = take,
+        TotalCount = totalCount,
+        HasMore = skip + take < totalCount  // Hâlâ gösterilecek aday var mı?
+    };
 }
 ```
 
@@ -512,6 +526,71 @@ private static PropertyDto MapToDto(Property p) => new()
     // Owner null ise (navigation yüklenmediyse) boş string döner
 };
 ```
+
+---
+
+## 7. Unit Test Mimarisi — xUnit + Moq
+
+### Neden Unit Test?
+
+Postman testleri entegrasyon testidir — gerçek veritabanı, gerçek HTTP yığını. Her iş kuralı değişikliğinde yüzlerce satır test kodu yeniden çalışır. Unit testler ise bir servisin *tek bir davranışını* izole ederek test eder:
+
+- Hızlı: Veritabanı I/O yok, ağ yok → milisaniyede biter
+- Güvenilir: Harici bağımlılık olmadığından ortam kaynaklı hata riski sıfır
+- Belgeleyici: Test adı, iş kuralını belgelerin yerini tutar
+
+### Test Projesi Yapısı
+
+```
+EvArkadasimV2.Tests/
+├── CompatibilityServiceTests.cs   # 8 test — matematiksel algoritma
+├── FeedServiceTests.cs            # 7 test — sıralama ve sayfalama
+└── SwipeServiceTests.cs           # 8 test — swipe iş kuralları ve match mantığı
+```
+
+### Mock (Taklit) Nedir?
+
+Gerçek repository veritabanına bağlanır. Unit testlerde buna gerek yok — sadece "şu metodun bu değeri döneceğini" söyleriz:
+
+```csharp
+// Moq ile mock oluştur
+var swipeRepo = new Mock<ISwipeRepository>();
+
+// "HasSwipedAsync('user1', 'user2') çağrılırsa false dön" kuralı koy
+swipeRepo.Setup(r => r.HasSwipedAsync("user1", "user2")).ReturnsAsync(false);
+
+// Mock'u servise enjekte et
+var sut = new SwipeService(swipeRepo.Object, ...);
+```
+
+Bu sayede `SwipeService` yalnızca kendi mantığıyla test edilir, veritabanı hiç devreye girmez.
+
+### Verifikasyon (Verify)
+
+Mock, metod çağrılarını sayar. "Match oluşmamalı" testlerinde `AddAsync` hiç çağrılmadığını doğrulayabiliriz:
+
+```csharp
+// AddAsync hiç çağrılmadıysa test geçer
+_matchRepo.Verify(r => r.AddAsync(It.IsAny<UserMatch>()), Times.Never);
+
+// Tam 1 kez çağrıldıysa test geçer (mutual Like → 1 match)
+_matchRepo.Verify(r => r.AddAsync(It.IsAny<UserMatch>()), Times.Once);
+```
+
+### Test Kapsamı
+
+| Test Sınıfı | Test Sayısı | Kapsanan Davranışlar |
+|-------------|-------------|----------------------|
+| `CompatibilityServiceTests` | 8 | Null girdiler → 50, eşit skorlar → 100, maksimum zıtlık → 0, simetri, aralık garantisi, kısmi fark |
+| `FeedServiceTests` | 7 | Kullanıcı kendi feed'inde yok, liker önce gelir, boş liste, skip/take doğru, HasMore hesabı, take clamp (≤50), negatif skip |
+| `SwipeServiceTests` | 8 | Self-swipe → exception, geçersiz tip → exception, mükerrer swipe → exception, bulunamayan kullanıcı → exception, Pass → match yok, tek taraflı Like → match yok, karşılıklı Like → match oluşur, MatchesCount artışı |
+| **Toplam** | **23** | |
+
+### Global Exception Handler ve Testler
+
+İleride global exception handler middleware eklenecekse (controller'lardaki try-catch blokları kaldırılacak), **unit testler etkilenmez** — servis metodları exception fırlatmaya devam eder, sadece bu exception'ı yakalayan yer değişir. Test kodu değiştirmeden geçmeye devam eder.
+
+---
 
 ### DataAnnotations Validation
 

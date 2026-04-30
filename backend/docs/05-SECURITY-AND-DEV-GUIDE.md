@@ -380,22 +380,36 @@ dotnet ef migrations add AddUserBlocks ...
 
 ---
 
-## 5. Eksik Özellikler ve Yol Haritası
+## 5. Özellik Durumu ve Yol Haritası
+
+### Tamamlanan Özellikler
+
+| Özellik | Durum | Notlar |
+|---------|-------|--------|
+| **Auth (JWT)** | ✅ Tamamlandı | Register, Login, token doğrulama |
+| **Profil Yönetimi** | ✅ Tamamlandı | GET/PUT, kısmi güncelleme |
+| **Kişilik Testi** | ✅ Tamamlandı | Temel (6 boyut) + Detaylı (ortalama) |
+| **Feed & Swipe** | ✅ Tamamlandı | Uyumluluk sıralaması, Like/Pass/SuperLike, match detection |
+| **Feed Sayfalama** | ✅ Tamamlandı | `skip/take` + `PagedFeedDto`, DoS clamp (max 50) |
+| **Mesajlaşma REST** | ✅ Tamamlandı | GET (sayfalı) / POST / MarkAsRead, match membership guard |
+| **Property CRUD** | ✅ Tamamlandı | Filtrelenebilir liste, owner yetkilendirmesi, DataAnnotations validation |
+| **Unit Tests** | ✅ Tamamlandı | 23 test — xUnit + Moq (CompatibilityService, FeedService, SwipeService) |
+| **Seed Verisi** | ✅ Tamamlandı | 50 kullanıcı, 10 ilan, 3 match, 18 mesaj |
+
+### Devam Eden / Planlanan Özellikler
 
 | Özellik | Durum | Zorluk | Etki |
 |---------|-------|--------|------|
-| **Mesajlaşma (SignalR)** | DTO'lar hazır | Yüksek | Eşleşen kullanıcılar konuşabilir |
-| **Property CRUD** | Entity+DTO hazır | Orta | İlan oluşturma/listeleme |
-| **Fotoğraf Upload** | URL string saklanıyor | Orta | Gerçek dosya depolama (Azure Blob) |
-| **Refresh Token** | Yok | Orta | Süre dolan token yenileme |
-| **Global Exception Handler** | Yok | Düşük | Controller'lardaki try-catch tekrarını kaldır |
-| **Rate Limiting** | Yok | Düşük | Brute-force ve DoS koruması |
-| **Email Doğrulama** | Yok | Orta | Sahte hesap engelleme |
-| **Push Notification** | Yok | Yüksek | Eşleşme/mesaj bildirimi |
-| **Unit Tests** | Yok | Orta | Kod güvenilirliği |
-| **Caching (Redis)** | Yok | Orta | Feed ve profil performansı |
+| **Global Exception Handler** | Planlandı | Düşük | Controller'lardaki try-catch tekrarını kaldır |
+| **Mesajlaşma (SignalR / WebSocket)** | Planlandı | Yüksek | Gerçek zamanlı bildirim — REST API'nin üzerine eklenir |
+| **Fotoğraf Upload** | Planlandı | Orta | Gerçek dosya depolama (Azure Blob / S3) |
+| **Refresh Token** | Planlandı | Orta | Süre dolan token yenileme — şu an 24 saatlik token var |
+| **Rate Limiting** | Planlandı | Düşük | Brute-force ve DoS koruması |
+| **Email Doğrulama** | Planlandı | Orta | Sahte hesap engelleme |
+| **Push Notification** | Planlandı | Yüksek | Eşleşme/mesaj bildirimi (FCM/APNs) |
+| **Caching (Redis)** | Planlandı | Orta | Feed ve profil performansı |
 | **Logging (Serilog)** | Temel ILogger | Düşük | Structured logging, dosya/DB log |
-| **Health Check** | Yok | Düşük | Deployment izleme |
-| **API Versioning** | Yok | Düşük | Geriye dönük uyumluluk |
-| **Kullanıcı Engelleme** | Yok | Orta | Feed ve mesajlaşmada filtreleme |
+| **Health Check** | Planlandı | Düşük | Deployment izleme |
+| **API Versioning** | Planlandı | Düşük | Geriye dönük uyumluluk |
+| **Kullanıcı Engelleme** | Planlandı | Orta | Feed ve mesajlaşmada filtreleme |
 | **Bildirim Tercihleri** | Alan var, logic yok | Düşük | Kullanıcı bildirim ayarları |
