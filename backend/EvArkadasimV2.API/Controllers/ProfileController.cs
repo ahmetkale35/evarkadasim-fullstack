@@ -7,9 +7,11 @@ using System.Security.Claims;
 
 namespace EvArkadasimV2.API.Controllers
 {
+    /// <summary>Kullanıcı profili yönetimi.</summary>
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
+    [Produces("application/json")]
     public class ProfileController : ControllerBase
     {
         private readonly IProfileService _profileService;
@@ -21,7 +23,12 @@ namespace EvArkadasimV2.API.Controllers
             _logger = logger;
         }
 
+        /// <summary>Giriş yapan kullanıcının profilini döner.</summary>
         [HttpGet]
+        [ProducesResponseType(typeof(UserProfileDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetMyProfile()
         {
             // [Authorize] pipeline'dan geçen her istek için userId garantilidir.
@@ -43,7 +50,14 @@ namespace EvArkadasimV2.API.Controllers
             }
         }
 
+        /// <summary>Giriş yapan kullanıcının profilini günceller.</summary>
+        /// <remarks>Partial update semantiği: yalnızca gönderilen alanlar değişir, null gönderilmeyenler korunur.</remarks>
         [HttpPut]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> UpdateMyProfile([FromBody] UpdateProfileDto updateDto)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;

@@ -1,3 +1,4 @@
+using EvArkadasimV2.Application.DTOs.User;
 using EvArkadasimV2.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -5,9 +6,11 @@ using System.Security.Claims;
 
 namespace EvArkadasimV2.API.Controllers
 {
+    /// <summary>Swipe akışı (feed) yönetimi.</summary>
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
+    [Produces("application/json")]
     public class UsersController : ControllerBase
     {
         private readonly IFeedService _feedService;
@@ -19,10 +22,14 @@ namespace EvArkadasimV2.API.Controllers
             _logger = logger;
         }
 
-        // GET: api/users?skip=0&take=20
-        // Swipe için aday kullanıcı listesini döndürür.
-        // Kendisi ve daha önce swipe attığı kullanıcılar listede yer almaz.
+        /// <summary>Swipe için aday kullanıcıları sayfalı listeler.</summary>
+        /// <remarks>Giriş yapan kullanıcının kendisi ve daha önce swipe attığı kullanıcılar hariç tutulur.</remarks>
+        /// <param name="skip">Atlanan kayıt sayısı (offset). Varsayılan: 0.</param>
+        /// <param name="take">Döndürülecek kayıt sayısı. Varsayılan: 20.</param>
         [HttpGet]
+        [ProducesResponseType(typeof(PagedFeedDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetFeed([FromQuery] int skip = 0, [FromQuery] int take = 20)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
