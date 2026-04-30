@@ -20,7 +20,7 @@ namespace EvArkadasimV2.Application.Services
             _compatibilityService = compatibilityService;
         }
 
-        public async Task<IEnumerable<UserSummaryDto>> GetFeedAsync(string currentUserId, int skip, int take)
+        public async Task<PagedFeedDto> GetFeedAsync(string currentUserId, int skip, int take)
         {
             if (skip < 0) skip = 0;
             if (take <= 0) take = DefaultTake;
@@ -31,9 +31,10 @@ namespace EvArkadasimV2.Application.Services
 
             var candidates = await _userRepository.GetFeedCandidatesWithLikeStatusAsync(currentUserId);
 
+            // Sıralama in-memory yapılır çünkü compatibility skoru DB'de hesaplanamaz.
             // Sıralama: Like-boost DESC → Compatibility DESC → LastActive DESC
-            // Sayfalama en sonda — compatibility hesaplandıktan sonra uygulanır.
-            return candidates
+            // TotalCount skip/take uygulanmadan önce alınır — HasMore hesabı için gerekli.
+            var sorted = candidates
                 .Select(item =>
                 {
                     var dto = MapToDto(item.User);
@@ -43,9 +44,19 @@ namespace EvArkadasimV2.Application.Services
                 .OrderByDescending(x => x.HasLikedCurrentUser)
                 .ThenByDescending(x => x.Dto.Compatibility)
                 .ThenByDescending(x => x.Dto.LastActive)
-                .Skip(skip)
-                .Take(take)
-                .Select(x => x.Dto);
+                .ToList();
+
+            var totalCount = sorted.Count;
+            var users = sorted.Skip(skip).Take(take).Select(x => x.Dto).ToList();
+
+            return new PagedFeedDto
+            {
+                Users = users,
+                Skip = skip,
+                Take = take,
+                TotalCount = totalCount,
+                HasMore = skip + take < totalCount
+            };
         }
 
         private static UserSummaryDto MapToDto(AppUser u) => new()

@@ -7,6 +7,6 @@ namespace EvArkadasimV2.Application.Interfaces.Services
         // Belirli bir kullanıcı için swipe edilebilecek aday listesini döner.
         // Kendisi ve daha önce swipe attığı kullanıcılar listede yer almaz.
         // Sıralama: önce bu kullanıcıya Like/SuperLike atanlar, sonra LastActive DESC.
-        Task<IEnumerable<UserSummaryDto>> GetFeedAsync(string currentUserId, int skip, int take);
+        Task<PagedFeedDto> GetFeedAsync(string currentUserId, int skip, int take);
     }
 }

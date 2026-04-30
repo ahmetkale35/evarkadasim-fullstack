@@ -29,8 +29,8 @@ namespace EvArkadasimV2.API.Controllers
 
             try
             {
-                var feed = await _feedService.GetFeedAsync(userId, skip, take);
-                return Ok(feed);
+                var result = await _feedService.GetFeedAsync(userId, skip, take);
+                return Ok(result);
             }
             catch (Exception ex)
             {
