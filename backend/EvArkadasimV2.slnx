@@ -3,4 +3,5 @@
   <Project Path="EvArkadasimV2.Application/EvArkadasimV2.Application.csproj" />
   <Project Path="EvArkadasimV2.Domain/EvArkadasimV2.Domain.csproj" />
   <Project Path="EvArkadasimV2.Infrastructure/EvArkadasimV2.Infrastructure.csproj" />
+  <Project Path="EvArkadasimV2.Tests/EvArkadasimV2.Tests.csproj" />
 </Solution>
