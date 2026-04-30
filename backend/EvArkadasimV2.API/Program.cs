@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
 using EvArkadasimV2.Application.Interfaces.Repositories;
@@ -96,14 +97,31 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Ev Arkadasim V2 API", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Ev Arkadaşım API",
+        Version = "v1",
+        Description =
+            "Ev arkadaşı eşleştirme platformu REST API'si.\n\n" +
+            "**Kimlik doğrulama:** `POST /api/auth/login` ile JWT token alın, " +
+            "sağ üstteki **Authorize** butonuna token değerini girin.",
+        Contact = new OpenApiContact
+        {
+            Name = "Ahmet Kale",
+            Email = "ahmetkale1248.ak@gmail.com"
+        }
+    });
+
+    // Http Bearer: Swagger UI "Bearer " önekini otomatik ekler; kullanıcı sadece token'ı girer.
+    // ApiKey ile kurulunca kullanıcının "Bearer {token}" yazmasi gerekiyordu.
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        In = ParameterLocation.Header,
-        Description = "Bearer {token}",
-        Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Description = "JWT token'ınızı giriniz. 'Bearer ' öneki otomatik eklenir."
     });
+
     c.AddSecurityRequirement(new OpenApiSecurityRequirement {
         {
             new OpenApiSecurityScheme {
@@ -112,6 +130,10 @@ builder.Services.AddSwaggerGen(c =>
             Array.Empty<string>()
         }
     });
+
+    var xmlPath = Path.Combine(AppContext.BaseDirectory,
+        $"{Assembly.GetExecutingAssembly().GetName().Name}.xml");
+    c.IncludeXmlComments(xmlPath);
 });
 
 // --- CORS ---
@@ -153,7 +175,12 @@ if (app.Environment.IsDevelopment())
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ev Arkadaşım API v1");
+        c.DisplayRequestDuration();
+        c.DefaultModelsExpandDepth(1);
+    });
     app.UseCors("Development");
 }
 else
