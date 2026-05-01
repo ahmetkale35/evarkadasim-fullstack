@@ -1,5 +1,4 @@
 using EvArkadasimV2.Application.DTOs.Chat;
-using EvArkadasimV2.Application.Exceptions;
 using EvArkadasimV2.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,12 +14,10 @@ namespace EvArkadasimV2.API.Controllers
     public class MessageController : ControllerBase
     {
         private readonly IMessageService _messageService;
-        private readonly ILogger<MessageController> _logger;
 
-        public MessageController(IMessageService messageService, ILogger<MessageController> logger)
+        public MessageController(IMessageService messageService)
         {
             _messageService = messageService;
-            _logger = logger;
         }
 
         /// <summary>Bir eşleşmeye ait mesajları kronolojik sırayla sayfalı döner.</summary>
@@ -40,26 +37,8 @@ namespace EvArkadasimV2.API.Controllers
             if (pageSize < 1 || pageSize > 100) pageSize = 50;
 
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-
-            try
-            {
-                var result = await _messageService.GetMessagesAsync(matchId, currentUserId, page, pageSize);
-                return Ok(result);
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(new { Message = ex.Message });
-            }
-            catch (DomainException)
-            {
-                // Kullanıcı bu match'e dahil değil — 403 dön, detay verme.
-                return Forbid();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "GetMessages sırasında beklenmedik hata. MatchId: {MatchId}", matchId);
-                return StatusCode(500, new { Message = "Sunucu hatası oluştu." });
-            }
+            var result = await _messageService.GetMessagesAsync(matchId, currentUserId, page, pageSize);
+            return Ok(result);
         }
 
         /// <summary>Eşleşme üzerinden yeni mesaj gönderir.</summary>
@@ -72,25 +51,8 @@ namespace EvArkadasimV2.API.Controllers
         public async Task<IActionResult> Send([FromBody] SendMessageDto dto)
         {
             var senderId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-
-            try
-            {
-                var message = await _messageService.SendMessageAsync(dto, senderId);
-                return CreatedAtAction(nameof(GetMessages), new { matchId = dto.MatchId }, message);
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(new { Message = ex.Message });
-            }
-            catch (DomainException)
-            {
-                return Forbid();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Send sırasında beklenmedik hata. MatchId: {MatchId}", dto.MatchId);
-                return StatusCode(500, new { Message = "Sunucu hatası oluştu." });
-            }
+            var message = await _messageService.SendMessageAsync(dto, senderId);
+            return CreatedAtAction(nameof(GetMessages), new { matchId = dto.MatchId }, message);
         }
 
         /// <summary>Karşı tarafın okunmamış mesajlarını okundu olarak işaretler.</summary>
@@ -104,25 +66,8 @@ namespace EvArkadasimV2.API.Controllers
         public async Task<IActionResult> MarkAsRead(int matchId)
         {
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-
-            try
-            {
-                await _messageService.MarkAsReadAsync(matchId, currentUserId);
-                return NoContent();
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(new { Message = ex.Message });
-            }
-            catch (DomainException)
-            {
-                return Forbid();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "MarkAsRead sırasında beklenmedik hata. MatchId: {MatchId}", matchId);
-                return StatusCode(500, new { Message = "Sunucu hatası oluştu." });
-            }
+            await _messageService.MarkAsReadAsync(matchId, currentUserId);
+            return NoContent();
         }
     }
 }

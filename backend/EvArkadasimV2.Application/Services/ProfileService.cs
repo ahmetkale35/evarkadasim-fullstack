@@ -53,7 +53,7 @@ namespace EvArkadasimV2.Application.Services
             };
         }
 
-        public async Task<bool> UpdateProfileAsync(string userId, UpdateProfileDto updateDto)
+        public async Task UpdateProfileAsync(string userId, UpdateProfileDto updateDto)
         {
             var user = await _userRepository.GetUserWithProfileAsync(userId, tracking: true);
 
@@ -74,7 +74,7 @@ namespace EvArkadasimV2.Application.Services
             if (updateDto.NotificationsEnabled.HasValue) user.Profile.NotificationsEnabled = updateDto.NotificationsEnabled.Value;
 
             _userRepository.Update(user);
-            return await _userRepository.SaveChangesAsync();
+            await _userRepository.SaveChangesAsync();
         }
     }
 }

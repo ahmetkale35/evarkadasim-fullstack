@@ -14,12 +14,10 @@ namespace EvArkadasimV2.API.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IFeedService _feedService;
-        private readonly ILogger<UsersController> _logger;
 
-        public UsersController(IFeedService feedService, ILogger<UsersController> logger)
+        public UsersController(IFeedService feedService)
         {
             _feedService = feedService;
-            _logger = logger;
         }
 
         /// <summary>Swipe için aday kullanıcıları sayfalı listeler.</summary>
@@ -33,17 +31,8 @@ namespace EvArkadasimV2.API.Controllers
         public async Task<IActionResult> GetFeed([FromQuery] int skip = 0, [FromQuery] int take = 20)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-
-            try
-            {
-                var result = await _feedService.GetFeedAsync(userId, skip, take);
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "GetFeed sırasında beklenmedik hata. UserId: {UserId}", userId);
-                return StatusCode(500, new { Message = "Sunucu hatası oluştu." });
-            }
+            var result = await _feedService.GetFeedAsync(userId, skip, take);
+            return Ok(result);
         }
     }
 }
