@@ -84,7 +84,7 @@ namespace EvArkadasimV2.Application.Services
                 throw new NotFoundException($"İlan bulunamadı. Id: {id}");
 
             if (property.OwnerId != currentUserId)
-                throw new DomainException("Bu ilanı düzenleme yetkiniz yok.");
+                throw new ForbiddenException("Bu ilanı düzenleme yetkiniz yok.");
 
             property.Title = dto.Title;
             property.PriceAmount = dto.PriceAmount;
@@ -116,7 +116,7 @@ namespace EvArkadasimV2.Application.Services
                 throw new NotFoundException($"İlan bulunamadı. Id: {id}");
 
             if (property.OwnerId != currentUserId)
-                throw new DomainException("Bu ilanı silme yetkiniz yok.");
+                throw new ForbiddenException("Bu ilanı silme yetkiniz yok.");
 
             _propertyRepository.Remove(property);
             await _propertyRepository.SaveChangesAsync();

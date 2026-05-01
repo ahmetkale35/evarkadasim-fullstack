@@ -7,8 +7,8 @@ namespace EvArkadasimV2.Application.Exceptions
     // Controller'da catch bloklarını ayırt edebilmek. Beklenen iş hataları ile
     // beklenmedik sistem hataları (NullReferenceException, DbException) farklı
     // HTTP kodlarıyla ve farklı log seviyeleriyle işlenmelidir.
-    public class DomainException : Exception
+    public class DomainException : AppException
     {
-        public DomainException(string message) : base(message) { }
+        public DomainException(string message) : base(message, 400) { }
     }
 }

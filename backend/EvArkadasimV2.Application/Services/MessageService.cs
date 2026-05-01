@@ -76,7 +76,7 @@ namespace EvArkadasimV2.Application.Services
 
             // User1 veya User2 olmayan biri başkasının sohbetine erişmeye çalışıyor.
             if (match.User1Id != userId && match.User2Id != userId)
-                throw new DomainException("Bu sohbete erişim yetkiniz yok.");
+                throw new ForbiddenException("Bu sohbete erişim yetkiniz yok.");
         }
 
         private static MessageDto MapToDto(Message m) => new()

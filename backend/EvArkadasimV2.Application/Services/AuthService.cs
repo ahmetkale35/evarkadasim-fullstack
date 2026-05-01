@@ -53,7 +53,7 @@ namespace EvArkadasimV2.Application.Services
             // Böylece saldırgan hangi e-postaların kayıtlı olduğunu tespit edemez.
             var isPasswordValid = user != null && await _userManager.CheckPasswordAsync(user, request.Password);
             if (!isPasswordValid)
-                throw new DomainException("E-posta veya şifre hatalı.");
+                throw new UnauthorizedException("E-posta veya şifre hatalı.");
 
             var (token, expiration) = _tokenService.GenerateToken(user!);
             return BuildAuthResponse(user!, token, expiration);
