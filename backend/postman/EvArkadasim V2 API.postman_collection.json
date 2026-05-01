@@ -28,7 +28,7 @@
                   "    pm.collectionVariables.set('TOKEN1', r.token);",
                   "    pm.collectionVariables.set('USER1_ID', r.userId);",
                   "} else {",
-                  "    pm.test('400 ise DomainException mesajı var', () => {",
+                  "    pm.test('400 ise hata mesajı var', () => {",
                   "        pm.expect(pm.response.json().message).to.exist;",
                   "    });",
                   "}"
@@ -119,8 +119,11 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status 401 Unauthorized', () => pm.response.to.have.status(401));",
-                  "pm.test('DomainException mesajı döndü', () => {",
+                  "pm.test('Hata mesajı döndü', () => {",
                   "    pm.expect(pm.response.json().message).to.exist;",
+                  "});",
+                  "pm.test('statusCode 401', () => {",
+                  "    pm.expect(pm.response.json().statusCode).to.equal(401);",
                   "});"
                 ]
               }
@@ -842,8 +845,11 @@
                   "pm.test('Status 400 BadRequest (kendine swipe atılamaz)', () => {",
                   "    pm.response.to.have.status(400);",
                   "});",
-                  "pm.test('DomainException mesajı', () => {",
+                  "pm.test('Hata mesajı', () => {",
                   "    pm.expect(pm.response.json().message).to.exist;",
+                  "});",
+                  "pm.test('statusCode 400', () => {",
+                  "    pm.expect(pm.response.json().statusCode).to.equal(400);",
                   "});"
                 ]
               }
@@ -2202,8 +2208,9 @@
                 "exec": [
                   "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
                   "",
-                  "const feed = pm.response.json();",
-                  "pm.test('Feed boş değil', () => pm.expect(feed.length).to.be.above(0));",
+                  "const r = pm.response.json();",
+                  "const feed = r.users;",
+                  "pm.test('Feed boş değil', () => pm.expect(r.totalCount).to.be.above(0));",
                   "",
                   "pm.test('Her kullanıcıda compatibility alanı var (sayı, 0-100 arası)', () => {",
                   "    feed.forEach(u => {",
@@ -2256,7 +2263,8 @@
                 "exec": [
                   "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
                   "",
-                  "const feed = pm.response.json();",
+                  "const r = pm.response.json();",
+                  "const feed = r.users;",
                   "const user3Id = pm.collectionVariables.get('USER3_ID');",
                   "",
                   "pm.test(\"user3 feed'de mevcut (henüz swipe atılmadı)\", () => {",
@@ -2401,8 +2409,9 @@
                 "exec": [
                   "pm.test('Status 200 OK', () => pm.response.to.have.status(200));",
                   "",
-                  "const feed = pm.response.json();",
-                  "pm.test('Feed boş değil', () => pm.expect(feed.length).to.be.above(0));",
+                  "const r = pm.response.json();",
+                  "const feed = r.users;",
+                  "pm.test('Feed boş değil', () => pm.expect(r.totalCount).to.be.above(0));",
                   "",
                   "pm.test('FinalScores yok → tüm compatibility 50.0 (varsayılan)', () => {",
                   "    const allFifty = feed.every(u => u.compatibility === 50);",
@@ -3152,7 +3161,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status 403 Forbidden', () => pm.response.to.have.status(403));"
+                  "pm.test('Status 403 Forbidden', () => pm.response.to.have.status(403));",
+                  "pm.test('statusCode 403', () => pm.expect(pm.response.json().statusCode).to.equal(403));",
+                  "pm.test('Hata mesajı var', () => pm.expect(pm.response.json().message).to.exist);"
                 ]
               }
             }
@@ -3449,7 +3460,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status 404 Not Found', () => pm.response.to.have.status(404));",
-                  "pm.test('Hata mesaji var', () => pm.expect(pm.response.json().message).to.exist);"
+                  "pm.test('Hata mesajı var', () => pm.expect(pm.response.json().message).to.exist);",
+                  "pm.test('statusCode 404', () => pm.expect(pm.response.json().statusCode).to.equal(404));"
                 ]
               }
             }
@@ -3743,7 +3755,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status 404 Not Found', () => pm.response.to.have.status(404));",
-                  "pm.test('Hata mesaji var', () => pm.expect(pm.response.json().message).to.exist);"
+                  "pm.test('Hata mesajı var', () => pm.expect(pm.response.json().message).to.exist);",
+                  "pm.test('statusCode 404', () => pm.expect(pm.response.json().statusCode).to.equal(404));"
                 ]
               }
             }
