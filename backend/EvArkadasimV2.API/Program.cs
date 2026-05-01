@@ -185,6 +185,7 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
+    app.UseHsts();
     app.UseCors("Production");
 }
 
