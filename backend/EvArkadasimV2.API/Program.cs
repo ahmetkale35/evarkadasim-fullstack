@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
+using EvArkadasimV2.API.Middleware;
 using EvArkadasimV2.Application.Interfaces.Repositories;
 using EvArkadasimV2.Application.Interfaces.Services;
 using EvArkadasimV2.Application.Options;
@@ -188,6 +189,10 @@ else
     app.UseHsts();
     app.UseCors("Production");
 }
+
+// Pipeline'ın en dışında: controller, auth, routing gibi tüm katmanlardan
+// fırlayan exception'ları yakalar. Sonraya koyulursa önceki middleware'ler kör kalır.
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
