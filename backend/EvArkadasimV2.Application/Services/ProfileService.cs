@@ -41,15 +41,9 @@ namespace EvArkadasimV2.Application.Services
                 Lifestyle = user.Profile.Lifestyle ?? new List<string>(),
                 Photos = user.Profile.Photos ?? new List<string>(),
                 Interests = user.Profile.Interests ?? new List<string>(),
-                CharacterProfile = user.Profile.FinalScores != null ? new BasicTestResultDto
-                {
-                    SocialEnergy = user.Profile.FinalScores.SocialEnergy,
-                    OrderApproach = user.Profile.FinalScores.OrderApproach,
-                    ConflictManagement = user.Profile.FinalScores.ConflictManagement,
-                    SharingStyle = user.Profile.FinalScores.SharingStyle,
-                    LifeRhythm = user.Profile.FinalScores.LifeRhythm,
-                    CommunicationStyle = user.Profile.FinalScores.CommunicationStyle
-                } : null
+                CharacterProfile = MapScores(user.Profile.FinalScores),
+                InitialBasicTestResults = MapScores(user.Profile.InitialBasicTestResults),
+                FinalScores = MapScores(user.Profile.FinalScores)
             };
         }
 
@@ -76,5 +70,16 @@ namespace EvArkadasimV2.Application.Services
             _userRepository.Update(user);
             await _userRepository.SaveChangesAsync();
         }
+
+        private static BasicTestResultDto? MapScores(EvArkadasimV2.Domain.ValueObjects.BasicTestResults? scores) =>
+            scores == null ? null : new BasicTestResultDto
+            {
+                SocialEnergy = scores.SocialEnergy,
+                OrderApproach = scores.OrderApproach,
+                ConflictManagement = scores.ConflictManagement,
+                SharingStyle = scores.SharingStyle,
+                LifeRhythm = scores.LifeRhythm,
+                CommunicationStyle = scores.CommunicationStyle
+            };
     }
 }

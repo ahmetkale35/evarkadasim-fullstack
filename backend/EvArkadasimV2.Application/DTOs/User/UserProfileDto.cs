@@ -27,6 +27,8 @@ namespace EvArkadasimV2.Application.DTOs.User
         public int Cleanliness { get; set; }
         public int SocialLevel { get; set; }
         public BasicTestResultDto? CharacterProfile { get; set; }
+        public BasicTestResultDto? InitialBasicTestResults { get; set; }
+        public BasicTestResultDto? FinalScores { get; set; }
         public int LikedProfilesCount { get; set; }
         public int MatchesCount { get; set; }
         public double CompatibilityScore { get; set; }
