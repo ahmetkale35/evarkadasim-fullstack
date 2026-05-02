@@ -3183,7 +3183,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"title\": \"Hack denemesi\",\r\n  \"priceAmount\": 1,\r\n  \"currency\": \"₺\",\r\n  \"pricePeriod\": \"ay\",\r\n  \"location\": \"x\",\r\n  \"bedrooms\": 1,\r\n  \"bathrooms\": 1,\r\n  \"images\": [],\r\n  \"amenities\": [],\r\n  \"availableFrom\": \"2026-06-01T00:00:00Z\",\r\n  \"propertyType\": \"Room\",\r\n  \"furnished\": false,\r\n  \"petsAllowed\": false,\r\n  \"smokingAllowed\": false\r\n}",
+              "raw": "{\r\n  \"title\": \"Hack denemesi\",\r\n  \"priceAmount\": 1,\r\n  \"currency\": \"₺\",\r\n  \"pricePeriod\": \"ay\",\r\n  \"location\": \"xx\",\r\n  \"bedrooms\": 1,\r\n  \"bathrooms\": 1,\r\n  \"images\": [],\r\n  \"amenities\": [],\r\n  \"availableFrom\": \"2026-06-01T00:00:00Z\",\r\n  \"propertyType\": \"Room\",\r\n  \"furnished\": false,\r\n  \"petsAllowed\": false,\r\n  \"smokingAllowed\": false\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
