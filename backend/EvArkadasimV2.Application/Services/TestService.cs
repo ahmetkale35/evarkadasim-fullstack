@@ -36,7 +36,16 @@ namespace EvArkadasimV2.Application.Services
 
             // Detaylı test henüz çözülmemiş: FinalScores'u temel testle başlatıyoruz.
             // Eşleşme algoritması FinalScores üzerinden çalıştığı için bu değer her zaman dolu olmalı.
-            user.Profile.FinalScores = testResults;
+            // Ayrı instance: EF Core owned type aynı referansı iki property'ye atamayı desteklemez.
+            user.Profile.FinalScores = new BasicTestResults
+            {
+                SocialEnergy = dto.SocialEnergy,
+                OrderApproach = dto.OrderApproach,
+                ConflictManagement = dto.ConflictManagement,
+                SharingStyle = dto.SharingStyle,
+                LifeRhythm = dto.LifeRhythm,
+                CommunicationStyle = dto.CommunicationStyle
+            };
 
             _userRepository.Update(user);
             return await _userRepository.SaveChangesAsync();
