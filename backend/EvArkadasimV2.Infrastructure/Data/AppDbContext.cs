@@ -110,7 +110,16 @@ namespace EvArkadasimV2.Infrastructure.Data
                 });
             });
 
-            // --- 3. PROPERTY CONFIGURATION ---
+            // --- 3. UNIQUE CONSTRAINTS ---
+            builder.Entity<UserSwipe>()
+                .HasIndex(s => new { s.SenderId, s.ReceiverId })
+                .IsUnique();
+
+            builder.Entity<UserProfile>()
+                .HasIndex(p => p.AppUserId)
+                .IsUnique();
+
+            // --- 4. PROPERTY CONFIGURATION ---
             builder.Entity<Property>(entity =>
             {
                 entity.Property(p => p.PriceAmount).HasColumnType("decimal(18,2)");
