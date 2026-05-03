@@ -2,9 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace EvArkadasimV2.Application.DTOs.User
 {
-    // Tüm alanlar nullable: Client'ın göndermediği alan null gelir ve ProfileService
-    // bu alanları veritabanındaki mevcut değerin üzerine yazmaz.
-    // Bu yaklaşım HTTP PUT ile kısmi güncelleme (partial update) semantiği sağlar.
+    // Null gelen alanlar ProfileService'te atlanır — PUT ile partial update semantiği sağlar.
     public class UpdateProfileDto
     {
         [MaxLength(500)]

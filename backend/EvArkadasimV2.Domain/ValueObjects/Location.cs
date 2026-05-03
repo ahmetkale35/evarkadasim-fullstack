@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EvArkadasimV2.Domain.ValueObjects
 {
-    // Bu sınıf, bir kişinin konumunu temsil eder
     [Owned]
     public class Location
     {

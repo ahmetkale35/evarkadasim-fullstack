@@ -2,13 +2,11 @@
 
 namespace EvArkadasimV2.Application.Interfaces.Repositories
 {
-    // Bu arayüz, uygulama genelinde kullanılacak olan temel CRUD (Create, Read, Update, Delete) işlemlerini tanımlar.
     public interface IGenericRepository<T> where T : class
     {
         Task<T?> GetByIdAsync(int id);
         Task<T?> GetByIdStringAsync(string id);
 
-        // GÜNCELLEME: IQueryable dönüyoruz ve varsayılan olarak tracking (takip) açık geliyor.
         IQueryable<T> GetAll(bool tracking = true);
         IQueryable<T> Where(Expression<Func<T, bool>> predicate, bool tracking = true);
 

@@ -8,31 +8,25 @@ using System.Threading.Tasks;
 
 namespace EvArkadasimV2.Domain.Entities
 {
-    // UserProfile entity, AppUser ile birebir ilişki içinde olacak şekilde tasarlandı.
     public class UserProfile
     {
         public int Id { get; set; }
         public string AppUserId { get; set; }
-
-        // Navigation Property
         public AppUser AppUser { get; set; }
 
         public int Age { get; set; }
         public string? Bio { get; set; }
-        public string? Budget { get; set; }       
-        public string? MoveInDate { get; set; }  
+        public string? Budget { get; set; }
+        public string? MoveInDate { get; set; }
 
-        // Listeler nullable yapıldı
-        public List<string>? Lifestyle { get; set; } = new List<string>(); 
+        public List<string>? Lifestyle { get; set; } = new List<string>();
         public List<string>? Photos { get; set; } = new List<string>();
-        public List<string>? Interests { get; set; } = new List<string>(); 
+        public List<string>? Interests { get; set; } = new List<string>();
 
         public string? Occupation { get; set; }
-        public string? Education { get; set; }    
+        public string? Education { get; set; }
         public Location? Location { get; set; }
-        // Nullable: kullanıcı oda tipi tercihi belirtmemiş olabilir ("any" ↔ null).
-        // Frontend'in "any" değeri burada null ile temsil edilir — "any" gerçek bir oda tipi
-        // değil, "fark etmez" anlamında bir filtre tercihi olduğu için enum'a eklenmedi.
+        // null = "fark etmez" filtresi; frontend "any" değerine karşılık gelir, enum'a eklenmedi.
         public RoomType? RoomType { get; set; }
         public LookingFor? LookingFor { get; set; }
 

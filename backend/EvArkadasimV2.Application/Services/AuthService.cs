@@ -28,8 +28,6 @@ namespace EvArkadasimV2.Application.Services
                 UserName = request.Email,
                 Email = request.Email,
                 Name = request.Name,
-                // EF Core "cascade insert" davranışı: AppUser kaydedildiğinde
-                // ilişkili UserProfile da otomatik olarak INSERT edilir.
                 Profile = new UserProfile()
             };
 
@@ -49,9 +47,7 @@ namespace EvArkadasimV2.Application.Services
         {
             var user = await _userManager.FindByEmailAsync(request.Email);
 
-            // Kullanıcı numaralandırması (user enumeration) saldırısını önlemek için
-            // "kullanıcı yok" ile "şifre yanlış" durumlarında aynı hata mesajı dönülür.
-            // Böylece saldırgan hangi e-postaların kayıtlı olduğunu tespit edemez.
+            // User enumeration saldırısına karşı iki durum aynı mesajla döner.
             var isPasswordValid = user != null && await _userManager.CheckPasswordAsync(user, request.Password);
             if (!isPasswordValid)
                 throw new UnauthorizedException("E-posta veya şifre hatalı.");
@@ -91,8 +87,6 @@ namespace EvArkadasimV2.Application.Services
             new()
             {
                 Token = token,
-                // ISO 8601 formatı ("o"): "2026-04-25T14:30:00.0000000Z"
-                // Timezone belirsizliği olmadan client-server arasında güvenli tarih aktarımı sağlar.
                 Expiration = expiration.ToString("o"),
                 UserId = user.Id,
                 Name = user.Name ?? string.Empty,

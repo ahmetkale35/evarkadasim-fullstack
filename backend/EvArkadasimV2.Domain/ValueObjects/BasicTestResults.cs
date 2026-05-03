@@ -8,12 +8,6 @@ using System.Threading.Tasks;
 
 namespace EvArkadasimV2.Domain.ValueObjects
 {
-    // Bu sınıf, temel test sonuçlarını temsil eder
-    // ve kişilik tipini hesaplamak için gerekli özellikleri içerir.
-    // Kişilik tipi, sosyal enerji, düzen yaklaşımı ve çatışma yönetimi
-    // gibi faktörlere dayanarak belirlenir.
-   
-
     [Owned]
     public class BasicTestResults
     {
@@ -24,20 +18,15 @@ namespace EvArkadasimV2.Domain.ValueObjects
         public double LifeRhythm { get; set; }
         public double CommunicationStyle { get; set; }
 
-
-        // Kişilik tipi, sosyal enerji, düzen yaklaşımı ve çatışma yönetimi gibi faktörlere dayanarak belirlenir.
+        // E/I: SocialEnergy, S/F: OrderApproach, D/H: ConflictManagement — eşik değeri 3.
         [NotMapped]
         public string PersonalityType
         {
             get
             {
-                // extroversion (E) veya introversion (I) türkçe karşılıkları: dışa dönüklük (E) veya içe dönüklük (I)
                 var e_i = SocialEnergy > 3 ? "E" : "I";
-                // sensing (S) veya feeling (F) türkçe karşılıkları: algılama (S) veya hissetme (F)
                 var s_f = OrderApproach > 3 ? "S" : "F";
-                // judging (J) veya perceiving (P) türkçe karşılıkları: yargılama (J) veya algılama (P)
                 var d_h = ConflictManagement > 3 ? "D" : "H";
-                
                 return $"{e_i}{s_f}{d_h}";
             }
         }

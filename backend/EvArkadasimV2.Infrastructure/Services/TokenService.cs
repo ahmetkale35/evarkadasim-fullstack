@@ -29,14 +29,11 @@ namespace EvArkadasimV2.Infrastructure.Services
 
             var claims = new List<Claim>
             {
-                // ClaimTypes.NameIdentifier: Controller'larda User.FindFirstValue(ClaimTypes.NameIdentifier)
-                // çalışabilmek için ASP.NET Identity sisteminin beklediği standart claim tipi.
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email!),
                 new Claim(JwtRegisteredClaimNames.Name, user.Name ?? string.Empty),
-                // Jti (JWT ID): Her token'a benzersiz bir kimlik atar. Token iptali
-                // için RevokedTokens tablosunda bu değer üzerinden eşleştirme yapılır.
+                // Jti: logout sırasında RevokedTokens tablosunda bu değer üzerinden eşleştirme yapılır.
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
