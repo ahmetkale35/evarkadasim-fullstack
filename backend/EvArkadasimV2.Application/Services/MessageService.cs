@@ -4,6 +4,7 @@ using EvArkadasimV2.Application.Interfaces.Repositories;
 using EvArkadasimV2.Application.Interfaces.Services;
 using EvArkadasimV2.Domain.Entities;
 using EvArkadasimV2.Domain.Enums;
+using System.Net;
 
 namespace EvArkadasimV2.Application.Services
 {
@@ -47,7 +48,7 @@ namespace EvArkadasimV2.Application.Services
             {
                 UserMatchId = dto.MatchId,
                 SenderId = senderId,
-                Content = dto.Content,
+                Content = WebUtility.HtmlEncode(dto.Content),
                 Timestamp = DateTime.UtcNow,
                 Type = messageType,
                 IsRead = false
