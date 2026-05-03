@@ -147,6 +147,9 @@ builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>()
 builder.Services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrategy>();
 builder.Services.AddInMemoryRateLimiting();
 
+// --- HEALTH CHECK ---
+builder.Services.AddHealthChecks();
+
 // --- CORS ---
 // Geliştirme: her kaynağa açık (emülatör ve yerel tarayıcı testleri için).
 // Üretim: yalnızca kendi domain'ine izin ver. AllowAnyOrigin() production'da
@@ -156,8 +159,12 @@ builder.Services.AddCors(options =>
     options.AddPolicy("Development", policy =>
         policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 
+    var allowedOrigins = builder.Configuration
+        .GetSection("Cors:AllowedOrigins")
+        .Get<string[]>() ?? Array.Empty<string>();
+
     options.AddPolicy("Production", policy =>
-        policy.WithOrigins("https://evarkadasim.com")
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyMethod()
               .AllowAnyHeader());
 });
@@ -214,5 +221,6 @@ app.UseAuthentication();
 app.UseMiddleware<TokenRevocationMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();
