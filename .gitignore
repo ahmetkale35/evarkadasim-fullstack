@@ -71,6 +71,11 @@ frontend/graphify-out/
 backend/.graphifyignore
 frontend/.graphifyignore
 backend/_query*.py
+backend/.graphify_python
+.graphify_uncached.txt
+backend/audit-dashboard.html
+backend/docs/audit-tasks.json
+backend/profile-README.md
 
 # =====================
 # Documentation (Local Only)
