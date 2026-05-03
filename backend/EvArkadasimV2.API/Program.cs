@@ -208,6 +208,10 @@ app.UseMiddleware<GlobalExceptionMiddleware>();
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
+// UseAuthentication sonrasında: sadece doğrulanmış token'larda revocation kontrolü yapar.
+// UseAuthorization öncesinde olması gerekir; revoke edilmiş token 401 alır, [Authorize]
+// endpoint'lerine hiç ulaşamaz.
+app.UseMiddleware<TokenRevocationMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
 

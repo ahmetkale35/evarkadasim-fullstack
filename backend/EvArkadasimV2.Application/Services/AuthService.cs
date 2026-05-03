@@ -41,7 +41,8 @@ namespace EvArkadasimV2.Application.Services
             }
 
             var (token, expiration) = _tokenService.GenerateToken(user);
-            return BuildAuthResponse(user, token, expiration);
+            var refreshToken = await _tokenService.GenerateRefreshTokenAsync(user.Id);
+            return BuildAuthResponse(user, token, expiration, refreshToken);
         }
 
         public async Task<AuthResponseDto> LoginAsync(LoginDto request)
@@ -56,10 +57,37 @@ namespace EvArkadasimV2.Application.Services
                 throw new UnauthorizedException("E-posta veya şifre hatalı.");
 
             var (token, expiration) = _tokenService.GenerateToken(user!);
-            return BuildAuthResponse(user!, token, expiration);
+            var refreshToken = await _tokenService.GenerateRefreshTokenAsync(user!.Id);
+            return BuildAuthResponse(user!, token, expiration, refreshToken);
         }
 
-        private static AuthResponseDto BuildAuthResponse(AppUser user, string token, DateTime expiration) =>
+        public async Task<AuthResponseDto> RefreshTokenAsync(string refreshToken)
+        {
+            var (isValid, userId) = await _tokenService.ValidateRefreshTokenAsync(refreshToken);
+            if (!isValid)
+                throw new UnauthorizedException("Refresh token geçersiz veya süresi dolmuş.");
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                throw new UnauthorizedException("Kullanıcı bulunamadı.");
+
+            // Eski refresh token'ı revoke et, yeni token çifti üret
+            await _tokenService.RevokeRefreshTokenAsync(refreshToken);
+
+            var (newToken, expiration) = _tokenService.GenerateToken(user);
+            var newRefreshToken = await _tokenService.GenerateRefreshTokenAsync(user.Id);
+            return BuildAuthResponse(user, newToken, expiration, newRefreshToken);
+        }
+
+        public async Task LogoutAsync(string jti, string userId, DateTime tokenExpiresAt, string? refreshToken)
+        {
+            await _tokenService.RevokeAccessTokenAsync(jti, userId, tokenExpiresAt);
+
+            if (!string.IsNullOrWhiteSpace(refreshToken))
+                await _tokenService.RevokeRefreshTokenAsync(refreshToken);
+        }
+
+        private static AuthResponseDto BuildAuthResponse(AppUser user, string token, DateTime expiration, string refreshToken) =>
             new()
             {
                 Token = token,
@@ -67,7 +95,8 @@ namespace EvArkadasimV2.Application.Services
                 // Timezone belirsizliği olmadan client-server arasında güvenli tarih aktarımı sağlar.
                 Expiration = expiration.ToString("o"),
                 UserId = user.Id,
-                Name = user.Name ?? string.Empty
+                Name = user.Name ?? string.Empty,
+                RefreshToken = refreshToken
             };
     }
 }

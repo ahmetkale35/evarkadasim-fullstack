@@ -1,9 +1,4 @@
-﻿using EvArkadasimV2.Application.DTOs.Auth;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using EvArkadasimV2.Application.DTOs.Auth;
 
 namespace EvArkadasimV2.Application.Interfaces.Services
 {
@@ -12,5 +7,7 @@ namespace EvArkadasimV2.Application.Interfaces.Services
     {
         Task<AuthResponseDto> RegisterAsync(RegisterDto request);
         Task<AuthResponseDto> LoginAsync(LoginDto request);
+        Task<AuthResponseDto> RefreshTokenAsync(string refreshToken);
+        Task LogoutAsync(string jti, string userId, DateTime tokenExpiresAt, string? refreshToken);
     }
 }
