@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
+using AspNetCoreRateLimit;
 using EvArkadasimV2.API.Middleware;
 using EvArkadasimV2.Application.Interfaces.Repositories;
 using EvArkadasimV2.Application.Interfaces.Services;
@@ -137,6 +138,15 @@ builder.Services.AddSwaggerGen(c =>
     c.IncludeXmlComments(xmlPath);
 });
 
+// --- RATE LIMITING ---
+builder.Services.AddMemoryCache();
+builder.Services.Configure<IpRateLimitOptions>(builder.Configuration.GetSection("IpRateLimiting"));
+builder.Services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
+builder.Services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
+builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+builder.Services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrategy>();
+builder.Services.AddInMemoryRateLimiting();
+
 // --- CORS ---
 // Geliştirme: her kaynağa açık (emülatör ve yerel tarayıcı testleri için).
 // Üretim: yalnızca kendi domain'ine izin ver. AllowAnyOrigin() production'da
@@ -190,7 +200,9 @@ else
     app.UseCors("Production");
 }
 
-// Pipeline'ın en dışında: controller, auth, routing gibi tüm katmanlardan
+app.UseIpRateLimiting();
+
+// Pipeline'ın en dışunda: controller, auth, routing gibi tüm katmanlardan
 // fırlayan exception'ları yakalar. Sonraya koyulursa önceki middleware'ler kör kalır.
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
