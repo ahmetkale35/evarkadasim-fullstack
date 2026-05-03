@@ -3,13 +3,13 @@ using EvArkadasimV2.Domain.Enums;
 
 namespace EvArkadasimV2.Application.DTOs.Property
 {
-    public class CreatePropertyDto
+    public class CreatePropertyDto : IValidatableObject
     {
         [Required]
         [StringLength(200, MinimumLength = 3)]
         public string Title { get; set; } = string.Empty;
 
-        [Range(0, 1_000_000)]
+        [Range(1, 1_000_000, ErrorMessage = "Fiyat 1 ile 1.000.000 arasında olmalı.")]
         public decimal PriceAmount { get; set; }
 
         [Required]
@@ -43,5 +43,13 @@ namespace EvArkadasimV2.Application.DTOs.Property
         public bool Furnished { get; set; }
         public bool PetsAllowed { get; set; }
         public bool SmokingAllowed { get; set; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (AvailableFrom.Date < DateTime.UtcNow.Date)
+                yield return new ValidationResult(
+                    "AvailableFrom geçmiş tarih olamaz.",
+                    new[] { nameof(AvailableFrom) });
+        }
     }
 }

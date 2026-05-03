@@ -13,7 +13,7 @@ namespace EvArkadasimV2.Application.DTOs.Chat
         public string Content { get; set; }
 
         [Required(ErrorMessage = "Mesaj türü belirtilmelidir.")]
-        [RegularExpression("^(text|image|gif)$", ErrorMessage = "Geçersiz mesaj türü. Geçerli değerler: text, image, gif")]
+        [RegularExpression("(?i)^(text|image|gif)$", ErrorMessage = "Geçersiz mesaj türü. Geçerli değerler: text, image, gif")]
         public string Type { get; set; } = "text";
     }
 }
