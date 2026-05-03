@@ -37,12 +37,7 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
-// --- YAPILANDIRMA (OPTIONS PATTERN) ---
-// IConfiguration yerine strongly-typed JwtSettings: servislere type-safe erişim sağlar.
-// Üretim ortamında Secret değeri environment variable veya Azure Key Vault'tan okunur:
-//   Linux/Mac: export JwtSettings__Secret="..."
-//   Windows:   $env:JwtSettings__Secret="..."
-//   Azure:     App Settings → JwtSettings:Secret
+// --- YAPILANDIRMA ---
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 
 // --- JWT KİMLİK DOĞRULAMA ---
@@ -86,11 +81,6 @@ builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 
 // --- API ARAÇLARI ---
-// JsonStringEnumConverter: enum'ları JSON'da int yerine string olarak serialize/deserialize eder.
-// Neden: Frontend (TypeScript) string union tip kullanıyor (örn. "Like" / "Pass"); int değer
-// dönersek client tarafında her enum için manuel mapping gerekir. String'ler self-documenting,
-// API yüzeyinde versiyon değişikliklerine karşı daha sağlam (yeni enum değer eklemek
-// mevcut int sırasını bozma riski taşımaz).
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -114,8 +104,6 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 
-    // Http Bearer: Swagger UI "Bearer " önekini otomatik ekler; kullanıcı sadece token'ı girer.
-    // ApiKey ile kurulunca kullanıcının "Bearer {token}" yazmasi gerekiyordu.
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Type = SecuritySchemeType.Http,
@@ -171,18 +159,13 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// --- DATA SEEDING (yalnızca Development) ---
-// Idempotent: zaten seed kullanıcıları varsa tekrar eklenmez. Üretimde çalışmaz.
-// CreateScope: UserManager ve AppDbContext scoped servislerdir; root container'dan
-// doğrudan resolve edilemezler, scope açmamız gerekir.
+// --- DATA SEEDING (yalnızca Development) ---clac
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
     var sp = scope.ServiceProvider;
 
-    // Auto-migrate: schema her zaman model ile senkron başlasın.
-    // Aksi halde eski DB üzerinde çalışırken kolon eksikliği gibi hatalar UserManager.CreateAsync
-    // sırasında patlayabilir.
+    // Migration önce: seed sırasında şema uyuşmazlığından kaynaklanan hataları önler.
     var db = sp.GetRequiredService<EvArkadasimV2.Infrastructure.Data.AppDbContext>();
     await db.Database.MigrateAsync();
 
@@ -190,6 +173,9 @@ if (app.Environment.IsDevelopment())
 }
 
 // --- MIDDLEWARE PIPELINE ---
+// Pipeline'ın en dışunda: tüm katmanlardan fırlayan exception'ları yakalar.
+app.UseMiddleware<GlobalExceptionMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -207,17 +193,12 @@ else
     app.UseCors("Production");
 }
 
-app.UseIpRateLimiting();
-
-// Pipeline'ın en dışunda: controller, auth, routing gibi tüm katmanlardan
-// fırlayan exception'ları yakalar. Sonraya koyulursa önceki middleware'ler kör kalır.
-app.UseMiddleware<GlobalExceptionMiddleware>();
+if (!app.Environment.IsDevelopment())
+    app.UseIpRateLimiting();
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
-// UseAuthentication sonrasında: sadece doğrulanmış token'larda revocation kontrolü yapar.
-// UseAuthorization öncesinde olması gerekir; revoke edilmiş token 401 alır, [Authorize]
-// endpoint'lerine hiç ulaşamaz.
+// UseAuthentication sonrası, UseAuthorization öncesi: revoke edilmiş token [Authorize]'a ulaşmadan 401 alır.
 app.UseMiddleware<TokenRevocationMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
