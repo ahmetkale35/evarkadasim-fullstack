@@ -11,5 +11,6 @@ namespace EvArkadasimV2.Domain.Entities
         // AppUser her zaman bir Profile ile birlikte oluşturulur (AuthService bunu garantiler).
         // Include() yapılmadan çekilen sorguların sonuçlarına erişmeden önce null kontrolü yapılmalı.
         public UserProfile Profile { get; set; } = null!;
+        public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
     }
 }

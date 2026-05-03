@@ -16,6 +16,8 @@ namespace EvArkadasimV2.Infrastructure.Data
         public DbSet<UserSwipe> UserSwipes { get; set; }
         public DbSet<UserMatch> UserMatches { get; set; }
         public DbSet<Message> Messages { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<RevokedToken> RevokedTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -110,7 +112,18 @@ namespace EvArkadasimV2.Infrastructure.Data
                 });
             });
 
-            // --- 3. UNIQUE CONSTRAINTS ---
+            // --- 3. REFRESH & REVOKED TOKEN YAPILANDIRMASI ---
+            builder.Entity<RefreshToken>()
+                .HasOne(rt => rt.User)
+                .WithMany(u => u.RefreshTokens)
+                .HasForeignKey(rt => rt.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Jti üzerinde index: IsAccessTokenRevokedAsync sorgusunu hızlandırır.
+            builder.Entity<RevokedToken>()
+                .HasIndex(rt => rt.Jti);
+
+            // --- 5. UNIQUE CONSTRAINTS ---
             builder.Entity<UserSwipe>()
                 .HasIndex(s => new { s.SenderId, s.ReceiverId })
                 .IsUnique();
@@ -119,7 +132,7 @@ namespace EvArkadasimV2.Infrastructure.Data
                 .HasIndex(p => p.AppUserId)
                 .IsUnique();
 
-            // --- 4. PROPERTY CONFIGURATION ---
+            // --- 6. PROPERTY CONFIGURATION ---
             builder.Entity<Property>(entity =>
             {
                 entity.Property(p => p.PriceAmount).HasColumnType("decimal(18,2)");
