@@ -42,11 +42,8 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
         setTimeout(() => {
             if (username === '123' && password === '123') {
                 setLoading(false);
-                Alert.alert(
-                    'Başarılı!',
-                    isLoginMode ? 'Giriş başarılı!' : 'Hesap oluşturuldu!',
-                    [{ text: 'Tamam', onPress: onAuthSuccess }]
-                );
+                Alert.alert('Başarılı!', isLoginMode ? 'Giriş başarılı!' : 'Hesap oluşturuldu!');
+                onAuthSuccess();
             } else {
                 setLoading(false);
                 Alert.alert('Hata', 'Kullanıcı adı veya şifre hatalı.\nDoğru bilgiler: 123 / 123');
