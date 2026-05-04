@@ -10,7 +10,7 @@ namespace EvArkadasimV2.Application.DTOs.Chat
 
         [Required(ErrorMessage = "Mesaj içeriği boş olamaz.")]
         [StringLength(2000, MinimumLength = 1, ErrorMessage = "Mesaj 1-2000 karakter arasında olmalıdır.")]
-        public string Content { get; set; }
+        public string Content { get; set; } = null!;
 
         [Required(ErrorMessage = "Mesaj türü belirtilmelidir.")]
         [RegularExpression("(?i)^(text|image|gif)$", ErrorMessage = "Geçersiz mesaj türü. Geçerli değerler: text, image, gif")]

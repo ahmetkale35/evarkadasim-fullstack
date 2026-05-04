@@ -11,8 +11,8 @@ namespace EvArkadasimV2.Domain.Entities
     public class UserProfile
     {
         public int Id { get; set; }
-        public string AppUserId { get; set; }
-        public AppUser AppUser { get; set; }
+        public string AppUserId { get; set; } = null!;
+        public AppUser AppUser { get; set; } = null!;
 
         public int Age { get; set; }
         public string? Bio { get; set; }

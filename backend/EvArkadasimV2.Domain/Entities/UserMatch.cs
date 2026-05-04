@@ -9,10 +9,10 @@ namespace EvArkadasimV2.Domain.Entities
     public class UserMatch
     {
         public int Id { get; set; }
-        public string User1Id { get; set; }
-        public AppUser User1 { get; set; }
-        public string User2Id { get; set; }
-        public AppUser User2 { get; set; }
+        public string User1Id { get; set; } = null!;
+        public AppUser User1 { get; set; } = null!;
+        public string User2Id { get; set; } = null!;
+        public AppUser User2 { get; set; } = null!;
 
         public DateTime MatchedAt { get; set; } = DateTime.UtcNow;
         public bool User1HasSeen { get; set; } = false;
