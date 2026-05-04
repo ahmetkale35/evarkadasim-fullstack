@@ -28,11 +28,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup .NET 9 (C# analizi için)
+      - name: Setup .NET SDKs (C# analizi için)
         if: matrix.language == 'csharp'
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: |
+            6.0.x
+            9.0.x
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
