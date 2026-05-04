@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Heart, Home, Users, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
+import { authService } from '@/services/authService';
 
 interface AuthScreenProps {
     onAuthSuccess: () => void;
@@ -30,25 +31,29 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
         opacity: formOpacity.value,
     }));
 
-    const handleAuth = () => {
+    const handleAuth = async () => {
         if (!username.trim() || !password.trim()) {
             Alert.alert('Hata', 'Lütfen tüm alanları doldurun.');
             return;
         }
 
         setLoading(true);
-
-        // Basit doğrulama (daha sonra gerçek API ile değiştirilecek)
-        setTimeout(() => {
-            if (username === '123' && password === '123') {
-                setLoading(false);
-                Alert.alert('Başarılı!', isLoginMode ? 'Giriş başarılı!' : 'Hesap oluşturuldu!');
-                onAuthSuccess();
+        try {
+            if (isLoginMode) {
+                await authService.login({ email: username.trim(), password });
             } else {
-                setLoading(false);
-                Alert.alert('Hata', 'Kullanıcı adı veya şifre hatalı.\nDoğru bilgiler: 123 / 123');
+                // Kayıt sırasında name olarak email'in @ öncesi kısmı kullanılır,
+                // kullanıcı profil ekranında sonradan düzenleyebilir
+                const name = username.split('@')[0];
+                await authService.register({ name, email: username.trim(), password });
             }
-        }, 1000);
+            onAuthSuccess();
+        } catch (error: any) {
+            const message = error.response?.data?.message ?? 'Bir hata oluştu. Lütfen tekrar dene.';
+            Alert.alert('Hata', message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const toggleMode = () => {
@@ -106,11 +111,12 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
                                         <Mail size={20} color="#9CA3AF" style={styles.inputIcon} />
                                         <TextInput
                                             style={styles.textInput}
-                                            placeholder="Kullanıcı adı"
+                                            placeholder="E-posta adresi"
                                             value={username}
                                             onChangeText={setUsername}
                                             autoCapitalize="none"
                                             autoCorrect={false}
+                                            keyboardType="email-address"
                                             placeholderTextColor="#9CA3AF"
                                         />
                                     </View>
@@ -141,13 +147,6 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
                                             )}
                                         </TouchableOpacity>
                                     </View>
-                                </View>
-
-                                {/* Demo bilgileri */}
-                                <View style={styles.demoInfo}>
-                                    <Text style={styles.demoText}>
-                                        Demo için: Kullanıcı adı: 123, Şifre: 123
-                                    </Text>
                                 </View>
 
                                 {/* Giriş butonu */}
