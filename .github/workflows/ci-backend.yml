@@ -1,0 +1,34 @@
+name: CI — Backend
+
+on:
+  push:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/ci-backend.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+
+jobs:
+  build-and-test:
+    name: Build & Test (.NET)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 9 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore backend/EvArkadasimV2.slnx
+
+      - name: Build
+        run: dotnet build backend/EvArkadasimV2.slnx --no-restore -c Release
+
+      - name: Test
+        run: dotnet test backend/EvArkadasimV2.Tests/EvArkadasimV2.Tests.csproj --no-build -c Release --logger "console;verbosity=minimal"
