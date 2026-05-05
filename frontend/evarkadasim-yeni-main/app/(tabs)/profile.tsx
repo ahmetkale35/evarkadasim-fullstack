@@ -1,43 +1,33 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Switch, ActivityIndicator, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Settings, Camera, MapPin, Heart, Star, Shield, Bell, Eye, CreditCard as Edit, Shield as Verified, Brain, Lock, CheckCircle2 } from 'lucide-react-native';
+import { Settings, Camera, MapPin, Heart, Star, Shield, Bell, Eye, CreditCard as Edit, Shield as Verified, Brain, Lock, CheckCircle2, LogOut } from 'lucide-react-native';
 import { CharacterTest } from '@/components/CharacterTest';
 import { useCharacterTest } from '@/hooks/useCharacterTest';
-
-interface ProfileData {
-  name: string;
-  age: number;
-  bio: string;
-  photos: string[];
-  location: string;
-  interests: string[];
-  occupation: string;
-  education: string;
-  isVerified: boolean;
-}
+import { useProfile } from '@/hooks/useProfile';
+import { authService } from '@/services/authService';
+import { authEvents } from '@/services/authEvents';
 
 export default function ProfileScreen() {
-  const [profile] = useState<ProfileData>({
-    name: 'Alex',
-    age: 27,
-    bio: 'Software developer looking for a clean, respectful roommate. I work from home sometimes but am generally quiet and organized.',
-    photos: [
-      'https://images.pexels.com/photos/1040880/pexels-photo-1040880.jpeg?auto=compress&cs=tinysrgb&w=600',
-      'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=600'
-    ],
-    location: 'San Francisco, CA',
-    interests: ['Technology', 'Reading', 'Coffee', 'Cooking', 'Gaming', 'Movies'],
-    occupation: 'Software Developer',
-    education: 'Stanford University',
-    isVerified: true
-  });
+  const { profile, loading } = useProfile();
 
   const [notifications, setNotifications] = useState(true);
   const [showOnline, setShowOnline] = useState(true);
   const [showBasicTest, setShowBasicTest] = useState(false);
   const [showDetailedTest, setShowDetailedTest] = useState(false);
+
+  const handleLogout = () => {
+    Alert.alert('Çıkış Yap', 'Hesabından çıkmak istediğine emin misin?', [
+      { text: 'İptal', style: 'cancel' },
+      {
+        text: 'Çıkış Yap', style: 'destructive', onPress: async () => {
+          await authService.logout();
+          authEvents.emitUnauthorized();
+        }
+      },
+    ]);
+  };
 
   // Global test hook'unu kullan
   const {
@@ -52,9 +42,8 @@ export default function ProfileScreen() {
   } = useCharacterTest();
 
   const stats = [
-    { label: 'Profiles Liked', value: '89', icon: Heart },
-    { label: 'Roommate Matches', value: '12', icon: Star },
-    { label: 'Profile Views', value: '156', icon: Eye }
+    { label: 'Beğenilen', value: profile?.likedProfilesCount?.toString() ?? '—', icon: Heart },
+    { label: 'Eşleşme', value: profile?.matchesCount?.toString() ?? '—', icon: Star },
   ];
 
   const handleBasicTestComplete = (results: typeof basicTestResults) => {
@@ -76,7 +65,14 @@ export default function ProfileScreen() {
     setShowDetailedTest(false);
   };
 
-  // Eğer test gösteriliyorsa test ekranını göster
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FDF2F8' }}>
+        <ActivityIndicator size="large" color="#EC4899" />
+      </View>
+    );
+  }
+
   if (showBasicTest) {
     return (
       <CharacterTest
@@ -113,11 +109,17 @@ export default function ProfileScreen() {
           {/* Profile Photos */}
           <View style={styles.photosContainer}>
             <View style={styles.mainPhotoContainer}>
-              <Image source={{ uri: profile.photos[0] }} style={styles.mainPhoto} />
+              {profile?.photos?.[0] ? (
+                <Image source={{ uri: profile.photos[0] }} style={styles.mainPhoto} />
+              ) : (
+                <View style={[styles.mainPhoto, { backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }]}>
+                  <Camera size={40} color="#9CA3AF" />
+                </View>
+              )}
               <TouchableOpacity style={styles.cameraButton}>
                 <Camera size={20} color="#fff" />
               </TouchableOpacity>
-              {profile.isVerified && (
+              {profile?.isVerified && (
                 <View style={styles.verifiedBadge}>
                   <Verified size={20} color="#fff" fill="#3B82F6" />
                 </View>
@@ -125,7 +127,7 @@ export default function ProfileScreen() {
             </View>
 
             <View style={styles.additionalPhotos}>
-              {profile.photos.slice(1).map((photo, index) => (
+              {(profile?.photos ?? []).slice(1).map((photo, index) => (
                 <View key={index} style={styles.photoSlot}>
                   <Image source={{ uri: photo }} style={styles.additionalPhoto} />
                 </View>
@@ -139,28 +141,34 @@ export default function ProfileScreen() {
           {/* Profile Info */}
           <View style={styles.infoSection}>
             <View style={styles.nameRow}>
-              <Text style={styles.name}>{profile.name}, {profile.age}</Text>
+              <Text style={styles.name}>{profile?.name ?? '—'}{profile?.age ? `, ${profile.age}` : ''}</Text>
               <TouchableOpacity style={styles.editButton}>
                 <Edit size={18} color="#EC4899" />
               </TouchableOpacity>
             </View>
 
-            <View style={styles.locationRow}>
-              <MapPin size={16} color="#9CA3AF" />
-              <Text style={styles.location}>{profile.location}</Text>
-            </View>
+            {profile?.location?.city && (
+              <View style={styles.locationRow}>
+                <MapPin size={16} color="#9CA3AF" />
+                <Text style={styles.location}>{profile.location.city}</Text>
+              </View>
+            )}
 
-            <Text style={styles.bio}>{profile.bio}</Text>
+            {profile?.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
 
             <View style={styles.detailsContainer}>
-              <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>Occupation</Text>
-                <Text style={styles.detailValue}>{profile.occupation}</Text>
-              </View>
-              <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>Education</Text>
-                <Text style={styles.detailValue}>{profile.education}</Text>
-              </View>
+              {profile?.occupation && (
+                <View style={styles.detailItem}>
+                  <Text style={styles.detailLabel}>Meslek</Text>
+                  <Text style={styles.detailValue}>{profile.occupation}</Text>
+                </View>
+              )}
+              {profile?.education && (
+                <View style={styles.detailItem}>
+                  <Text style={styles.detailLabel}>Eğitim</Text>
+                  <Text style={styles.detailValue}>{profile.education}</Text>
+                </View>
+              )}
             </View>
           </View>
 
@@ -279,16 +287,18 @@ export default function ProfileScreen() {
           </View>
 
           {/* Interests */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Interests</Text>
-            <View style={styles.interestsContainer}>
-              {profile.interests.map((interest, index) => (
-                <View key={index} style={styles.interestTag}>
-                  <Text style={styles.interestText}>{interest}</Text>
-                </View>
-              ))}
+          {(profile?.interests ?? []).length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>İlgi Alanları</Text>
+              <View style={styles.interestsContainer}>
+                {profile!.interests.map((interest, index) => (
+                  <View key={index} style={styles.interestTag}>
+                    <Text style={styles.interestText}>{interest}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
-          </View>
+          )}
 
           {/* Stats */}
           <View style={styles.section}>
@@ -337,7 +347,14 @@ export default function ProfileScreen() {
             <TouchableOpacity style={styles.settingItem}>
               <View style={styles.settingInfo}>
                 <Shield size={20} color="#6B7280" />
-                <Text style={styles.settingLabel}>Privacy & Safety</Text>
+                <Text style={styles.settingLabel}>Gizlilik & Güvenlik</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={[styles.settingItem, { marginTop: 8 }]} onPress={handleLogout}>
+              <View style={styles.settingInfo}>
+                <LogOut size={20} color="#EF4444" />
+                <Text style={[styles.settingLabel, { color: '#EF4444' }]}>Çıkış Yap</Text>
               </View>
             </TouchableOpacity>
           </View>

@@ -1,25 +1,34 @@
-import { useEffect, useState } from 'react';
-import { Stack } from 'expo-router';
+import { useState, useEffect } from 'react';
+import { Stack, Redirect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { AuthScreen } from '@/components/AuthScreen';
+import { authService } from '@/services/authService';
+import { authEvents } from '@/services/authEvents';
 
 export default function RootLayout() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [frameworkReady, setFrameworkReady] = useState(false);
 
   useFrameworkReady();
 
   useEffect(() => {
-    // Framework hazır olduğunda işaretle
-    setFrameworkReady(true);
+    // Herhangi bir ekrandan 401 gelirse login ekranına dön
+    const unsubscribe = authEvents.onUnauthorized(() => setIsAuthenticated(false));
+    return () => { unsubscribe(); };
   }, []);
 
-  const handleLoadingFinish = () => {
-    setIsLoading(false);
+  const handleLoadingFinish = async () => {
+    try {
+      const loggedIn = await authService.isLoggedIn();
+      setIsAuthenticated(loggedIn);
+    } catch {
+      setIsAuthenticated(false);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleAuthSuccess = () => {
@@ -46,12 +55,14 @@ export default function RootLayout() {
     );
   }
 
-  // Kullanıcı giriş yaptıysa ana uygulamayı göster
+  // Kullanıcı giriş yaptıysa tab navigasyonuna yönlendir
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
         <Stack.Screen name="+not-found" />
       </Stack>
+      <Redirect href="/(tabs)" />
       <StatusBar style="auto" />
     </GestureHandlerRootView>
   );

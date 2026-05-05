@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
 import { TestResults, DetailedTestResults } from '@/types';
+import { testService } from '@/services/testService';
 
-// Global state için basit bir store
+// Birden fazla bileşen aynı test state'ini okuyabilsin diye module-level store
 let globalBasicTestResults: TestResults | null = null;
 let globalDetailedTestResults: DetailedTestResults | null = null;
 let listeners: Set<() => void> = new Set();
 
-const notifyListeners = () => {
-    listeners.forEach(listener => listener());
-};
+const notifyListeners = () => listeners.forEach(l => l());
 
 export function useCharacterTest() {
     const [basicTestResults, setBasicTestResults] = useState<TestResults | null>(globalBasicTestResults);
@@ -19,33 +18,31 @@ export function useCharacterTest() {
             setBasicTestResults(globalBasicTestResults);
             setDetailedTestResults(globalDetailedTestResults);
         };
-
         listeners.add(listener);
-
-        return () => {
-            listeners.delete(listener);
-        };
+        return () => { listeners.delete(listener); };
     }, []);
 
     const setBasicTestResultsGlobal = (results: TestResults | null) => {
         globalBasicTestResults = results;
         setBasicTestResults(results);
         notifyListeners();
+        // Global state güncellenince backend'e de kaydet; hata sessizce geçilir
+        if (results) {
+            testService.submitBasic(results).catch(() => {});
+        }
     };
 
     const setDetailedTestResultsGlobal = (results: DetailedTestResults | null) => {
         globalDetailedTestResults = results;
         setDetailedTestResults(results);
         notifyListeners();
+        if (results) {
+            testService.submitDetailed(results).catch(() => {});
+        }
     };
 
-    const hasCompletedBasicTest = (): boolean => {
-        return globalBasicTestResults !== null;
-    };
-
-    const hasCompletedDetailedTest = (): boolean => {
-        return globalDetailedTestResults !== null;
-    };
+    const hasCompletedBasicTest = (): boolean => globalBasicTestResults !== null;
+    const hasCompletedDetailedTest = (): boolean => globalDetailedTestResults !== null;
 
     const getPersonalityType = (results: TestResults) => {
         const e_i = results.socialEnergy > 3 ? 'E' : 'I';
@@ -63,7 +60,7 @@ export function useCharacterTest() {
             'ISD': 'Sakin Organize Doğrudan',
             'ISH': 'Sakin Organize Hassas',
             'IFD': 'Sakin Esnek Doğrudan',
-            'IFH': 'Sakin Esnek Hassas'
+            'IFH': 'Sakin Esnek Hassas',
         };
         return descriptions[type] || 'Bilinmeyen Tip';
     };
@@ -76,6 +73,6 @@ export function useCharacterTest() {
         hasCompletedBasicTest,
         hasCompletedDetailedTest,
         getPersonalityType,
-        getPersonalityDescription
+        getPersonalityDescription,
     };
-} 
+}

@@ -12,11 +12,16 @@ namespace EvArkadasimV2.Application.Services
     {
         private readonly IMessageRepository _messageRepository;
         private readonly IMatchRepository _matchRepository;
+        private readonly INotificationService _notifications;
 
-        public MessageService(IMessageRepository messageRepository, IMatchRepository matchRepository)
+        public MessageService(
+            IMessageRepository messageRepository,
+            IMatchRepository matchRepository,
+            INotificationService notifications)
         {
             _messageRepository = messageRepository;
             _matchRepository = matchRepository;
+            _notifications = notifications;
         }
 
         public async Task<PagedMessagesDto> GetMessagesAsync(int matchId, string currentUserId, int page, int pageSize)
@@ -57,7 +62,17 @@ namespace EvArkadasimV2.Application.Services
             await _messageRepository.AddAsync(message);
             await _messageRepository.SaveChangesAsync();
 
-            return MapToDto(message);
+            var messageDto = MapToDto(message);
+
+            // Alıcıya gerçek zamanlı push — bağlı değilse sessizce geçer.
+            var match = await _matchRepository.GetByIdAsync(dto.MatchId);
+            if (match is not null)
+            {
+                var recipientId = match.User1Id == senderId ? match.User2Id : match.User1Id;
+                await _notifications.SendMessageAsync(recipientId, messageDto);
+            }
+
+            return messageDto;
         }
 
         public async Task MarkAsReadAsync(int matchId, string currentUserId)

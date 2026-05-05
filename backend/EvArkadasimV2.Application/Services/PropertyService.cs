@@ -59,7 +59,7 @@ namespace EvArkadasimV2.Application.Services
                 Bedrooms = dto.Bedrooms,
                 Bathrooms = dto.Bathrooms,
                 Images = dto.Images,
-                Description = dto.Description,
+                Description = dto.Description ?? string.Empty,
                 Amenities = dto.Amenities,
                 AvailableFrom = dto.AvailableFrom,
                 PropertyType = dto.PropertyType,
@@ -94,7 +94,7 @@ namespace EvArkadasimV2.Application.Services
             property.Bedrooms = dto.Bedrooms;
             property.Bathrooms = dto.Bathrooms;
             property.Images = dto.Images;
-            property.Description = dto.Description;
+            property.Description = dto.Description ?? string.Empty;
             property.Amenities = dto.Amenities;
             property.AvailableFrom = dto.AvailableFrom;
             property.PropertyType = dto.PropertyType;

@@ -2,22 +2,48 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
 using AspNetCoreRateLimit;
+using Serilog;
 using EvArkadasimV2.API.Middleware;
 using EvArkadasimV2.Application.Interfaces.Repositories;
 using EvArkadasimV2.Application.Interfaces.Services;
 using EvArkadasimV2.Application.Options;
+
 using EvArkadasimV2.Application.Services;
 using EvArkadasimV2.Domain.Entities;
 using EvArkadasimV2.Infrastructure.Data;
 using EvArkadasimV2.Infrastructure.Repositories;
 using EvArkadasimV2.Infrastructure.Services;
+using EvArkadasimV2.API.Hubs;
+using EvArkadasimV2.API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(new ConfigurationBuilder()
+        .AddJsonFile("appsettings.json")
+        .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true)
+        .AddEnvironmentVariables()
+        .Build())
+    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}")
+    .WriteTo.File("logs/api-.log",
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 7,
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}")
+    .CreateBootstrapLogger();
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((ctx, services, config) => config
+    .ReadFrom.Configuration(ctx.Configuration)
+    .ReadFrom.Services(services)
+    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}")
+    .WriteTo.File("logs/api-.log",
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 7,
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}"));
 
 // --- VERİTABANI ---
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -60,6 +86,18 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = jwtSettings.Issuer,
         ValidAudience = jwtSettings.Audience,
         IssuerSigningKey = new SymmetricSecurityKey(secretKey)
+    };
+    // WebSocket handshake'de header gönderilemez — SignalR token'ı query string'den alır.
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var token = context.Request.Query["access_token"];
+            if (!string.IsNullOrEmpty(token) &&
+                context.HttpContext.Request.Path.StartsWithSegments("/hubs"))
+                context.Token = token;
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -126,6 +164,18 @@ builder.Services.AddSwaggerGen(c =>
     c.IncludeXmlComments(xmlPath);
 });
 
+// --- SIGNALR ---
+builder.Services.AddSignalR();
+builder.Services.AddScoped<INotificationService, SignalRNotificationService>();
+
+// --- REDIS CACHE ---
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+    options.InstanceName = "EvArkadasim:";
+});
+builder.Services.AddScoped<ICacheService, RedisCacheService>();
+
 // --- RATE LIMITING ---
 builder.Services.AddMemoryCache();
 builder.Services.Configure<IpRateLimitOptions>(builder.Configuration.GetSection("IpRateLimiting"));
@@ -175,6 +225,10 @@ if (app.Environment.IsDevelopment())
 // --- MIDDLEWARE PIPELINE ---
 // Pipeline'ın en dışunda: tüm katmanlardan fırlayan exception'ları yakalar.
 app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseSerilogRequestLogging(options =>
+{
+    options.MessageTemplate = "{RequestMethod} {RequestPath} → {StatusCode} ({Elapsed:0.0}ms)";
+});
 
 if (app.Environment.IsDevelopment())
 {
@@ -202,6 +256,7 @@ app.UseAuthentication();
 app.UseMiddleware<TokenRevocationMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<ChatHub>("/hubs/chat");
 app.MapHealthChecks("/health");
 
 app.Run();

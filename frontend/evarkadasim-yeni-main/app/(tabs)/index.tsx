@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,6 +10,7 @@ import { CharacterTest } from '@/components/CharacterTest';
 import { useUsers } from '@/hooks/useUsers';
 import { useMatches } from '@/hooks/useMatches';
 import { useCharacterTest } from '@/hooks/useCharacterTest';
+import { userService } from '@/services/userService';
 import { User } from '@/types';
 
 export default function FindRoommatesScreen() {
@@ -25,18 +26,14 @@ export default function FindRoommatesScreen() {
   const [showTestPopup, setShowTestPopup] = useState(false);
   const [showTest, setShowTest] = useState(false);
   const [usersWithCompatibility, setUsersWithCompatibility] = useState<(User & { compatibility?: number })[]>([]);
+  const popupShown = useRef(false); // Session başına bir kez göster
 
-  // Kullanıcı giriş yaptıktan sonra pop-up'ı göster (sadece test çözülmemişse)
   useEffect(() => {
-    if (!loading && users.length > 0) {
-      // Eğer test çözülmemişse pop-up'ı göster
-      if (!hasCompletedBasicTest()) {
-        setTimeout(() => {
-          setShowTestPopup(true);
-        }, 1000); // 1 saniye bekle
-      }
+    if (!loading && users.length > 0 && !hasCompletedBasicTest() && !popupShown.current) {
+      popupShown.current = true;
+      setTimeout(() => setShowTestPopup(true), 1000);
     }
-  }, [loading, users, hasCompletedBasicTest]);
+  }, [loading]); // sadece loading değişince kontrol et
 
   // Kullanıcı test sonuçları değiştiğinde uyumluluk hesapla
   useEffect(() => {
@@ -120,44 +117,46 @@ export default function FindRoommatesScreen() {
     setShowTestPopup(true);
   };
 
-  const handleLike = () => {
+  const handleLike = async () => {
     if (!currentUser) return;
-
-    // Simulate match probability (30% chance)
-    const isMatch = Math.random() > 0.7;
-
-    if (isMatch) {
-      addMatch(currentUser);
-      Alert.alert(
-        "It's a Match! 🏠",
-        `You and ${currentUser.name} liked each other!`,
-        [{ text: 'Keep Swiping', style: 'default' }]
-      );
+    removeUser(currentUser.id);
+    setCurrentIndex(prev => Math.min(prev, usersWithCompatibility.length - 1));
+    try {
+      const result = await userService.swipe(currentUser.id, 'like');
+      if (result.isMatch) {
+        addMatch(currentUser);
+        Alert.alert("Eşleşme! 🏠", `Sen ve ${currentUser.name} birbirinizi beğendiniz!`);
+      }
+    } catch {
+      // Swipe isteği başarısız olursa kart zaten kaldırıldı, sessizce geç
     }
-
-    removeUser(currentUser.id);
-    setCurrentIndex(prev => Math.min(prev, usersWithCompatibility.length - 1));
   };
 
-  const handlePass = () => {
+  const handlePass = async () => {
     if (!currentUser) return;
     removeUser(currentUser.id);
     setCurrentIndex(prev => Math.min(prev, usersWithCompatibility.length - 1));
+    try {
+      await userService.swipe(currentUser.id, 'pass');
+    } catch {
+      // Geçme isteği başarısız — animasyon zaten tamamlandı, kullanıcıya gösterme
+    }
   };
 
-  const handleSuperLike = () => {
+  const handleSuperLike = async () => {
     if (!currentUser) return;
-
-    // Super like always creates a match for demo
-    addMatch(currentUser);
-    Alert.alert(
-      "Super Like! ⭐",
-      `${currentUser.name} will be notified that you super liked them!`,
-      [{ text: 'Amazing!', style: 'default' }]
-    );
-
     removeUser(currentUser.id);
     setCurrentIndex(prev => Math.min(prev, usersWithCompatibility.length - 1));
+    try {
+      const result = await userService.swipe(currentUser.id, 'superlike');
+      addMatch(currentUser);
+      Alert.alert("Süper Beğeni! ⭐", `${currentUser.name} süper beğenildiğine dair bildirim alacak!`);
+      if (!result.isMatch) {
+        // Karşı taraf henüz beğenmedi; match listesine yeni eşleşme olarak eklendi
+      }
+    } catch {
+      // Süper beğeni başarısız — kullanıcıya gösterme
+    }
   };
 
   // Eğer test gösteriliyorsa test ekranını göster
@@ -186,7 +185,7 @@ export default function FindRoommatesScreen() {
         style={styles.emptyContainer}
       >
         <SafeAreaView style={styles.emptyContent}>
-          <Text style={styles.emptyTitle}>That's everyone for now!</Text>
+          <Text style={styles.emptyTitle}>{"That's everyone for now!"}</Text>
           <Text style={styles.emptySubtitle}>
             Check back later for more roommate profiles, or expand your search settings.
           </Text>

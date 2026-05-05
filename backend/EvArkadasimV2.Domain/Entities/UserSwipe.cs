@@ -10,10 +10,10 @@ namespace EvArkadasimV2.Domain.Entities
     public class UserSwipe
     {
         public int Id { get; set; }
-        public string SenderId { get; set; }
-        public AppUser Sender { get; set; }
-        public string ReceiverId { get; set; }
-        public AppUser Receiver { get; set; }
+        public string SenderId { get; set; } = null!;
+        public AppUser Sender { get; set; } = null!;
+        public string ReceiverId { get; set; } = null!;
+        public AppUser Receiver { get; set; } = null!;
         public SwipeType SwipeType { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }

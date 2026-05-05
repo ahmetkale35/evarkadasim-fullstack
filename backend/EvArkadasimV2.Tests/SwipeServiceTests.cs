@@ -18,11 +18,15 @@ namespace EvArkadasimV2.Tests
         private readonly Mock<IMatchRepository> _matchRepo = new();
         private readonly Mock<IUserRepository> _userRepo = new();
         private readonly Mock<ICompatibilityService> _compatibility = new();
+        private readonly Mock<ICacheService> _cache = new();
+        private readonly Mock<INotificationService> _notifications = new();
         private readonly SwipeService _sut;
 
         public SwipeServiceTests()
         {
-            _sut = new SwipeService(_swipeRepo.Object, _matchRepo.Object, _userRepo.Object, _compatibility.Object);
+            _cache.Setup(c => c.RemoveAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
+            _notifications.Setup(n => n.SendMatchAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<EvArkadasimV2.Application.DTOs.Chat.MatchDto>())).Returns(Task.CompletedTask);
+            _sut = new SwipeService(_swipeRepo.Object, _matchRepo.Object, _userRepo.Object, _compatibility.Object, _cache.Object, _notifications.Object);
         }
 
         private static AppUser MakeUser(string id) => new()

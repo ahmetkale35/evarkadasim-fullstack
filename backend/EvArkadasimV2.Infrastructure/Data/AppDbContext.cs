@@ -11,13 +11,13 @@ namespace EvArkadasimV2.Infrastructure.Data
         {
         }
 
-        public DbSet<UserProfile> UserProfiles { get; set; }
-        public DbSet<Property> Properties { get; set; }
-        public DbSet<UserSwipe> UserSwipes { get; set; }
-        public DbSet<UserMatch> UserMatches { get; set; }
-        public DbSet<Message> Messages { get; set; }
-        public DbSet<RefreshToken> RefreshTokens { get; set; }
-        public DbSet<RevokedToken> RevokedTokens { get; set; }
+        public DbSet<UserProfile> UserProfiles { get; set; } = null!;
+        public DbSet<Property> Properties { get; set; } = null!;
+        public DbSet<UserSwipe> UserSwipes { get; set; } = null!;
+        public DbSet<UserMatch> UserMatches { get; set; } = null!;
+        public DbSet<Message> Messages { get; set; } = null!;
+        public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
+        public DbSet<RevokedToken> RevokedTokens { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
