@@ -5,13 +5,15 @@ on:
     branches: [main]
     paths:
       - 'backend/**'
-      - 'Dockerfile'
+      - 'backend/Dockerfile'
       - '.github/workflows/docker.yml'
 
 jobs:
   docker:
     name: Build & Push to GHCR
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     permissions:
       contents: read
