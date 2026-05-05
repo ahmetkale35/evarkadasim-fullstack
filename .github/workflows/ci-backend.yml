@@ -14,6 +14,8 @@ jobs:
   build-and-test:
     name: Build & Test (.NET)
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -34,5 +36,30 @@ jobs:
       - name: Build
         run: dotnet build backend/EvArkadasimV2.slnx --no-restore -c Release
 
-      - name: Test
-        run: dotnet test backend/EvArkadasimV2.Tests/EvArkadasimV2.Tests.csproj --no-build -c Release --logger "console;verbosity=minimal"
+      - name: Test with coverage
+        run: dotnet test backend/EvArkadasimV2.Tests/EvArkadasimV2.Tests.csproj --no-build -c Release --logger "console;verbosity=minimal" --collect:"XPlat Code Coverage" --results-directory ./coverage
+
+      - name: Coverage summary
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: coverage/**/coverage.cobertura.xml
+          badge: true
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: false
+          indicators: true
+          output: both
+          thresholds: '50 80'
+
+      - name: PR coverage comment
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          recreate: true
+          path: code-coverage-results.md
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/

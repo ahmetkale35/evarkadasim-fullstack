@@ -1,0 +1,24 @@
+name: Setup Labels
+
+on:
+  workflow_dispatch:
+
+jobs:
+  create-labels:
+    name: Create repository labels
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Create labels
+        run: |
+          create_label() {
+            gh label create "$1" --color "$2" --description "$3" --repo ${{ github.repository }} --force
+          }
+          create_label "backend"      "0075ca" "C# / .NET backend changes"
+          create_label "frontend"     "e4e669" "React Native frontend changes"
+          create_label "ci"           "f9d0c4" "CI/CD and workflow changes"
+          create_label "dependencies" "d4c5f9" "Dependency updates"

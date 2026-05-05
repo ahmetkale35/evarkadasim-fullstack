@@ -1,0 +1,17 @@
+backend:
+  - changed-files:
+    - any-glob-to-any-file: 'backend/**'
+
+frontend:
+  - changed-files:
+    - any-glob-to-any-file: 'frontend/**'
+
+ci:
+  - changed-files:
+    - any-glob-to-any-file: '.github/**'
+
+dependencies:
+  - changed-files:
+    - any-glob-to-any-file: 'backend/**/*.csproj'
+    - any-glob-to-any-file: 'frontend/**/package.json'
+    - any-glob-to-any-file: 'frontend/**/package-lock.json'
