@@ -4,12 +4,15 @@
   <img src="https://img.shields.io/badge/.NET-6.0-512BD4?style=flat&logo=dotnet" />
   <img src="https://img.shields.io/badge/Architecture-Clean_Architecture-brightgreen" />
   <img src="https://img.shields.io/badge/Database-SQLite_%26_EF_Core-003B57?style=flat&logo=sqlite" />
+  <img src="https://img.shields.io/badge/Cache-Redis-DC382D?style=flat&logo=redis" />
+  <img src="https://img.shields.io/badge/Realtime-SignalR-512BD4?style=flat" />
   <img src="https://img.shields.io/badge/Auth-JWT_Bearer-orange?style=flat&logo=jsonwebtokens" />
+  <img src="https://img.shields.io/badge/Logging-Serilog-004880?style=flat" />
   <img src="https://img.shields.io/badge/Postman-78_Tests-EF5B25?style=flat&logo=postman" />
-  <img src="https://img.shields.io/badge/xUnit-23_Tests-512BD4?style=flat&logo=dotnet" />
+  <img src="https://img.shields.io/badge/xUnit-49_Tests-512BD4?style=flat&logo=dotnet" />
 </p>
 
-ASP.NET Core 6 Web API for a personality-driven roommate matchmaking platform. Built with Clean Architecture, Repository Pattern, and JWT authentication.
+ASP.NET Core 6 Web API for a personality-driven roommate matchmaking platform. Built with Clean Architecture, Repository Pattern, JWT authentication, Redis distributed cache, and SignalR real-time messaging.
 
 ---
 
@@ -21,17 +24,31 @@ ASP.NET Core 6 Web API for a personality-driven roommate matchmaking platform. B
 | Architecture | Clean Architecture (4 layers) |
 | ORM | Entity Framework Core 6 |
 | Database | SQLite (dev) |
+| Cache | Redis via `StackExchange.Redis` (5-min feed TTL) |
+| Real-time | ASP.NET Core SignalR (WebSocket hub) |
 | Auth | ASP.NET Identity + JWT Bearer |
+| Logging | Serilog (console + rolling file sinks) |
 | API Docs | Swagger / OpenAPI |
+| Testing | xUnit + Moq (49 tests) |
 
 ---
 
 ## Getting Started
 
-### Prerequisites
-- [.NET 6 SDK](https://dotnet.microsoft.com/download/dotnet/6.0)
+### Option A — Docker (recommended)
 
-### Run
+```bash
+# From repo root
+cp .env.example .env
+# Edit .env — set JWT_SECRET to a 32+ character value
+docker-compose up --build
+```
+
+API: `http://localhost:5000` | Swagger: `http://localhost:5000/swagger`
+
+### Option B — Local
+
+**Prerequisites:** .NET 6 SDK, Redis (optional — app degrades gracefully without it)
 
 ```bash
 cd EvArkadasimV2.API
@@ -52,9 +69,9 @@ On first run, the database is created automatically and seeded with 50 mock user
 ```
 EvArkadasimV2.Domain/          # Entities, Enums, Value Objects
 EvArkadasimV2.Application/     # Services, DTOs, Interfaces, Exceptions
-EvArkadasimV2.Infrastructure/  # EF Core, Repositories, JWT, DataSeeder
-EvArkadasimV2.API/             # Controllers, Program.cs, DI Registration
-EvArkadasimV2.Tests/           # xUnit unit tests (xUnit + Moq, 23 tests)
+EvArkadasimV2.Infrastructure/  # EF Core, Repositories, Redis, JWT, DataSeeder
+EvArkadasimV2.API/             # Controllers, SignalR Hubs, Middleware, DI
+EvArkadasimV2.Tests/           # 49 xUnit unit tests (no DB required)
 docs/                          # Technical documentation
 postman/                       # Postman integration test collection (78 tests)
 ```
@@ -65,27 +82,45 @@ postman/                       # Postman integration test collection (78 tests)
 
 | Group | Endpoints | Description |
 |-------|-----------|-------------|
-| **Auth** | `POST /api/auth/register` `POST /api/auth/login` | JWT token issuance |
+| **Auth** | `POST /api/auth/register` `POST /api/auth/login` `POST /api/auth/logout` | JWT token issuance + revocation |
 | **Profile** | `GET /PUT /api/profile` | User profile management |
-| **Feed** | `GET /api/users` | Candidate feed with compatibility sorting |
-| **Swipe** | `POST /api/swipe` `GET /api/swipe/matches` | Like / Pass / SuperLike + match detection |
-| **Character Test** | `POST /api/test/basic` `POST /api/test/detailed` | 6-dimension personality scoring |
-| **Property** | `GET /POST /PUT /DELETE /api/property` | Property listings with filtering |
-| **Messaging** | `GET /POST /api/message/{matchId}` `PUT /api/message/{matchId}/read` | Match-scoped chat |
+| **Feed** | `GET /api/users` | Paginated candidate feed; Redis-cached (5-min TTL) |
+| **Swipe** | `POST /api/swipe` `GET /api/swipe/matches` | Like / Pass / SuperLike + mutual match detection |
+| **Character Test** | `POST /api/test/Basic` `POST /api/test/Detailed` | 6-dimension personality scoring |
+| **Property** | `GET /POST /PUT /DELETE /api/properties` | Property listings with city/price/type/pets filters |
+| **Messaging** | `GET /POST /api/messages/{matchId}` `PUT /api/messages/{matchId}/read` | Match-scoped chat |
+| **Health** | `GET /health` | Liveness check |
 
 All protected endpoints require `Authorization: Bearer <token>`.
 
 ---
 
+## Real-time (SignalR)
+
+WebSocket endpoint: `ws://host/hubs/chat?access_token={jwt}`
+
+| Event (server → client) | Payload | Trigger |
+|--------------------------|---------|---------|
+| `ReceiveMessage` | `MessageDto` | New message sent to a match |
+| `MatchCreated` | `MatchDto` | Mutual like detected (both users notified) |
+
+The hub authenticates via JWT query string (`access_token`) because WebSocket connections cannot carry HTTP headers. Each connected user joins their own group (`user-{id}`) on connect.
+
+---
+
 ## Key Design Decisions
 
-**Compatibility Algorithm** — Calculates a 0-100% score using Manhattan Distance across 6 personality dimensions (social energy, order approach, conflict management, sharing style, life rhythm, communication style).
+**Compatibility Algorithm** — Calculates a 0–100% score using Manhattan Distance across 6 personality dimensions (social energy, order approach, conflict management, sharing style, life rhythm, communication style).
 
-**Feed Sorting** — Three-tier priority: users who liked you first → highest compatibility → most recently active. Pagination happens after in-memory sort to prevent cross-page ordering issues.
+**Feed Sorting** — Three-tier priority: users who liked you first → highest compatibility → most recently active. Pagination runs after in-memory sort to prevent cross-page ordering gaps. Results are cached in Redis with a 5-min TTL; cache is invalidated automatically on every swipe.
 
-**Authorization Pattern** — Every messaging and property endpoint validates ownership/membership inside the service layer (`AuthorizeMatchAccessAsync`, `OwnerId == currentUserId`). Controllers only handle HTTP shape.
+**Authorization Pattern** — Ownership/membership is validated inside the service layer (`AuthorizeMatchAccessAsync`, `OwnerId == currentUserId`). Controllers only handle HTTP shape; no business logic leaks into controllers.
+
+**INotificationService Abstraction** — Application layer depends on `INotificationService` (interface), not SignalR directly. `SignalRNotificationService` is registered in the API layer. This keeps the Application layer framework-agnostic and testable with a `Mock<INotificationService>`.
 
 **Options Pattern** — `IConfiguration` dependency removed from Application layer. All settings injected via `IOptions<T>` for type safety and testability.
+
+**Token Revocation** — Logout adds the JWT `jti` to an in-memory blocklist. `TokenRevocationMiddleware` checks every request, returning 401 for revoked tokens without a round-trip to the database.
 
 ---
 
@@ -97,8 +132,9 @@ All protected endpoints require `Authorization: Bearer <token>`.
 | `JwtSettings__Issuer` | Token issuer identifier |
 | `JwtSettings__Audience` | Token audience identifier |
 | `ConnectionStrings__DefaultConnection` | SQLite file path |
+| `ConnectionStrings__Redis` | Redis connection string (e.g. `localhost:6379`) |
 
-Development defaults are in `appsettings.Development.json` (not committed). Create this file locally with a `JwtSettings.Secret` value of at least 32 characters to run the project.
+Development defaults are in `appsettings.Development.json` (not committed). Create this file locally with a `JwtSettings.Secret` value of at least 32 characters. Redis is optional; the feed falls through to direct DB query if Redis is unavailable.
 
 ---
 
@@ -114,18 +150,30 @@ The collection includes 78 tests across 10 groups (Auth, Profile, Feed, Swipe, T
 
 ```bash
 cd ..   # backend/ root
-dotnet test EvArkadasimV2.Tests
+dotnet test EvArkadasimV2.slnx -c Release
+# Passed! 49/49
 ```
 
-23 tests across 3 service classes:
+49 tests across 4 service classes:
 
 | Test Class | Tests | What It Covers |
 |------------|-------|----------------|
 | `CompatibilityServiceTests` | 8 | Manhattan Distance algorithm, null inputs, boundary values, symmetry |
 | `FeedServiceTests` | 7 | Sorting priority (likers first), pagination (skip/take), DoS clamp, edge cases |
-| `SwipeServiceTests` | 8 | Self-swipe guard, invalid type, duplicate swipe, mutual match creation, MatchesCount increment |
+| `SwipeServiceTests` | 21 | Self-swipe guard, invalid type, duplicate swipe, mutual match creation, MatchesCount increment, SignalR notification dispatch |
+| `MessageServiceTests` | 13 | Auth (NotFoundException, ForbiddenException), send direction, HTML encoding, mark-as-read, invalid message type fallback |
 
 All repository and service dependencies are mocked with Moq — no database required.
+
+---
+
+## Logging
+
+Structured logging via **Serilog** with two sinks:
+- **Console** — colored output in development
+- **Rolling file** — `logs/log-.txt` with daily rotation (retained 7 days)
+
+Request logging middleware records method, path, status code, and elapsed time for every HTTP request.
 
 ---
 
