@@ -14,19 +14,22 @@ namespace EvArkadasimV2.Application.Services
         private readonly IUserRepository _userRepository;
         private readonly ICompatibilityService _compatibilityService;
         private readonly ICacheService _cache;
+        private readonly INotificationService _notifications;
 
         public SwipeService(
             ISwipeRepository swipeRepository,
             IMatchRepository matchRepository,
             IUserRepository userRepository,
             ICompatibilityService compatibilityService,
-            ICacheService cache)
+            ICacheService cache,
+            INotificationService notifications)
         {
             _swipeRepository = swipeRepository;
             _matchRepository = matchRepository;
             _userRepository = userRepository;
             _compatibilityService = compatibilityService;
             _cache = cache;
+            _notifications = notifications;
         }
 
         public async Task<SwipeResultDto> SwipeAsync(string senderId, SwipeRequestDto request)
@@ -83,11 +86,12 @@ namespace EvArkadasimV2.Application.Services
                     if (sender?.Profile == null)
                         throw new NotFoundException("Kullanıcı profili bulunamadı.");
 
-                    await _matchRepository.AddAsync(new UserMatch
+                    var newMatch = new UserMatch
                     {
                         User1Id = senderId,
                         User2Id = request.ReceiverId
-                    });
+                    };
+                    await _matchRepository.AddAsync(newMatch);
 
                     sender.Profile.MatchesCount += 1;
                     receiver.Profile.MatchesCount += 1;
@@ -103,8 +107,19 @@ namespace EvArkadasimV2.Application.Services
             // başarılı olur ya da hiçbiri uygulanmaz (atomik tutarlılık).
             await _swipeRepository.SaveChangesAsync();
 
-            // Swiped kullanıcı artık feed'de görünmemeli — cache'i temizle.
             await _cache.RemoveAsync($"feed:{senderId}");
+
+            if (result.IsMatch)
+            {
+                var matchNotification = new DTOs.Chat.MatchDto
+                {
+                    Id = result.MatchedUserId!,
+                    MatchedAt = DateTime.UtcNow,
+                    IsNewMatch = true,
+                    User = null!
+                };
+                await _notifications.SendMatchAsync(senderId, request.ReceiverId, matchNotification);
+            }
 
             return result;
         }

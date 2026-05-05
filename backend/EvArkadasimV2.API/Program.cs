@@ -7,12 +7,14 @@ using EvArkadasimV2.API.Middleware;
 using EvArkadasimV2.Application.Interfaces.Repositories;
 using EvArkadasimV2.Application.Interfaces.Services;
 using EvArkadasimV2.Application.Options;
+
 using EvArkadasimV2.Application.Services;
 using EvArkadasimV2.Domain.Entities;
 using EvArkadasimV2.Infrastructure.Data;
 using EvArkadasimV2.Infrastructure.Repositories;
 using EvArkadasimV2.Infrastructure.Services;
-using EvArkadasimV2.Application.Interfaces.Services;
+using EvArkadasimV2.API.Hubs;
+using EvArkadasimV2.API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -85,6 +87,18 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings.Audience,
         IssuerSigningKey = new SymmetricSecurityKey(secretKey)
     };
+    // WebSocket handshake'de header gönderilemez — SignalR token'ı query string'den alır.
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var token = context.Request.Query["access_token"];
+            if (!string.IsNullOrEmpty(token) &&
+                context.HttpContext.Request.Path.StartsWithSegments("/hubs"))
+                context.Token = token;
+            return Task.CompletedTask;
+        }
+    };
 });
 
 // --- BAĞIMLILIK ENJEKSİYONU ---
@@ -149,6 +163,10 @@ builder.Services.AddSwaggerGen(c =>
         $"{Assembly.GetExecutingAssembly().GetName().Name}.xml");
     c.IncludeXmlComments(xmlPath);
 });
+
+// --- SIGNALR ---
+builder.Services.AddSignalR();
+builder.Services.AddScoped<INotificationService, SignalRNotificationService>();
 
 // --- REDIS CACHE ---
 builder.Services.AddStackExchangeRedisCache(options =>
@@ -238,6 +256,7 @@ app.UseAuthentication();
 app.UseMiddleware<TokenRevocationMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<ChatHub>("/hubs/chat");
 app.MapHealthChecks("/health");
 
 app.Run();
