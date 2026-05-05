@@ -15,6 +15,7 @@ jobs:
     name: Build & Test (.NET)
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       pull-requests: write
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
