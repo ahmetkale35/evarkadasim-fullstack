@@ -12,6 +12,7 @@ using EvArkadasimV2.Domain.Entities;
 using EvArkadasimV2.Infrastructure.Data;
 using EvArkadasimV2.Infrastructure.Repositories;
 using EvArkadasimV2.Infrastructure.Services;
+using EvArkadasimV2.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -148,6 +149,14 @@ builder.Services.AddSwaggerGen(c =>
         $"{Assembly.GetExecutingAssembly().GetName().Name}.xml");
     c.IncludeXmlComments(xmlPath);
 });
+
+// --- REDIS CACHE ---
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+    options.InstanceName = "EvArkadasim:";
+});
+builder.Services.AddScoped<ICacheService, RedisCacheService>();
 
 // --- RATE LIMITING ---
 builder.Services.AddMemoryCache();

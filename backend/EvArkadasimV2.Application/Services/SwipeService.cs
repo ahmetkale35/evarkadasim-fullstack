@@ -13,17 +13,20 @@ namespace EvArkadasimV2.Application.Services
         private readonly IMatchRepository _matchRepository;
         private readonly IUserRepository _userRepository;
         private readonly ICompatibilityService _compatibilityService;
+        private readonly ICacheService _cache;
 
         public SwipeService(
             ISwipeRepository swipeRepository,
             IMatchRepository matchRepository,
             IUserRepository userRepository,
-            ICompatibilityService compatibilityService)
+            ICompatibilityService compatibilityService,
+            ICacheService cache)
         {
             _swipeRepository = swipeRepository;
             _matchRepository = matchRepository;
             _userRepository = userRepository;
             _compatibilityService = compatibilityService;
+            _cache = cache;
         }
 
         public async Task<SwipeResultDto> SwipeAsync(string senderId, SwipeRequestDto request)
@@ -99,6 +102,9 @@ namespace EvArkadasimV2.Application.Services
             // EF Core tarafından aynı transaction içinde gönderilir. Bu sayede ya hepsi
             // başarılı olur ya da hiçbiri uygulanmaz (atomik tutarlılık).
             await _swipeRepository.SaveChangesAsync();
+
+            // Swiped kullanıcı artık feed'de görünmemeli — cache'i temizle.
+            await _cache.RemoveAsync($"feed:{senderId}");
 
             return result;
         }

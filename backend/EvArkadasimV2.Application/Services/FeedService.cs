@@ -7,17 +7,22 @@ namespace EvArkadasimV2.Application.Services
 {
     public class FeedService : IFeedService
     {
-        // DoS koruması: client çok büyük take değeri gönderse bile burada clamp ediliyor.
         private const int DefaultTake = 20;
         private const int MaxTake = 50;
+        private static readonly TimeSpan CacheExpiry = TimeSpan.FromMinutes(5);
 
         private readonly IUserRepository _userRepository;
         private readonly ICompatibilityService _compatibilityService;
+        private readonly ICacheService _cache;
 
-        public FeedService(IUserRepository userRepository, ICompatibilityService compatibilityService)
+        public FeedService(
+            IUserRepository userRepository,
+            ICompatibilityService compatibilityService,
+            ICacheService cache)
         {
             _userRepository = userRepository;
             _compatibilityService = compatibilityService;
+            _cache = cache;
         }
 
         public async Task<PagedFeedDto> GetFeedAsync(string currentUserId, int skip, int take)
@@ -26,25 +31,29 @@ namespace EvArkadasimV2.Application.Services
             if (take <= 0) take = DefaultTake;
             if (take > MaxTake) take = MaxTake;
 
-            var currentUser = await _userRepository.GetUserWithProfileAsync(currentUserId, tracking: false);
-            var currentScores = currentUser?.Profile?.FinalScores;
+            var cacheKey = $"feed:{currentUserId}";
+            var sorted = await _cache.GetAsync<List<(UserSummaryDto Dto, bool HasLikedCurrentUser)>>(cacheKey);
 
-            var candidates = await _userRepository.GetFeedCandidatesWithLikeStatusAsync(currentUserId);
+            if (sorted is null)
+            {
+                var currentUser = await _userRepository.GetUserWithProfileAsync(currentUserId, tracking: false);
+                var currentScores = currentUser?.Profile?.FinalScores;
+                var candidates = await _userRepository.GetFeedCandidatesWithLikeStatusAsync(currentUserId);
 
-            // Sıralama in-memory yapılır çünkü compatibility skoru DB'de hesaplanamaz.
-            // Sıralama: Like-boost DESC → Compatibility DESC → LastActive DESC
-            // TotalCount skip/take uygulanmadan önce alınır — HasMore hesabı için gerekli.
-            var sorted = candidates
-                .Select(item =>
-                {
-                    var dto = MapToDto(item.User);
-                    dto.Compatibility = _compatibilityService.Calculate(currentScores, item.User.Profile?.FinalScores);
-                    return (Dto: dto, item.HasLikedCurrentUser);
-                })
-                .OrderByDescending(x => x.HasLikedCurrentUser)
-                .ThenByDescending(x => x.Dto.Compatibility)
-                .ThenByDescending(x => x.Dto.LastActive)
-                .ToList();
+                sorted = candidates
+                    .Select(item =>
+                    {
+                        var dto = MapToDto(item.User);
+                        dto.Compatibility = _compatibilityService.Calculate(currentScores, item.User.Profile?.FinalScores);
+                        return (Dto: dto, item.HasLikedCurrentUser);
+                    })
+                    .OrderByDescending(x => x.HasLikedCurrentUser)
+                    .ThenByDescending(x => x.Dto.Compatibility)
+                    .ThenByDescending(x => x.Dto.LastActive)
+                    .ToList();
+
+                await _cache.SetAsync(cacheKey, sorted, CacheExpiry);
+            }
 
             var totalCount = sorted.Count;
             var users = sorted.Skip(skip).Take(take).Select(x => x.Dto).ToList();

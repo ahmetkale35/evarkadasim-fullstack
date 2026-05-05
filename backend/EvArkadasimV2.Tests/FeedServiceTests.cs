@@ -14,11 +14,14 @@ namespace EvArkadasimV2.Tests
     {
         private readonly Mock<IUserRepository> _userRepo = new();
         private readonly Mock<ICompatibilityService> _compatibility = new();
+        private readonly Mock<ICacheService> _cache = new();
         private readonly FeedService _sut;
 
         public FeedServiceTests()
         {
-            _sut = new FeedService(_userRepo.Object, _compatibility.Object);
+            _cache.Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<TimeSpan>()))
+                  .Returns(Task.CompletedTask);
+            _sut = new FeedService(_userRepo.Object, _compatibility.Object, _cache.Object);
             // Compatibility her çağrıda sabit 75 döndürür — sıralama mantığını test etmek için yeterli.
             _compatibility.Setup(c => c.Calculate(It.IsAny<BasicTestResults?>(), It.IsAny<BasicTestResults?>()))
                          .Returns(75.0);
