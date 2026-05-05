@@ -1,0 +1,26 @@
+services:
+  api:
+    build: ./backend
+    ports:
+      - "5000:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Data Source=/data/evarkadasim.db
+      - JwtSettings__Secret=${JWT_SECRET}
+      - JwtSettings__Issuer=EvArkadasimV2API
+      - JwtSettings__Audience=EvArkadasimV2MobileApp
+      - JwtSettings__ExpiryInMinutes=1440
+    volumes:
+      - db-data:/data
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+volumes:
+  db-data:

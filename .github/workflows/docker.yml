@@ -8,14 +8,10 @@ on:
       - 'Dockerfile'
       - '.github/workflows/docker.yml'
 
-# Bu workflow backend/Dockerfile oluşturulunca aktif olur (Faz 8.1).
-# Şimdilik sadece iskelet — push'layınca hata vermemesi için job koşullu.
-
 jobs:
   docker:
     name: Build & Push to GHCR
     runs-on: ubuntu-latest
-    if: false  # Dockerfile hazır olunca bu satırı sil
 
     permissions:
       contents: read
