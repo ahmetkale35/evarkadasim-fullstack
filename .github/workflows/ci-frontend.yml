@@ -10,16 +10,10 @@ on:
     paths:
       - 'frontend/**'
 
-# Frontend yeniden kurulunca:
-# 1. working-directory → frontend/<klasör-adı> güncelle
-# 2. cache-dependency-path → aynı klasör/package-lock.json güncelle
-# 3. if: false satırını sil
-
 jobs:
   type-check-and-lint:
     name: TypeScript & Lint (Expo)
     runs-on: ubuntu-latest
-    if: false
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -32,16 +26,16 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: frontend/evarkadasim-yeni-main/package-lock.json
 
       - name: Install dependencies
-        working-directory: frontend
+        working-directory: frontend/evarkadasim-yeni-main
         run: npm ci
 
       - name: TypeScript type check
-        working-directory: frontend
+        working-directory: frontend/evarkadasim-yeni-main
         run: npx tsc --noEmit
 
       - name: Lint
-        working-directory: frontend
+        working-directory: frontend/evarkadasim-yeni-main
         run: npm run lint

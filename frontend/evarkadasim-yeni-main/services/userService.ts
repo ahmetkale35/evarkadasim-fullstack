@@ -45,7 +45,7 @@ function mapRoomType(val?: string): User['roomType'] {
     Shared: 'shared',
     Studio: 'studio',
   };
-  return (val && map[val]) ?? 'any';
+  return (val && map[val]) || 'any';
 }
 
 function mapLookingFor(val?: string): User['lookingFor'] {
@@ -54,7 +54,7 @@ function mapLookingFor(val?: string): User['lookingFor'] {
     Room: 'room',
     Both: 'both',
   };
-  return (val && map[val]) ?? 'both';
+  return (val && map[val]) || 'both';
 }
 
 function toUser(dto: UserSummaryDto): User {

@@ -24,7 +24,6 @@ export const testService = {
       detailedConflictManagement: results.detailedConflictManagement,
       detailedSharingStyle: results.detailedSharingStyle,
       detailedLifeRhythm: results.detailedLifeRhythm,
-      detailedCommunicationStyle: results.detailedCommunicationStyle ?? [],
     });
   },
 };

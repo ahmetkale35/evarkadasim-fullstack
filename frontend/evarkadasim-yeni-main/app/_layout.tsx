@@ -17,7 +17,7 @@ export default function RootLayout() {
   useEffect(() => {
     // Herhangi bir ekrandan 401 gelirse login ekranına dön
     const unsubscribe = authEvents.onUnauthorized(() => setIsAuthenticated(false));
-    return unsubscribe;
+    return () => { unsubscribe(); };
   }, []);
 
   const handleLoadingFinish = async () => {
