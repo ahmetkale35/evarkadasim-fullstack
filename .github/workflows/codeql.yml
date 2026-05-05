@@ -1,12 +1,7 @@
 name: CodeQL Security Analysis
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-  schedule:
-    - cron: '0 9 * * 1'  # Her Pazartesi 09:00 UTC
+  workflow_dispatch:  # Repo public olunca elle tetikle, sonra push/PR ekle
 
 jobs:
   analyze:
