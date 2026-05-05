@@ -84,7 +84,7 @@ export function CharacterTestPopup({ visible, onClose, onStartTest }: CharacterT
                             {/* Fayda açıklaması */}
                             <View style={styles.benefitBox}>
                                 <Text style={styles.benefitText}>
-                                    ✨ Testi tamamladıktan sonra sana <Text style={styles.benefitHighlight}>%95'e kadar uyumlu</Text> ev arkadaşı önerileri göreceğin!
+                                    {'✨ Testi tamamladıktan sonra sana '}<Text style={styles.benefitHighlight}>{'%95\'e kadar uyumlu'}</Text>{' ev arkadaşı önerileri göreceğin!'}
                                 </Text>
                             </View>
 

@@ -185,7 +185,7 @@ export default function FindRoommatesScreen() {
         style={styles.emptyContainer}
       >
         <SafeAreaView style={styles.emptyContent}>
-          <Text style={styles.emptyTitle}>That's everyone for now!</Text>
+          <Text style={styles.emptyTitle}>{"That's everyone for now!"}</Text>
           <Text style={styles.emptySubtitle}>
             Check back later for more roommate profiles, or expand your search settings.
           </Text>
