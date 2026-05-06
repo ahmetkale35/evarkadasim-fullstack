@@ -18,9 +18,13 @@
 | Framework | ASP.NET Core 6.0 | Microsoft'un modern web framework'ü. Cross-platform, yüksek performans, geniş ekosistem |
 | Veritabanı | SQLite | Geliştirme için ideal: kurulum gerektirmez, tek dosya. Üretimde PostgreSQL'e geçilmeli |
 | ORM | Entity Framework Core 6 | C# ile SQL yazmadan veritabanı işlemleri. LINQ sorguları SQL'e çevrilir |
-| Kimlik Doğrulama | JWT Bearer Token | Stateless auth: sunucu session tutmaz. Mobil uygulama + API için standart |
+| Cache | Redis (`StackExchange.Redis`) | Feed sonuçları 5-dk TTL ile cache'lenir; swipe sonrası otomatik invalidate |
+| Gerçek Zamanlı | ASP.NET Core SignalR | WebSocket tabanlı hub; match ve mesaj bildirimleri anlık push edilir |
+| Kimlik Doğrulama | JWT Bearer + Refresh Token | Access token (kısa ömürlü) + refresh token (uzun ömürlü) ikili sistem |
 | Kimlik Yönetimi | ASP.NET Identity | Şifre hashleme, kullanıcı yönetimi, token üretimi hazır gelir |
-| API Dokümantasyonu | Swagger / OpenAPI | Tarayıcıda interaktif API test arayüzü |
+| Loglama | Serilog | Structured logging; console + rolling file sink (7 gün retention) |
+| Güvenlik | Rate Limiting (`AspNetCoreRateLimit`) | Login/register ve genel isteklerde IP-bazlı hız sınırlama |
+| API Dokümantasyonu | Swagger / OpenAPI | Tarayıcıda interaktif API test arayüzü, XML doc comment desteği |
 
 ---
 
@@ -292,6 +296,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ISwipeRepository, SwipeRepository>();
 builder.Services.AddScoped<IMatchRepository, MatchRepository>();
 builder.Services.AddScoped<IPropertyRepository, PropertyRepository>();
+builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 // ↑ Open generic: IGenericRepository<Property> istenirse GenericRepository<Property> verilir
 
@@ -304,8 +309,23 @@ builder.Services.AddScoped<ISwipeService, SwipeService>();
 builder.Services.AddScoped<IFeedService, FeedService>();
 builder.Services.AddScoped<ICompatibilityService, CompatibilityService>();
 builder.Services.AddScoped<IPropertyService, PropertyService>();
-builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<IMessageService, MessageService>();
+
+// SignalR + bildirim
+builder.Services.AddSignalR();
+builder.Services.AddScoped<INotificationService, SignalRNotificationService>();
+
+// Redis distributed cache
+builder.Services.AddStackExchangeRedisCache(options => { ... });
+builder.Services.AddScoped<ICacheService, RedisCacheService>();
+
+// Rate Limiting (IP-bazlı)
+builder.Services.AddMemoryCache();
+builder.Services.Configure<IpRateLimitOptions>(builder.Configuration.GetSection("IpRateLimiting"));
+// ... Singleton kayıtları (IIpPolicyStore, IRateLimitCounterStore, vb.)
+
+// Health Check
+builder.Services.AddHealthChecks();
 ```
 
 **Nasıl çalışır?** DI container şöyle düşünür:
@@ -434,37 +454,65 @@ Bir HTTP isteği sunucuya ulaştığında şu aşamalardan geçer:
 Client İsteği: POST /api/swipe { "receiverId": "abc", "swipeType": "Like" }
     │
     ▼
-┌─ UseHttpsRedirection() ─────────────────────────────────────────────┐
-│  HTTP isteği gelirse HTTPS'e yönlendir (301 redirect)               │
-│  Neden: Şifrelenmemiş HTTP trafiğinde token çalınabilir (MITM)     │
+┌─ GlobalExceptionMiddleware ─────────────────────────────────────────┐
+│  Pipeline'ın en dışında: tüm katmanlardan fırlayan exception'ları   │
+│  yakalar. AppException → ilgili HTTP kodu, Exception → 500.         │
+│  Stack trace client'a sızdırılmaz, sunucu loguna yazılır.           │
 └─────────────────────────────────────────────────────────────────────┘
     │
     ▼
-┌─ UseCors("Development") ────────────────────────────────────────────┐
-│  Cross-Origin isteklere izin ver                                     │
-│  Dev: AllowAnyOrigin (localhost:3000'den gelen istekler çalışsın)    │
-│  Prod: WithOrigins("https://evarkadasim.com") (sadece kendi domain) │
+┌─ UseSerilogRequestLogging() ────────────────────────────────────────┐
+│  Her HTTP isteğini loglar: metod, path, status code, süre (ms).     │
+│  Örnek: "POST /api/swipe → 200 (12.3ms)"                           │
+└─────────────────────────────────────────────────────────────────────┘
+    │
+    ▼
+┌─ Swagger (sadece Development) ──────────────────────────────────────┐
+│  /swagger endpoint'i aktif. Production'da devre dışı.               │
+└─────────────────────────────────────────────────────────────────────┘
+    │
+    ▼
+┌─ UseCors("Development" / "Production") ─────────────────────────────┐
+│  Dev: AllowAnyOrigin (localhost, emülatör, Expo)                     │
+│  Prod: WithOrigins(appsettings Cors:AllowedOrigins dizisinden)      │
+└─────────────────────────────────────────────────────────────────────┘
+    │
+    ▼
+┌─ UseIpRateLimiting() (sadece Production) ───────────────────────────┐
+│  IP-bazlı hız sınırlama. Login: 10/dk, Register: 5/saat, Genel: 100/dk │
+│  Development'ta devre dışı (Postman testlerini bloklamasın).        │
+└─────────────────────────────────────────────────────────────────────┘
+    │
+    ▼
+┌─ UseHttpsRedirection() (sadece Production) ─────────────────────────┐
+│  HTTP → HTTPS yönlendirme. Dev'de devre dışı (self-signed cert).    │
+│  Production'da UseHsts() ile birlikte HSTS header'ı da eklenir.     │
 └─────────────────────────────────────────────────────────────────────┘
     │
     ▼
 ┌─ UseAuthentication() ───────────────────────────────────────────────┐
-│  Authorization header'daki JWT token'ı doğrula                      │
-│  Token geçerliyse → HttpContext.User'a claim'leri yaz               │
-│  Token yoksa veya geçersizse → User boş kalır                       │
+│  JWT token'ı doğrula (imza, süre, issuer, audience).                │
+│  Token geçerliyse → HttpContext.User'a claim'leri yaz.              │
+└─────────────────────────────────────────────────────────────────────┘
+    │
+    ▼
+┌─ TokenRevocationMiddleware ─────────────────────────────────────────┐
+│  Logout sonrası revoke edilmiş token'ları engeller.                   │
+│  Token'ın jti claim'ini in-memory blocklist'te kontrol eder.         │
+│  Revoke edilmişse → 401 Unauthorized, veritabanına gitmeden.        │
 └─────────────────────────────────────────────────────────────────────┘
     │
     ▼
 ┌─ UseAuthorization() ────────────────────────────────────────────────┐
-│  [Authorize] attribute'u olan controller/action'ları kontrol et     │
-│  User boşsa (token yoksa) → 401 Unauthorized döndür                │
-│  User doluysa → devam et                                            │
+│  [Authorize] attribute'u olan endpoint'leri kontrol et.              │
+│  User boşsa → 401. User doluysa → devam et.                         │
 └─────────────────────────────────────────────────────────────────────┘
     │
     ▼
-┌─ MapControllers() ──────────────────────────────────────────────────┐
-│  URL'yi doğru Controller + Action ile eşleştir                      │
-│  POST /api/swipe → SwipeController.Swipe()                          │
-│  Model binding: JSON body → SwipeRequestDto                         │
+┌─ MapControllers() + MapHub + MapHealthChecks ────────────────────────┐
+│  REST: URL → Controller (POST /api/swipe → SwipeController)          │
+│  SignalR: /hubs/chat → ChatHub (WebSocket)                           │
+│  Health: /health → liveness check endpoint                           │
 └─────────────────────────────────────────────────────────────────────┘
     │
     ▼
@@ -474,4 +522,7 @@ Controller → Service → Repository → Database
 Yanıt: 200 OK { "isMatch": true, "matchedUserId": "xyz" }
 ```
 
-**Sıra neden önemli?** `UseAuthentication()` → `UseAuthorization()` sırasını tersine çevirirsen, Authorization middleware henüz kimlik doğrulanmamış bir kullanıcıyı görür ve her isteği reddeder.
+**Sıra neden önemli?**
+- `GlobalExceptionMiddleware` en dışta olmalı — aksi halde diğer middleware'lerin hataları yakalanmaz.
+- `UseAuthentication()` → `TokenRevocationMiddleware` → `UseAuthorization()` sırası kritik: önce token doğrulanır, sonra revoke kontrolü yapılır, en son yetki kontrolü.
+- Rate limiting, authentication'dan **önce** çalışır — brute-force saldırıları token doğrulama yüküne bile ulaşamaz.

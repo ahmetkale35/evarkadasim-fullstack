@@ -104,7 +104,7 @@ Ayrı tabloda olmasının nedeni: AppUser tablosu Identity tarafından yönetili
 
 Her satır tek yönlü bir swipe'ı temsil eder: A → B. Tersi (B → A) ayrı satırdır.
 
-**Benzersizlik**: Aynı `(SenderId, ReceiverId)` çifti için sadece bir kayıt olabilir. Bu kural veritabanı seviyesinde unique index ile değil, uygulama katmanında `HasSwipedAsync()` ile kontrol ediliyor.
+**Benzersizlik**: Aynı `(SenderId, ReceiverId)` çifti için sadece bir kayıt olabilir. Bu kural hem veritabanı seviyesinde unique index (`IX_UserSwipes_SenderId_ReceiverId`) ile hem de uygulama katmanında `HasSwipedAsync()` ile kontrol ediliyor (defence in depth).
 
 ### UserMatch — Eşleşme Tablosu
 
@@ -119,7 +119,17 @@ Her satır tek yönlü bir swipe'ı temsil eder: A → B. Tersi (B → A) ayrı 
 
 Her mesaj bir `UserMatch`'e bağlıdır. Eşleşmemiş kullanıcılar mesajlaşamaz.
 
-**Not**: Mesajlaşma API'si henüz implemente edilmedi. Entity ve DTO'lar hazır ama controller/service yok.
+| Sütun | Tip | Açıklama |
+|-------|-----|----------|
+| `Id` | int (PK) | Otomatik artan |
+| `UserMatchId` | int (FK) | Hangi eşleşmeye ait |
+| `SenderId` | string (FK) | Mesajı gönderen kullanıcı |
+| `Content` | string | Mesaj içeriği (XSS koruması için `HtmlEncoder` ile encode edilir) |
+| `Timestamp` | DateTime | Gönderim zamanı (UTC) |
+| `Type` | int (enum) | Mesaj tipi: Text (0), Image (1), Gif (2) |
+| `IsRead` | bool | Okundu işareti (toplu güncelleme desteği) |
+
+**Yetkilendirme**: Her mesaj işleminde `AuthorizeMatchAccessAsync` ile kullanıcının match'e dahil olup olmadığı kontrol edilir. Dahil değilse `ForbiddenException` (403) fırlatılır.
 
 ---
 

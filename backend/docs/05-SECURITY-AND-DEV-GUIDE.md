@@ -203,64 +203,96 @@ likedMeIds.Contains(userId)  // O(1) — sabit süre, veri boyutundan bağımsı
 
 ---
 
-## 3. Controller Deseni — Try-Catch-Log Kalıbı
+## 3. Controller Deseni — Global Exception Handler
 
-Tüm controller'lar aynı yapıyı izler. Bu tekrarlanan bir kalıptır ve gelecekte **middleware** ile merkezileştirilebilir.
+Tüm controller'lardaki try-catch blokları `GlobalExceptionMiddleware` ile merkezileştirildi. Controller'lar sadece HTTP şeklini yönetir, hata yönetimi middleware'e bırakılır.
 
-### Mevcut Yaklaşım (Her Controller'da)
+### Middleware Yapısı
+
+```csharp
+public class GlobalExceptionMiddleware
+{
+    public async Task InvokeAsync(HttpContext context)
+    {
+        try
+        {
+            await _next(context);
+        }
+        catch (AppException ex)
+        {
+            // Beklenen uygulama hatası: iş kuralı ihlali, kaynak yok, yetkisiz erişim.
+            // Stack trace loglamaya gerek yok — "normal" iş akışı sonucu.
+            _logger.LogWarning("Uygulama hatası: {StatusCode} - {Message}", ex.StatusCode, ex.Message);
+            await WriteErrorAsync(context, ex.StatusCode, ex.Message);
+        }
+        catch (Exception ex)
+        {
+            // Beklenmedik sistem hatası: NullReference, DbException, vs.
+            // Stack trace'i logla, ama client'a verme.
+            _logger.LogError(ex, "Beklenmedik hata: {Path}", context.Request.Path);
+            await WriteErrorAsync(context, 500, "Sunucu hatası oluştu.");
+        }
+    }
+}
+```
+
+### Exception Hiyerarşisi
+
+```
+Exception (System)
+└── AppException (soyut base class — StatusCode taşır)
+    ├── DomainException (400) — İş kuralı ihlali
+    ├── UnauthorizedException (401) — Kimlik doğrulama başarısız
+    ├── ForbiddenException (403) — Yetkisiz erişim
+    └── NotFoundException (404) — Kaynak bulunamadı
+```
+
+Controller örneği (temiz, try-catch yok):
 
 ```csharp
 [HttpPost]
 public async Task<IActionResult> Swipe([FromBody] SwipeRequestDto request)
 {
     var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-    try
-    {
-        var result = await _swipeService.SwipeAsync(userId, request);
-        return Ok(result);                                          // 200
-    }
-    catch (DomainException ex)   { return BadRequest(new { ex.Message }); }   // 400
-    catch (NotFoundException ex) { return NotFound(new { ex.Message }); }     // 404
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "Hata oluştu. UserId: {UserId}", userId);
-        return StatusCode(500, new { Message = "Sunucu hatası oluştu." });    // 500
-    }
+    var result = await _swipeService.SwipeAsync(userId, request);
+    return Ok(result);
+    // Exception fırlarsa GlobalExceptionMiddleware yakalar.
 }
 ```
 
-### İyileştirme Önerisi: Global Exception Handler Middleware
+### Token Revocation Middleware
+
+`TokenRevocationMiddleware`, authentication sonrası ve authorization öncesinde çalışır:
 
 ```csharp
-// Gelecekte eklenebilir:
-public class ExceptionMiddleware
+public async Task InvokeAsync(HttpContext context, ITokenService tokenService)
 {
-    public async Task InvokeAsync(HttpContext context, RequestDelegate next)
+    if (context.User.Identity?.IsAuthenticated == true)
     {
-        try
+        var jti = context.User.FindFirstValue(JwtRegisteredClaimNames.Jti);
+        if (jti != null && await tokenService.IsAccessTokenRevokedAsync(jti))
         {
-            await next(context);
-        }
-        catch (DomainException ex)
-        {
-            context.Response.StatusCode = 400;
-            await context.Response.WriteAsJsonAsync(new { ex.Message });
-        }
-        catch (NotFoundException ex)
-        {
-            context.Response.StatusCode = 404;
-            await context.Response.WriteAsJsonAsync(new { ex.Message });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Beklenmedik hata");
-            context.Response.StatusCode = 500;
-            await context.Response.WriteAsJsonAsync(new { Message = "Sunucu hatası." });
+            context.Response.StatusCode = 401;
+            return; // Pipeline'a devam etme
         }
     }
+    await _next(context);
 }
-// Bu sayede controller'lardaki try-catch blokları kaldırılır. Tek yerde yönetim.
 ```
+
+Logout sırasında access token'ın `jti` claim'i in-memory blocklist'e eklenir. Token süresi dolana kadar bu middleware tarafından reddedilir — veritabanına gitmeden.
+
+### Rate Limiting
+
+IP-bazlı hız sınırlama `AspNetCoreRateLimit` kütüphanesiyle uygulanır. Kurallar `appsettings.json`'da:
+
+| Endpoint | Limit | Süre |
+|----------|-------|------|
+| `POST /api/auth/login` | 10 istek | 1 dakika |
+| `POST /api/auth/register` | 5 istek | 1 saat |
+| Genel (`*`) | 100 istek | 1 dakika |
+
+Development ortamında devre dışı bırakılır (Postman testlerini bloklamasın). Production'da `UseIpRateLimiting()` pipeline'a eklenir.
 
 ---
 
@@ -377,6 +409,9 @@ dotnet ef migrations add AddUserBlocks ...
 | Microsoft.EntityFrameworkCore.Design | Migration oluşturma desteği (design-time) |
 | Swashbuckle.AspNetCore | Swagger UI — interaktif API dokümantasyonu |
 | System.IdentityModel.Tokens.Jwt | Token oluşturma ve claim yönetimi |
+| Serilog.AspNetCore | Structured logging + request logging middleware |
+| AspNetCoreRateLimit | IP-bazlı hız sınırlama |
+| StackExchange.Redis | Redis distributed cache bağlantısı |
 
 ---
 
@@ -386,30 +421,35 @@ dotnet ef migrations add AddUserBlocks ...
 
 | Özellik | Durum | Notlar |
 |---------|-------|--------|
-| **Auth (JWT)** | ✅ Tamamlandı | Register, Login, token doğrulama |
+| **Auth (JWT + Refresh Token)** | ✅ Tamamlandı | Register, Login, Refresh, Logout + token revocation |
 | **Profil Yönetimi** | ✅ Tamamlandı | GET/PUT, kısmi güncelleme |
 | **Kişilik Testi** | ✅ Tamamlandı | Temel (6 boyut) + Detaylı (ortalama) |
 | **Feed & Swipe** | ✅ Tamamlandı | Uyumluluk sıralaması, Like/Pass/SuperLike, match detection |
 | **Feed Sayfalama** | ✅ Tamamlandı | `skip/take` + `PagedFeedDto`, DoS clamp (max 50) |
 | **Mesajlaşma REST** | ✅ Tamamlandı | GET (sayfalı) / POST / MarkAsRead, match membership guard |
-| **Property CRUD** | ✅ Tamamlandı | Filtrelenebilir liste, owner yetkilendirmesi, DataAnnotations validation |
-| **Unit Tests** | ✅ Tamamlandı | 23 test — xUnit + Moq (CompatibilityService, FeedService, SwipeService) |
+| **Real-time (SignalR)** | ✅ Tamamlandı | WebSocket hub, ReceiveMessage + MatchCreated event'leri |
+| **Property CRUD** | ✅ Tamamlandı | Filtrelenebilir liste, owner yetkilendirmesi, DataAnnotations |
+| **Global Exception Handler** | ✅ Tamamlandı | `GlobalExceptionMiddleware` + `AppException` hiyerarşisi |
+| **Token Revocation** | ✅ Tamamlandı | Logout sonrası jti blocklist + `TokenRevocationMiddleware` |
+| **Rate Limiting** | ✅ Tamamlandı | IP-bazlı, login/register/genel kurallar |
+| **Redis Cache** | ✅ Tamamlandı | Feed sonuçları 5-dk TTL, fault-tolerant (Redis yoksa DB'ye düşer) |
+| **Structured Logging** | ✅ Tamamlandı | Serilog, console + rolling file (7 gün), request logging |
+| **Health Check** | ✅ Tamamlandı | `GET /health` liveness endpoint |
+| **HSTS** | ✅ Tamamlandı | Production'da UseHsts() aktif |
+| **CORS (ortam bazlı)** | ✅ Tamamlandı | Dev: AllowAnyOrigin, Prod: appsettings'ten AllowedOrigins |
+| **Frontend Bağlama** | ✅ Tamamlandı | Mock'tan gerçek API'ye geçiş (Faz 6) — Expo React Native |
+| **Unit Tests** | ✅ Tamamlandı | 49 test — xUnit + Moq (6 servis sınıfı) |
 | **Seed Verisi** | ✅ Tamamlandı | 50 kullanıcı, 10 ilan, 3 match, 18 mesaj |
 
 ### Devam Eden / Planlanan Özellikler
 
 | Özellik | Durum | Zorluk | Etki |
 |---------|-------|--------|------|
-| **Global Exception Handler** | Planlandı | Düşük | Controller'lardaki try-catch tekrarını kaldır |
-| **Mesajlaşma (SignalR / WebSocket)** | Planlandı | Yüksek | Gerçek zamanlı bildirim — REST API'nin üzerine eklenir |
 | **Fotoğraf Upload** | Planlandı | Orta | Gerçek dosya depolama (Azure Blob / S3) |
-| **Refresh Token** | Planlandı | Orta | Süre dolan token yenileme — şu an 24 saatlik token var |
-| **Rate Limiting** | Planlandı | Düşük | Brute-force ve DoS koruması |
 | **Email Doğrulama** | Planlandı | Orta | Sahte hesap engelleme |
 | **Push Notification** | Planlandı | Yüksek | Eşleşme/mesaj bildirimi (FCM/APNs) |
-| **Caching (Redis)** | Planlandı | Orta | Feed ve profil performansı |
-| **Logging (Serilog)** | Temel ILogger | Düşük | Structured logging, dosya/DB log |
-| **Health Check** | Planlandı | Düşük | Deployment izleme |
 | **API Versioning** | Planlandı | Düşük | Geriye dönük uyumluluk |
 | **Kullanıcı Engelleme** | Planlandı | Orta | Feed ve mesajlaşmada filtreleme |
 | **Bildirim Tercihleri** | Alan var, logic yok | Düşük | Kullanıcı bildirim ayarları |
+| **Soft Delete** | Planlandı | Düşük | Property/User için |
+| **Audit Log** | Planlandı | Orta | Kullanıcı aksiyonları takibi |

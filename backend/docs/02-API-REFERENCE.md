@@ -85,6 +85,56 @@ Mevcut kullanıcı girişi yapar ve JWT token döner.
 
 ---
 
+### POST `/api/auth/refresh`
+
+Geçerli bir refresh token ile yeni access + refresh token çifti üretir.
+
+**Auth**: Gerekmez
+
+**Request Body**:
+```json
+{
+  "refreshToken": "d4e5f6a7-b8c9-..."
+}
+```
+
+**200 OK — Başarılı**:
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "refreshToken": "a1b2c3d4-e5f6-...",
+  "expiration": "2026-04-29T14:30:00.0000000Z",
+  "userId": "a1b2c3d4-e5f6-...",
+  "name": "Ahmet"
+}
+```
+
+**401 Unauthorized — Geçersiz/süresi dolmuş refresh token**:
+```json
+{ "message": "Geçersiz veya süresi dolmuş refresh token." }
+```
+
+---
+
+### POST `/api/auth/logout`
+
+Mevcut access token ve refresh token'ı iptal ederek çıkış yapar.
+
+**Auth**: Bearer Token (Zorunlu)
+
+**Headers** (opsiyonel):
+```
+X-Refresh-Token: d4e5f6a7-b8c9-...
+```
+
+Refresh token gönderilirse veritabanından da silinir. Access token'ın `jti` claim'i in-memory blocklist'e eklenir — süresi dolana kadar `TokenRevocationMiddleware` tarafından reddedilir.
+
+**204 No Content**: Başarılı çıkış (body dönmez).
+
+**401 Unauthorized**: Token yok veya geçersiz.
+
+---
+
 ## Profile Endpoints
 
 ### GET `/api/profile`
@@ -598,19 +648,36 @@ Karşı tarafın okunmamış mesajlarını toplu olarak okundu işaretler. Kendi
 
 ---
 
+## Health Endpoint
+
+### GET `/health`
+
+Uygulamanın çalışıp çalışmadığını kontrol eder (liveness check).
+
+**Auth**: Gerekmez
+
+**200 OK**: `Healthy`
+
+---
+
 ## Hata Yanıt Formatı
 
-Tüm hata yanıtları aynı formattadır:
+`GlobalExceptionMiddleware` tüm hataları merkezi olarak yakalar. Tüm hata yanıtları aynı formattadır:
 
 ```json
-{ "message": "Hata açıklaması" }
+{ "statusCode": 400, "message": "Hata açıklaması" }
 ```
+
+### Exception Hiyerarşisi
+
+Tüm öngörülen hatalar `AppException` base class'ından türer. Her alt sınıf kendi HTTP status kodunu taşır:
 
 | HTTP Kodu | Exception Tipi | Anlamı |
 |-----------|---------------|--------|
-| 400 | `DomainException` | İş kuralı ihlali (kullanıcı düzeltebilir) |
-| 401 | `DomainException` (login) | Kimlik doğrulama hatası |
+| 400 | `DomainException` | İş kuralı ihlali (kendine swipe, mükerrer swipe, vb.) |
+| 401 | `UnauthorizedException` | Kimlik doğrulama hatası (yanlış şifre, geçersiz token) |
+| 403 | `ForbiddenException` | Yetkilendirme hatası (başkasının ilanı/match'i) |
 | 404 | `NotFoundException` | Kaynak bulunamadı |
 | 500 | `Exception` (catch-all) | Beklenmedik sunucu hatası |
 
-> **Güvenlik**: 500 hatalarında stack trace ve iç detaylar client'a sızdırılmaz. Detaylar sunucu loguna yazılır.
+> **Güvenlik**: `AppException` alt sınıfları için stack trace loglanmaz (beklenen iş akışı). Beklenmedik `Exception`'larda stack trace sunucu loguna yazılır ama client'a sızdırılmaz.

@@ -336,42 +336,36 @@ public async Task<PagedFeedDto> GetFeedAsync(string currentUserId, int skip, int
     if (take <= 0) take = 20;         // Varsayılan
     if (take > 50) take = 50;         // DoS koruması: max 50 kayıt
 
-    // Mevcut kullanıcının FinalScores'unu al (uyumluluk hesabı için)
-    var currentUser = await _userRepository.GetUserWithProfileAsync(currentUserId, tracking: false);
-    var currentScores = currentUser?.Profile?.FinalScores;
+    // Redis cache kontrolü
+    var cacheKey = $"feed:{currentUserId}";
+    var sorted = await _cache.GetAsync<List<(UserSummaryDto Dto, bool HasLikedCurrentUser)>>(cacheKey);
 
-    // TÜM adayları çek (filtrelenmiş: kendisi ve swipe edilenler hariç)
-    var candidates = await _userRepository.GetFeedCandidatesWithLikeStatusAsync(currentUserId);
+    if (sorted is null)
+    {
+        var currentUser = await _userRepository.GetUserWithProfileAsync(currentUserId, tracking: false);
+        var currentScores = currentUser?.Profile?.FinalScores;
+        var candidates = await _userRepository.GetFeedCandidatesWithLikeStatusAsync(currentUserId);
 
-    // Her aday için: DTO'ya dönüştür + uyumluluk hesapla + in-memory sırala
-    var sorted = candidates
-        .Select(item =>
-        {
-            var dto = MapToDto(item.User);
-            dto.Compatibility = _compatibilityService.Calculate(currentScores, item.User.Profile?.FinalScores);
-            return (Dto: dto, item.HasLikedCurrentUser);
-            // ↑ Anonymous tuple: DTO + beğeni durumunu birlikte taşı
-        })
-        .OrderByDescending(x => x.HasLikedCurrentUser)  // 1. SIRALAMA: Beni beğenenler ÖNCE
-        .ThenByDescending(x => x.Dto.Compatibility)       // 2. SIRALAMA: Uyumluluk yüksek → önce
-        .ThenByDescending(x => x.Dto.LastActive)           // 3. SIRALAMA: Son aktif → önce
-        .ToList();
+        sorted = candidates
+            .Select(item =>
+            {
+                var dto = MapToDto(item.User);
+                dto.Compatibility = _compatibilityService.Calculate(currentScores, item.User.Profile?.FinalScores);
+                return (Dto: dto, item.HasLikedCurrentUser);
+            })
+            .OrderByDescending(x => x.HasLikedCurrentUser)  // 1. SIRALAMA: Beni beğenenler ÖNCE
+            .ThenByDescending(x => x.Dto.Compatibility)       // 2. SIRALAMA: Uyumluluk yüksek → önce
+            .ThenByDescending(x => x.Dto.LastActive)           // 3. SIRALAMA: Son aktif → önce
+            .ToList();
 
-    // Neden in-memory sıralama?
-    // Sayfalama SQL'de yapılsaydı, farklı sayfalar farklı sıralama kuralları uygulayabilirdi.
-    // Tüm adaylar in-memory sıralanır, ardından .Skip/.Take uygulanır — tutarlı sıra garantisi.
+        // 5 dakika TTL ile Redis'e yaz. Swipe sonrası cache otomatik invalidate edilir.
+        await _cache.SetAsync(cacheKey, sorted, TimeSpan.FromMinutes(5));
+    }
 
     var totalCount = sorted.Count;
     var users = sorted.Skip(skip).Take(take).Select(x => x.Dto).ToList();
 
-    return new PagedFeedDto
-    {
-        Users = users,
-        Skip = skip,
-        Take = take,
-        TotalCount = totalCount,
-        HasMore = skip + take < totalCount  // Hâlâ gösterilecek aday var mı?
-    };
+    return new PagedFeedDto { Users = users, Skip = skip, Take = take, TotalCount = totalCount, HasMore = skip + take < totalCount };
 }
 ```
 
@@ -545,7 +539,10 @@ Postman testleri entegrasyon testidir — gerçek veritabanı, gerçek HTTP yı�
 EvArkadasimV2.Tests/
 ├── CompatibilityServiceTests.cs   # 8 test — matematiksel algoritma
 ├── FeedServiceTests.cs            # 7 test — sıralama ve sayfalama
-└── SwipeServiceTests.cs           # 8 test — swipe iş kuralları ve match mantığı
+├── SwipeServiceTests.cs           # 8 test — swipe iş kuralları ve match mantığı
+├── MessageServiceTests.cs         # 13 test — yetki, gönderim, XSS, okundu işaretleme
+├── ProfileServiceTests.cs         # 6 test — profil mapping, null kontrolleri
+└── TestServiceTests.cs            # 7 test — temel/detaylı test akışı, validation
 ```
 
 ### Mock (Taklit) Nedir?
@@ -583,12 +580,15 @@ _matchRepo.Verify(r => r.AddAsync(It.IsAny<UserMatch>()), Times.Once);
 |-------------|-------------|----------------------|
 | `CompatibilityServiceTests` | 8 | Null girdiler → 50, eşit skorlar → 100, maksimum zıtlık → 0, simetri, aralık garantisi, kısmi fark |
 | `FeedServiceTests` | 7 | Kullanıcı kendi feed'inde yok, liker önce gelir, boş liste, skip/take doğru, HasMore hesabı, take clamp (≤50), negatif skip |
-| `SwipeServiceTests` | 8 | Self-swipe → exception, geçersiz tip → exception, mükerrer swipe → exception, bulunamayan kullanıcı → exception, Pass → match yok, tek taraflı Like → match yok, karşılıklı Like → match oluşur, MatchesCount artışı |
-| **Toplam** | **23** | |
+| `SwipeServiceTests` | 8 | Self-swipe, geçersiz tip, mükerrer swipe, bulunamayan kullanıcı, Pass → match yok, tek taraflı Like, karşılıklı Like → match, MatchesCount artışı |
+| `MessageServiceTests` | 13 | NotFoundException, ForbiddenException, gönderim yönü, HTML encoding (XSS), okundu işaretleme, geçersiz tip fallback, SignalR bildirim dispatch |
+| `ProfileServiceTests` | 6 | InitialScores/FinalScores mapping, null kontrolleri, CharacterProfile dönüşümü, UserNotFound/ProfileNull hataları |
+| `TestServiceTests` | 7 | Temel test kaydı (Initial + Final), detaylı test ortalamaları, InitialBasicTestResults korunması, temel test olmadan detaylı test gönderimi |
+| **Toplam** | **49** | |
 
 ### Global Exception Handler ve Testler
 
-İleride global exception handler middleware eklenecekse (controller'lardaki try-catch blokları kaldırılacak), **unit testler etkilenmez** — servis metodları exception fırlatmaya devam eder, sadece bu exception'ı yakalayan yer değişir. Test kodu değiştirmeden geçmeye devam eder.
+Controller'lardaki try-catch blokları `GlobalExceptionMiddleware` ile merkezileştirildi. **Unit testler etkilenmez** — servis metodları exception fırlatmaya devam eder, sadece bu exception'ı yakalayan yer değişti. Test kodu değiştirmeden geçmeye devam eder.
 
 ---
 
