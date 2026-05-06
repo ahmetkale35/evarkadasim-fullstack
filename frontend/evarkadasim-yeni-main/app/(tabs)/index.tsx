@@ -11,6 +11,7 @@ import { useUsers } from '@/hooks/useUsers';
 import { useMatches } from '@/hooks/useMatches';
 import { useCharacterTest } from '@/hooks/useCharacterTest';
 import { userService } from '@/services/userService';
+import { TestResults } from '@/types';
 
 export default function FindRoommatesScreen() {
   const { users, loading, removeUser } = useUsers();
@@ -37,7 +38,7 @@ export default function FindRoommatesScreen() {
 
   const currentUser = sortedUsers[currentIndex];
 
-  const handleTestComplete = (results: typeof basicTestResults) => {
+  const handleTestComplete = (results: TestResults | null) => {
     if (results) {
       setBasicTestResults(results);
     }
