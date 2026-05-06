@@ -1,13 +1,39 @@
 import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TestResults, DetailedTestResults } from '@/types';
 import { testService } from '@/services/testService';
+import { storage } from '@/services/storage';
 
-// Birden fazla bileşen aynı test state'ini okuyabilsin diye module-level store
 let globalBasicTestResults: TestResults | null = null;
 let globalDetailedTestResults: DetailedTestResults | null = null;
 let listeners: Set<() => void> = new Set();
+let storageLoaded = false;
 
 const notifyListeners = () => listeners.forEach(l => l());
+
+const userKey = (base: string, userId: string) => `${base}_${userId}`;
+
+const loadFromStorage = async () => {
+  if (storageLoaded) return;
+  storageLoaded = true;
+  try {
+    const userId = await storage.getUserId();
+    if (!userId) return;
+    const basic = await AsyncStorage.getItem(userKey('char_test_basic', userId));
+    if (basic) globalBasicTestResults = JSON.parse(basic);
+    const detailed = await AsyncStorage.getItem(userKey('char_test_detailed', userId));
+    if (detailed) globalDetailedTestResults = JSON.parse(detailed);
+    notifyListeners();
+  } catch {}
+};
+
+// Logout: global state sıfırla, storage'a dokunma (aynı kullanıcı geri gelince verisi hazır)
+export const clearCharacterTestStorage = () => {
+  globalBasicTestResults = null;
+  globalDetailedTestResults = null;
+  storageLoaded = false;
+  notifyListeners();
+};
 
 export function useCharacterTest() {
     const [basicTestResults, setBasicTestResults] = useState<TestResults | null>(globalBasicTestResults);
@@ -19,26 +45,42 @@ export function useCharacterTest() {
             setDetailedTestResults(globalDetailedTestResults);
         };
         listeners.add(listener);
+        loadFromStorage();
         return () => { listeners.delete(listener); };
     }, []);
 
-    const setBasicTestResultsGlobal = (results: TestResults | null) => {
+    const setBasicTestResultsGlobal = async (results: TestResults | null) => {
         globalBasicTestResults = results;
         setBasicTestResults(results);
         notifyListeners();
-        // Global state güncellenince backend'e de kaydet; hata sessizce geçilir
-        if (results) {
-            testService.submitBasic(results).catch(() => {});
-        }
+        try {
+            const userId = await storage.getUserId();
+            if (userId) {
+                if (results) {
+                    await AsyncStorage.setItem(userKey('char_test_basic', userId), JSON.stringify(results));
+                } else {
+                    await AsyncStorage.removeItem(userKey('char_test_basic', userId));
+                }
+            }
+        } catch {}
+        if (results) testService.submitBasic(results).catch(() => {});
     };
 
-    const setDetailedTestResultsGlobal = (results: DetailedTestResults | null) => {
+    const setDetailedTestResultsGlobal = async (results: DetailedTestResults | null) => {
         globalDetailedTestResults = results;
         setDetailedTestResults(results);
         notifyListeners();
-        if (results) {
-            testService.submitDetailed(results).catch(() => {});
-        }
+        try {
+            const userId = await storage.getUserId();
+            if (userId) {
+                if (results) {
+                    await AsyncStorage.setItem(userKey('char_test_detailed', userId), JSON.stringify(results));
+                } else {
+                    await AsyncStorage.removeItem(userKey('char_test_detailed', userId));
+                }
+            }
+        } catch {}
+        if (results) testService.submitDetailed(results).catch(() => {});
     };
 
     const hasCompletedBasicTest = (): boolean => globalBasicTestResults !== null;

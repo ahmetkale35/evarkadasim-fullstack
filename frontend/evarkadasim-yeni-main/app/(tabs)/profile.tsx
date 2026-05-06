@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Settings, Camera, MapPin, Heart, Star, Shield, Bell, Eye, CreditCard as Edit, Shield as Verified, Brain, Lock, CheckCircle2, LogOut } from 'lucide-react-native';
 import { CharacterTest } from '@/components/CharacterTest';
-import { useCharacterTest } from '@/hooks/useCharacterTest';
+import { useCharacterTest, clearCharacterTestStorage } from '@/hooks/useCharacterTest';
 import { useProfile } from '@/hooks/useProfile';
 import { authService } from '@/services/authService';
 import { authEvents } from '@/services/authEvents';
@@ -22,6 +22,7 @@ export default function ProfileScreen() {
       { text: 'İptal', style: 'cancel' },
       {
         text: 'Çıkış Yap', style: 'destructive', onPress: async () => {
+          await clearCharacterTestStorage();
           await authService.logout();
           authEvents.emitUnauthorized();
         }

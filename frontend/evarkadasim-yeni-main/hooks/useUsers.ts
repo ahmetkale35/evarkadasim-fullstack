@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { User } from '@/types';
 import { userService } from '@/services/userService';
 
@@ -8,6 +9,8 @@ export function useUsers() {
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [skip, setSkip] = useState(0);
+  // Logout → remount sıfırlar; tab geçişinde tekrar yüklenmez
+  const didLoad = useRef(false);
 
   const fetchFeed = useCallback(async (currentSkip: number) => {
     try {
@@ -23,9 +26,14 @@ export function useUsers() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchFeed(0);
-  }, [fetchFeed]);
+  useFocusEffect(
+    useCallback(() => {
+      if (didLoad.current) return;
+      didLoad.current = true;
+      setLoading(true);
+      fetchFeed(0);
+    }, [fetchFeed])
+  );
 
   const removeUser = (userId: string) => {
     setUsers(prev => prev.filter(u => u.id !== userId));

@@ -20,7 +20,8 @@ export interface User {
   lastActive: Date;
   cleanliness: number; // 1-5 scale
   socialLevel: number; // 1-5 scale
-  characterProfile?: TestResults; // Karakter testi sonuçları
+  characterProfile?: TestResults;
+  compatibility?: number;
 }
 
 export interface TestResults {

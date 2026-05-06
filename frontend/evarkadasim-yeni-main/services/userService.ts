@@ -77,6 +77,7 @@ function toUser(dto: UserSummaryDto): User {
     lastActive: new Date(dto.lastActive),
     cleanliness: dto.cleanliness,
     socialLevel: dto.socialLevel,
+    compatibility: dto.compatibility ?? undefined,
   };
 }
 

@@ -64,7 +64,8 @@ export default function MessagesScreen() {
           )}
 
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            behavior="padding"
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 60}
             style={styles.inputContainer}
           >
             <View style={styles.inputRow}>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,85 +11,31 @@ import { useUsers } from '@/hooks/useUsers';
 import { useMatches } from '@/hooks/useMatches';
 import { useCharacterTest } from '@/hooks/useCharacterTest';
 import { userService } from '@/services/userService';
-import { User } from '@/types';
 
 export default function FindRoommatesScreen() {
   const { users, loading, removeUser } = useUsers();
   const { addMatch } = useMatches();
-  const {
-    basicTestResults,
-    hasCompletedBasicTest,
-    setBasicTestResults
-  } = useCharacterTest();
+  const { hasCompletedBasicTest, setBasicTestResults } = useCharacterTest();
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showTestPopup, setShowTestPopup] = useState(false);
   const [showTest, setShowTest] = useState(false);
-  const [usersWithCompatibility, setUsersWithCompatibility] = useState<(User & { compatibility?: number })[]>([]);
-  const popupShown = useRef(false); // Session başına bir kez göster
+  const popupShown = useRef(false);
 
   useEffect(() => {
     if (!loading && users.length > 0 && !hasCompletedBasicTest() && !popupShown.current) {
       popupShown.current = true;
       setTimeout(() => setShowTestPopup(true), 1000);
     }
-  }, [loading]); // sadece loading değişince kontrol et
+  }, [loading]);
 
-  // Kullanıcı test sonuçları değiştiğinde uyumluluk hesapla
-  useEffect(() => {
-    if (basicTestResults && users.length > 0) {
-      const usersWithScores = users.map(user => ({
-        ...user,
-        compatibility: calculateCompatibility(basicTestResults, user)
-      }));
+  // Backend compatibility skoruna göre sırala (yüksekten düşüğe)
+  const sortedUsers = useMemo(
+    () => [...users].sort((a, b) => (b.compatibility ?? 0) - (a.compatibility ?? 0)),
+    [users]
+  );
 
-      // Uyumluluk skoruna göre sırala (yüksekten düşüğe)
-      usersWithScores.sort((a, b) => (b.compatibility || 0) - (a.compatibility || 0));
-
-      setUsersWithCompatibility(usersWithScores);
-    } else {
-      setUsersWithCompatibility(users);
-    }
-  }, [basicTestResults, users]);
-
-  const calculateCompatibility = (userResults: typeof basicTestResults, otherUser: User): number => {
-    if (!userResults) return 0;
-
-    // Eğer diğer kullanıcının test sonuçları yoksa random bir uyumluluk ver
-    if (!otherUser.characterProfile) {
-      // Demo için random karakter profili oluştur
-      const randomProfile = {
-        socialEnergy: Math.random() * 4 + 1,
-        orderApproach: Math.random() * 4 + 1,
-        conflictManagement: Math.random() * 4 + 1,
-        sharingStyle: Math.random() * 4 + 1,
-        lifeRhythm: Math.random() * 4 + 1,
-        communicationStyle: Math.random() * 4 + 1,
-      };
-      otherUser.characterProfile = randomProfile;
-    }
-
-    // Her boyut için farkı hesapla
-    const dimensions = Object.keys(userResults) as (keyof typeof userResults)[];
-    let totalDifference = 0;
-
-    dimensions.forEach(dimension => {
-      const userScore = userResults[dimension];
-      const otherScore = otherUser.characterProfile![dimension];
-      const difference = Math.abs(userScore - otherScore);
-      totalDifference += difference;
-    });
-
-    // Ortalama farkı hesapla (0-4 arası)
-    const avgDifference = totalDifference / dimensions.length;
-
-    // Uyumluluk yüzdesine çevir (4-0 fark = %0-100 uyumluluk)
-    const compatibility = Math.max(0, ((4 - avgDifference) / 4) * 100);
-
-    return Math.round(compatibility);
-  };
-
-  const currentUser = usersWithCompatibility[currentIndex];
+  const currentUser = sortedUsers[currentIndex];
 
   const handleTestComplete = (results: typeof basicTestResults) => {
     if (results) {
@@ -120,7 +66,7 @@ export default function FindRoommatesScreen() {
   const handleLike = async () => {
     if (!currentUser) return;
     removeUser(currentUser.id);
-    setCurrentIndex(prev => Math.min(prev, usersWithCompatibility.length - 1));
+    setCurrentIndex(prev => Math.min(prev, sortedUsers.length - 1));
     try {
       const result = await userService.swipe(currentUser.id, 'like');
       if (result.isMatch) {
@@ -135,7 +81,7 @@ export default function FindRoommatesScreen() {
   const handlePass = async () => {
     if (!currentUser) return;
     removeUser(currentUser.id);
-    setCurrentIndex(prev => Math.min(prev, usersWithCompatibility.length - 1));
+    setCurrentIndex(prev => Math.min(prev, sortedUsers.length - 1));
     try {
       await userService.swipe(currentUser.id, 'pass');
     } catch {
@@ -146,7 +92,7 @@ export default function FindRoommatesScreen() {
   const handleSuperLike = async () => {
     if (!currentUser) return;
     removeUser(currentUser.id);
-    setCurrentIndex(prev => Math.min(prev, usersWithCompatibility.length - 1));
+    setCurrentIndex(prev => Math.min(prev, sortedUsers.length - 1));
     try {
       const result = await userService.swipe(currentUser.id, 'superlike');
       addMatch(currentUser);
@@ -218,7 +164,7 @@ export default function FindRoommatesScreen() {
         </View>
         <View style={styles.subHeader}>
           <Text style={styles.subtitle}>
-            {usersWithCompatibility.length - currentIndex} potential roommates nearby
+            {sortedUsers.length - currentIndex} potential roommates nearby
           </Text>
         </View>
 
