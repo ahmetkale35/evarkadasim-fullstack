@@ -250,7 +250,8 @@ else
 if (!app.Environment.IsDevelopment())
     app.UseIpRateLimiting();
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
 app.UseAuthentication();
 // UseAuthentication sonrası, UseAuthorization öncesi: revoke edilmiş token [Authorize]'a ulaşmadan 401 alır.
 app.UseMiddleware<TokenRevocationMiddleware>();
