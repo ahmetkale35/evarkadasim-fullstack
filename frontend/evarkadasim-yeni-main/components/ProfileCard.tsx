@@ -32,7 +32,10 @@ export function ProfileCard({ user, compatibility }: ProfileCardProps) {
 
   return (
     <View style={styles.card}>
-      <Image source={{ uri: user.photos[0] }} style={styles.image} />
+      {user.photos.length > 0
+        ? <Image source={{ uri: user.photos[0] }} style={styles.image} />
+        : <View style={[styles.image, styles.imagePlaceholder]} />
+      }
 
       <LinearGradient
         colors={['transparent', 'rgba(0,0,0,0.2)', 'rgba(0,0,0,0.9)']}
@@ -159,6 +162,9 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '45%',
     resizeMode: 'cover',
+  },
+  imagePlaceholder: {
+    backgroundColor: '#E5E7EB',
   },
   gradient: {
     position: 'absolute',

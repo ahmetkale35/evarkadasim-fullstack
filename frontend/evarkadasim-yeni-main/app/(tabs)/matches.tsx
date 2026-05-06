@@ -3,16 +3,17 @@ import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-nativ
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Heart } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import { MatchCard } from '@/components/MatchCard';
 import { useMatches } from '@/hooks/useMatches';
 import { Match } from '@/types';
 
 export default function MatchesScreen() {
   const { matches, loading } = useMatches();
+  const router = useRouter();
 
   const handleMatchPress = (match: Match) => {
-    // Navigate to chat screen
-    console.log('Navigate to chat with:', match.user.name);
+    router.push({ pathname: '/(tabs)/messages', params: { matchId: match.id } });
   };
 
   const renderMatch = ({ item }: { item: Match }) => (

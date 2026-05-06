@@ -3,15 +3,17 @@ import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity }
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Chrome as Home, Filter, Search } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import { PropertyCard } from '@/components/PropertyCard';
 import { useProperties } from '@/hooks/useProperties';
 import { Property } from '@/types';
 
 export default function PropertiesScreen() {
   const { properties, loading } = useProperties();
+  const router = useRouter();
 
   const handlePropertyPress = (property: Property) => {
-    console.log('View property details:', property.title);
+    router.push({ pathname: '/property/[id]', params: { id: property.id } });
   };
 
   const renderProperty = ({ item }: { item: Property }) => (

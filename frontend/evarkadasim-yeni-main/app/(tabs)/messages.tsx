@@ -3,13 +3,15 @@ import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, Keyboard
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Send, ArrowLeft } from 'lucide-react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { ChatMessage } from '@/components/ChatMessage';
 import { useMatches } from '@/hooks/useMatches';
 import { useMessages } from '@/hooks/useMessages';
 
 export default function MessagesScreen() {
   const { matches, loading: matchesLoading } = useMatches();
-  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
+  const { matchId } = useLocalSearchParams<{ matchId?: string }>();
+  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(matchId ?? null);
   const [messageText, setMessageText] = useState('');
   const flatListRef = useRef<FlatList>(null);
 

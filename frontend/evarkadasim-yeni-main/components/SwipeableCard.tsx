@@ -23,6 +23,8 @@ export function SwipeableCard({ children, onSwipeLeft, onSwipeRight, onSwipeUp }
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
   const scale = useSharedValue(1);
+  // Her kart instance'ı yalnızca bir kez swipe edilebilir — çift tetiklenmeyi önler
+  const swiped = useRef(false);
 
   const gesture = Gesture.Pan()
     .onUpdate((event) => {
@@ -34,24 +36,27 @@ export function SwipeableCard({ children, onSwipeLeft, onSwipeRight, onSwipeUp }
       scale.value = Math.max(0.95, 1 - distance / 1000);
     })
     .onEnd((event) => {
+      if (swiped.current) return;
       const { translationX, translationY, velocityX, velocityY } = event;
-      
+
       // Check for swipe up (super like)
       if (translationY < -100 && Math.abs(translationX) < 50) {
+        swiped.current = true;
         translateY.value = withSpring(-screenWidth, { damping: 15 });
         translateX.value = withSpring(0);
         scale.value = withSpring(0.8);
         if (onSwipeUp) runOnJS(onSwipeUp)();
         return;
       }
-      
+
       // Check for horizontal swipes
       if (Math.abs(translationX) > SWIPE_THRESHOLD || Math.abs(velocityX) > 500) {
+        swiped.current = true;
         const direction = translationX > 0 ? 1 : -1;
         translateX.value = withSpring(direction * screenWidth * 1.5, { damping: 15 });
         translateY.value = withSpring(translationY * 0.2);
         scale.value = withSpring(0.8);
-        
+
         if (direction > 0) {
           runOnJS(onSwipeRight)();
         } else {
