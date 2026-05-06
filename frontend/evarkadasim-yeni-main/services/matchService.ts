@@ -33,8 +33,8 @@ interface MessageDto {
 }
 
 interface MatchDto {
-  id: string;
-  user: UserProfileDto;
+  matchId: number;
+  matchedUser: UserProfileDto;
   matchedAt: string;
   lastMessage?: MessageDto;
   isNewMatch: boolean;
@@ -54,26 +54,26 @@ function toMessage(dto: MessageDto): Message {
 
 function toMatch(dto: MatchDto): Match {
   return {
-    id: dto.id,
+    id: dto.matchId.toString(),
     user: {
-      id: dto.user.id,
-      name: dto.user.name,
-      age: dto.user.age,
-      bio: dto.user.bio ?? '',
-      budget: dto.user.budget ?? '',
-      moveInDate: dto.user.moveInDate ?? '',
-      lifestyle: dto.user.lifestyle,
-      photos: dto.user.photos,
-      location: { city: dto.user.location?.city ?? '' },
-      interests: dto.user.interests,
-      occupation: dto.user.occupation,
-      education: dto.user.education,
+      id: dto.matchedUser.id,
+      name: dto.matchedUser.name,
+      age: dto.matchedUser.age,
+      bio: dto.matchedUser.bio ?? '',
+      budget: dto.matchedUser.budget ?? '',
+      moveInDate: dto.matchedUser.moveInDate ?? '',
+      lifestyle: dto.matchedUser.lifestyle,
+      photos: dto.matchedUser.photos,
+      location: { city: dto.matchedUser.location?.city ?? '' },
+      interests: dto.matchedUser.interests,
+      occupation: dto.matchedUser.occupation,
+      education: dto.matchedUser.education,
       roomType: 'any',
       lookingFor: 'both',
-      isVerified: dto.user.isVerified,
-      lastActive: new Date(dto.user.lastActive),
-      cleanliness: dto.user.cleanliness,
-      socialLevel: dto.user.socialLevel,
+      isVerified: dto.matchedUser.isVerified,
+      lastActive: new Date(dto.matchedUser.lastActive),
+      cleanliness: dto.matchedUser.cleanliness,
+      socialLevel: dto.matchedUser.socialLevel,
     },
     matchedAt: new Date(dto.matchedAt),
     lastMessage: dto.lastMessage ? toMessage(dto.lastMessage) : undefined,
