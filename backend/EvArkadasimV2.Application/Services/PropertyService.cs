@@ -13,10 +13,12 @@ namespace EvArkadasimV2.Application.Services
         private const int MaxTake = 50;
 
         private readonly IPropertyRepository _propertyRepository;
+        private readonly IUserRepository _userRepository;
 
-        public PropertyService(IPropertyRepository propertyRepository)
+        public PropertyService(IPropertyRepository propertyRepository, IUserRepository userRepository)
         {
             _propertyRepository = propertyRepository;
+            _userRepository = userRepository;
         }
 
         public async Task<IEnumerable<PropertyDto>> GetListAsync(
@@ -66,11 +68,20 @@ namespace EvArkadasimV2.Application.Services
                 Furnished = dto.Furnished,
                 PetsAllowed = dto.PetsAllowed,
                 SmokingAllowed = dto.SmokingAllowed,
-                OwnerId = ownerId
+                OwnerId = ownerId,
+                Latitude = dto.Latitude,
+                Longitude = dto.Longitude
             };
 
             await _propertyRepository.AddAsync(property);
             await _propertyRepository.SaveChangesAsync();
+
+            var owner = await _userRepository.GetUserWithProfileAsync(ownerId);
+            if (owner?.Profile != null && owner.Profile.LookingFor != LookingFor.Roommate)
+            {
+                owner.Profile.LookingFor = LookingFor.Roommate;
+                await _userRepository.SaveChangesAsync();
+            }
 
             // Owner navigation property olmadan dönmemek için tekrar çek
             var created = await _propertyRepository.GetByIdWithOwnerAsync(property.Id);
@@ -101,6 +112,8 @@ namespace EvArkadasimV2.Application.Services
             property.Furnished = dto.Furnished;
             property.PetsAllowed = dto.PetsAllowed;
             property.SmokingAllowed = dto.SmokingAllowed;
+            property.Latitude = dto.Latitude;
+            property.Longitude = dto.Longitude;
 
             _propertyRepository.Update(property);
             await _propertyRepository.SaveChangesAsync();
@@ -122,6 +135,23 @@ namespace EvArkadasimV2.Application.Services
             await _propertyRepository.SaveChangesAsync();
         }
 
+        public async Task<IEnumerable<PropertyMapPinDto>> GetMapPinsAsync()
+        {
+            var properties = await _propertyRepository.GetWithCoordinatesAsync();
+            return properties.Select(p => new PropertyMapPinDto
+            {
+                Id = p.Id,
+                Latitude = p.Latitude!.Value,
+                Longitude = p.Longitude!.Value,
+                Title = p.Title,
+                Price = $"{p.Currency}{p.PriceAmount:N0}/{p.PricePeriod}",
+                Location = p.Location,
+                PropertyType = p.PropertyType,
+                OwnerId = p.OwnerId,
+                OwnerName = $"{p.Owner?.Name} {p.Owner?.LastName}".Trim()
+            });
+        }
+
         private static PropertyDto MapToDto(Property p) => new()
         {
             Id = p.Id,
@@ -138,6 +168,8 @@ namespace EvArkadasimV2.Application.Services
             Furnished = p.Furnished,
             PetsAllowed = p.PetsAllowed,
             SmokingAllowed = p.SmokingAllowed,
+            Latitude = p.Latitude,
+            Longitude = p.Longitude,
             OwnerId = p.OwnerId,
             OwnerName = p.Owner?.Name ?? string.Empty
         };

@@ -40,6 +40,16 @@ namespace EvArkadasimV2.API.Controllers
             return Ok(result);
         }
 
+        /// <summary>Koordinatı olan tüm ilanları harita pin'i olarak döner.</summary>
+        [HttpGet("map")]
+        [ProducesResponseType(typeof(List<PropertyMapPinDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetMapPins()
+        {
+            var result = await _propertyService.GetMapPinsAsync();
+            return Ok(result);
+        }
+
         /// <summary>Tek bir emlak ilanının detayını döner.</summary>
         /// <param name="id">İlan ID'si.</param>
         [HttpGet("{id}")]
