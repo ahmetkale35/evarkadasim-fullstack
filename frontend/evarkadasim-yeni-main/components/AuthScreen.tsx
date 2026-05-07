@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Heart, Home, Users, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
+import { Heart, Home, Users, Mail, Lock, Eye, EyeOff, User } from 'lucide-react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
 import { authService } from '@/services/authService';
 
@@ -14,6 +14,8 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
     const [isLoginMode, setIsLoginMode] = useState(true);
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
 
@@ -36,16 +38,22 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
             Alert.alert('Hata', 'Lütfen tüm alanları doldurun.');
             return;
         }
+        if (!isLoginMode && (!firstName.trim() || !lastName.trim())) {
+            Alert.alert('Hata', 'Lütfen ad ve soyadınızı girin.');
+            return;
+        }
 
         setLoading(true);
         try {
             if (isLoginMode) {
                 await authService.login({ email: username.trim(), password });
             } else {
-                // Kayıt sırasında name olarak email'in @ öncesi kısmı kullanılır,
-                // kullanıcı profil ekranında sonradan düzenleyebilir
-                const name = username.split('@')[0];
-                await authService.register({ name, email: username.trim(), password });
+                await authService.register({
+                    name: firstName.trim(),
+                    lastName: lastName.trim(),
+                    email: username.trim(),
+                    password,
+                });
             }
             onAuthSuccess();
         } catch (error: any) {
@@ -60,6 +68,8 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
         setIsLoginMode(!isLoginMode);
         setUsername('');
         setPassword('');
+        setFirstName('');
+        setLastName('');
     };
 
     return (
@@ -105,7 +115,39 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
                                     }
                                 </Text>
 
-                                {/* Kullanıcı adı input */}
+                                {/* Ad + Soyad — sadece kayıt modunda */}
+                                {!isLoginMode && (
+                                    <View style={styles.nameRow}>
+                                        <View style={[styles.inputContainer, styles.nameInput]}>
+                                            <View style={styles.inputWrapper}>
+                                                <User size={20} color="#9CA3AF" style={styles.inputIcon} />
+                                                <TextInput
+                                                    style={styles.textInput}
+                                                    placeholder="Ad"
+                                                    value={firstName}
+                                                    onChangeText={setFirstName}
+                                                    autoCorrect={false}
+                                                    placeholderTextColor="#9CA3AF"
+                                                />
+                                            </View>
+                                        </View>
+                                        <View style={[styles.inputContainer, styles.nameInput]}>
+                                            <View style={styles.inputWrapper}>
+                                                <User size={20} color="#9CA3AF" style={styles.inputIcon} />
+                                                <TextInput
+                                                    style={styles.textInput}
+                                                    placeholder="Soyad"
+                                                    value={lastName}
+                                                    onChangeText={setLastName}
+                                                    autoCorrect={false}
+                                                    placeholderTextColor="#9CA3AF"
+                                                />
+                                            </View>
+                                        </View>
+                                    </View>
+                                )}
+
+                                {/* E-posta input */}
                                 <View style={styles.inputContainer}>
                                     <View style={styles.inputWrapper}>
                                         <Mail size={20} color="#9CA3AF" style={styles.inputIcon} />
@@ -266,6 +308,13 @@ const styles = StyleSheet.create({
     },
     inputContainer: {
         marginBottom: 20,
+    },
+    nameRow: {
+        flexDirection: 'row',
+        gap: 10,
+    },
+    nameInput: {
+        flex: 1,
     },
     inputWrapper: {
         flexDirection: 'row',
