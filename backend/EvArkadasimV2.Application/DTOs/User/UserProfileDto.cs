@@ -7,6 +7,7 @@ namespace EvArkadasimV2.Application.DTOs.User
     {
         public string Id { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
+        public string? LastName { get; set; }
         public int Age { get; set; }
         public string? Bio { get; set; }
         public string? Budget { get; set; }

@@ -38,9 +38,15 @@ namespace EvArkadasimV2.Application.Services
             {
                 var currentUser = await _userRepository.GetUserWithProfileAsync(currentUserId, tracking: false);
                 var currentScores = currentUser?.Profile?.FinalScores;
+                var currentCity = currentUser?.Profile?.Location?.City;
                 var candidates = await _userRepository.GetFeedCandidatesWithLikeStatusAsync(currentUserId);
 
-                sorted = candidates
+                var filtered = string.IsNullOrEmpty(currentCity)
+                    ? candidates
+                    : candidates.Where(x => string.Equals(
+                        x.User.Profile?.Location?.City, currentCity, StringComparison.OrdinalIgnoreCase));
+
+                sorted = filtered
                     .Select(item =>
                     {
                         var dto = MapToDto(item.User);
