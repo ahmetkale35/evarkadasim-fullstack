@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Menu, User as UserIcon } from 'lucide-react-native';
+import { Menu, User as UserIcon, X, Lock } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { storage } from '@/services/storage';
 import { ProfileCard } from '@/components/ProfileCard';
-import { SwipeableCard } from '@/components/SwipeableCard';
 import { CharacterTestPopup } from '@/components/CharacterTestPopup';
 import { CharacterTest } from '@/components/CharacterTest';
 import { useUsers } from '@/hooks/useUsers';
@@ -14,13 +15,14 @@ import { userService } from '@/services/userService';
 import { TestResults } from '@/types';
 
 export default function FindRoommatesScreen() {
-  const { users, loading, removeUser } = useUsers();
+  const { users, loading, removeUser, refresh } = useUsers();
   const { addMatch } = useMatches();
   const { hasCompletedBasicTest, setBasicTestResults } = useCharacterTest();
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showTestPopup, setShowTestPopup] = useState(false);
   const [showTest, setShowTest] = useState(false);
+  const [showTestBanner, setShowTestBanner] = useState(false);
   const popupShown = useRef(false);
 
   useEffect(() => {
@@ -29,6 +31,23 @@ export default function FindRoommatesScreen() {
       setTimeout(() => setShowTestPopup(true), 1000);
     }
   }, [loading]);
+
+  useEffect(() => {
+    if (!hasCompletedBasicTest()) {
+      storage.getUserId().then(uid => {
+        if (!uid) return;
+        AsyncStorage.getItem(`test_banner_dismissed_${uid}`).then(val => {
+          if (!val) setShowTestBanner(true);
+        });
+      });
+    }
+  }, []);
+
+  const dismissTestBanner = async () => {
+    const uid = await storage.getUserId();
+    if (uid) await AsyncStorage.setItem(`test_banner_dismissed_${uid}`, '1');
+    setShowTestBanner(false);
+  };
 
   // Backend compatibility skoruna göre sırala (yüksekten düşüğe)
   const sortedUsers = useMemo(
@@ -43,6 +62,8 @@ export default function FindRoommatesScreen() {
       setBasicTestResults(results);
     }
     setShowTest(false);
+    setCurrentIndex(0);
+    refresh();
     Alert.alert(
       'Test Tamamlandı! 🎉',
       'Artık sana en uygun ev arkadaşı önerilerini görmeye başlayacaksın.',
@@ -169,10 +190,29 @@ export default function FindRoommatesScreen() {
           </Text>
         </View>
 
+        {showTestBanner && !hasCompletedBasicTest() && (
+          <View style={styles.testBanner}>
+            <Lock size={14} color="#7C3AED" />
+            <Text style={styles.testBannerText}>Uyumluluk skorlarını görmek için karakterini test et</Text>
+            <TouchableOpacity onPress={() => setShowTest(true)}>
+              <Text style={styles.testBannerCta}>Teste Git</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={dismissTestBanner} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <X size={14} color="#9CA3AF" />
+            </TouchableOpacity>
+          </View>
+        )}
+
         <View style={styles.cardContainer}>
-          <SwipeableCard key={currentUser.id} onSwipeLeft={handlePass} onSwipeRight={handleLike} onSwipeUp={handleSuperLike}>
-            <ProfileCard user={currentUser} compatibility={currentUser.compatibility} />
-          </SwipeableCard>
+          <ProfileCard
+            key={currentUser.id}
+            user={currentUser}
+            compatibility={currentUser.compatibility}
+            onSwipeLeft={handlePass}
+            onSwipeRight={handleLike}
+            onSwipeUp={handleSuperLike}
+            onLockPress={() => setShowTestPopup(true)}
+          />
         </View>
       </SafeAreaView>
 
@@ -187,6 +227,15 @@ export default function FindRoommatesScreen() {
 }
 
 const styles = StyleSheet.create({
+  testBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    marginHorizontal: 16, marginBottom: 8,
+    paddingHorizontal: 12, paddingVertical: 10,
+    backgroundColor: '#F3E8FF', borderRadius: 12,
+    borderWidth: 1, borderColor: '#DDD6FE',
+  },
+  testBannerText: { flex: 1, fontSize: 12, color: '#4C1D95', fontWeight: '500' },
+  testBannerCta: { fontSize: 12, fontWeight: '700', color: '#7C3AED' },
   container: {
     flex: 1,
   },
@@ -255,6 +304,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 16,
+    paddingBottom: 12,
   },
   loadingContainer: {
     flex: 1,
