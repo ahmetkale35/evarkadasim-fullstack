@@ -1,21 +1,69 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Switch, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Switch, ActivityIndicator, Alert, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Settings, Camera, MapPin, Heart, Star, Shield, Bell, Eye, CreditCard as Edit, Shield as Verified, Brain, Lock, CheckCircle2, LogOut } from 'lucide-react-native';
+import { Settings, Camera, MapPin, Heart, Star, Shield, Bell, Eye, CreditCard as Edit, Shield as Verified, Brain, Lock, CheckCircle2, LogOut, X } from 'lucide-react-native';
 import { CharacterTest } from '@/components/CharacterTest';
 import { useCharacterTest, clearCharacterTestStorage } from '@/hooks/useCharacterTest';
 import { useProfile } from '@/hooks/useProfile';
+import { profileService } from '@/services/profileService';
 import { authService } from '@/services/authService';
 import { authEvents } from '@/services/authEvents';
+import { feedEvents } from '@/services/feedEvents';
 
 export default function ProfileScreen() {
-  const { profile, loading } = useProfile();
+  const { profile, loading, refresh } = useProfile();
 
   const [notifications, setNotifications] = useState(true);
   const [showOnline, setShowOnline] = useState(true);
   const [showBasicTest, setShowBasicTest] = useState(false);
   const [showDetailedTest, setShowDetailedTest] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editForm, setEditForm] = useState({
+    firstName: '',
+    lastName: '',
+    age: '',
+    bio: '',
+    occupation: '',
+    education: '',
+    city: '',
+  });
+
+  const openEditModal = () => {
+    setEditForm({
+      firstName: profile?.name ?? '',
+      lastName: profile?.lastName ?? '',
+      age: profile?.age ? String(profile.age) : '',
+      bio: profile?.bio ?? '',
+      occupation: profile?.occupation ?? '',
+      education: profile?.education ?? '',
+      city: profile?.location?.city ?? '',
+    });
+    setShowEditModal(true);
+  };
+
+  const handleSaveProfile = async () => {
+    setEditSaving(true);
+    try {
+      await profileService.updateProfile({
+        firstName: editForm.firstName.trim() || undefined,
+        lastName: editForm.lastName.trim() || undefined,
+        age: editForm.age ? parseInt(editForm.age, 10) : undefined,
+        bio: editForm.bio.trim() || undefined,
+        occupation: editForm.occupation.trim() || undefined,
+        education: editForm.education.trim() || undefined,
+        city: editForm.city.trim() || undefined,
+      });
+      setShowEditModal(false);
+      refresh();
+      feedEvents.emitRefreshNeeded();
+    } catch {
+      Alert.alert('Hata', 'Profil güncellenemedi. Lütfen tekrar dene.');
+    } finally {
+      setEditSaving(false);
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert('Çıkış Yap', 'Hesabından çıkmak istediğine emin misin?', [
@@ -94,6 +142,56 @@ export default function ProfileScreen() {
   // }
 
   return (
+    <>
+    <Modal visible={showEditModal} animationType="slide" presentationStyle="pageSheet">
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1, backgroundColor: '#fff' }}>
+        <SafeAreaView style={{ flex: 1 }}>
+          <View style={editStyles.header}>
+            <Text style={editStyles.title}>Profili Düzenle</Text>
+            <TouchableOpacity onPress={() => setShowEditModal(false)}>
+              <X size={24} color="#6B7280" />
+            </TouchableOpacity>
+          </View>
+          <ScrollView contentContainerStyle={editStyles.form}>
+            {[
+              { label: 'Ad', key: 'firstName', placeholder: 'Adınız' },
+              { label: 'Soyad', key: 'lastName', placeholder: 'Soyadınız' },
+              { label: 'Yaş', key: 'age', placeholder: '25', keyboard: 'numeric' as const },
+              { label: 'Şehir', key: 'city', placeholder: 'İstanbul' },
+              { label: 'Meslek', key: 'occupation', placeholder: 'Yazılım Mühendisi' },
+              { label: 'Eğitim', key: 'education', placeholder: 'Üniversite' },
+              { label: 'Hakkımda', key: 'bio', placeholder: 'Kendinizi tanıtın...', multiline: true },
+            ].map(({ label, key, placeholder, keyboard, multiline }) => (
+              <View key={key} style={editStyles.field}>
+                <Text style={editStyles.label}>{label}</Text>
+                <TextInput
+                  style={[editStyles.input, multiline && editStyles.inputMultiline]}
+                  placeholder={placeholder}
+                  placeholderTextColor="#9CA3AF"
+                  value={editForm[key as keyof typeof editForm]}
+                  onChangeText={v => setEditForm(f => ({ ...f, [key]: v }))}
+                  keyboardType={keyboard ?? 'default'}
+                  multiline={multiline}
+                  numberOfLines={multiline ? 3 : 1}
+                />
+              </View>
+            ))}
+          </ScrollView>
+          <View style={editStyles.footer}>
+            <TouchableOpacity
+              style={[editStyles.saveBtn, editSaving && { opacity: 0.6 }]}
+              onPress={handleSaveProfile}
+              disabled={editSaving}
+            >
+              <LinearGradient colors={['#EC4899', '#8B5CF6']} style={editStyles.saveBtnGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+                <Text style={editStyles.saveBtnText}>{editSaving ? 'Kaydediliyor...' : 'Kaydet'}</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
+    </Modal>
+
     <LinearGradient
       colors={['#FDF2F8', '#F3E8FF']}
       style={styles.container}
@@ -143,7 +241,7 @@ export default function ProfileScreen() {
           <View style={styles.infoSection}>
             <View style={styles.nameRow}>
               <Text style={styles.name}>{profile?.name ?? '—'}{profile?.age ? `, ${profile.age}` : ''}</Text>
-              <TouchableOpacity style={styles.editButton}>
+              <TouchableOpacity style={styles.editButton} onPress={openEditModal}>
                 <Edit size={18} color="#EC4899" />
               </TouchableOpacity>
             </View>
@@ -365,6 +463,7 @@ export default function ProfileScreen() {
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>
+    </>
   );
 }
 
@@ -666,5 +765,66 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 32,
+  },
+});
+
+const editStyles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  form: {
+    padding: 20,
+    gap: 16,
+  },
+  field: {
+    gap: 6,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  input: {
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#111827',
+  },
+  inputMultiline: {
+    height: 80,
+    textAlignVertical: 'top',
+  },
+  footer: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+  },
+  saveBtn: {
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  saveBtnGradient: {
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  saveBtnText: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#fff',
   },
 });

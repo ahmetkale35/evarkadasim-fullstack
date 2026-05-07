@@ -20,6 +20,7 @@ interface RegisterPayload {
   email: string;
   password: string;
   lookingFor: 'Roommate' | 'Room';
+  city?: string;
 }
 
 export const authService = {
