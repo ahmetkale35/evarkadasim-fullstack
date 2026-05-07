@@ -29,7 +29,7 @@ namespace EvArkadasimV2.Application.Services
                 Email = request.Email,
                 Name = request.Name,
                 LastName = request.LastName,
-                Profile = new UserProfile()
+                Profile = new UserProfile { LookingFor = request.LookingFor }
             };
 
             var result = await _userManager.CreateAsync(user, request.Password);
