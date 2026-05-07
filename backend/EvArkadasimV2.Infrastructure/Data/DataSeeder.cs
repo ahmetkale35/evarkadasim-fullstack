@@ -129,7 +129,7 @@ namespace EvArkadasimV2.Infrastructure.Data
                         Email = email,
                         Name = firstName,
                         LastName = lastName,
-                        Profile = BuildProfile(random, firstName)
+                        Profile = BuildProfile(random, firstName, noTestResults: i >= 46)
                     };
 
                     var result = await userManager.CreateAsync(user, SeedPassword);
@@ -407,7 +407,7 @@ namespace EvArkadasimV2.Infrastructure.Data
             };
         }
 
-        private static UserProfile BuildProfile(Random random, string firstName)
+        private static UserProfile BuildProfile(Random random, string firstName, bool noTestResults = false)
         {
             // BasicTestResults: eşleşme algoritması FinalScores üzerinden çalıştığı için
             // her sahte kullanıcının da rastgele bir karakter profili olması gerekir.
@@ -447,7 +447,7 @@ namespace EvArkadasimV2.Infrastructure.Data
                 // RoomType: 4'te 1 ihtimalle null (kullanıcının "fark etmez" dediği durum).
                 // Enum'da 3 değer var (Private=0, Shared=1, Studio=2); 3 değeri null'a map.
                 RoomType = random.Next(0, 4) is var rt && rt == 3 ? null : (RoomType?)rt,
-                LookingFor = (LookingFor)random.Next(0, 3),
+                LookingFor = (LookingFor)random.Next(0, 2),
                 // Ölçek 1-5: profil tercihleri ve karakter testi skorları aynı ölçeği kullanır.
                 // CompatibilityService MaxDiff=4 bu ölçeği varsayar.
                 Cleanliness = random.Next(1, 6),
@@ -456,8 +456,8 @@ namespace EvArkadasimV2.Infrastructure.Data
                 Interests = InterestOptions.OrderBy(_ => random.Next()).Take(3).ToList(),
                 Photos = new List<string>(),
                 IsVerified = false,
-                InitialBasicTestResults = NewScores(),
-                FinalScores = NewScores()
+                InitialBasicTestResults = noTestResults ? null : NewScores(),
+                FinalScores = noTestResults ? null : NewScores()
             };
         }
     }

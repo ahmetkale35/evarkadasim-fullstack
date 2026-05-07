@@ -69,7 +69,7 @@ namespace EvArkadasimV2.Tests
         public void Calculate_ScoreAlwaysBetween0And100()
         {
             var result = _sut.Calculate(Scores(1), Scores(5));
-            Assert.InRange(result, 0.0, 100.0);
+            Assert.InRange(result!.Value, 0.0, 100.0);
         }
 
         // Sadece 1 boyut farklı, diğer 5 eşit → kısmi skor ≈ 83.3 beklenir.
@@ -79,7 +79,7 @@ namespace EvArkadasimV2.Tests
             var current   = new BasicTestResults { SocialEnergy = 1, OrderApproach = 3, ConflictManagement = 3, SharingStyle = 3, LifeRhythm = 3, CommunicationStyle = 3 };
             var candidate = new BasicTestResults { SocialEnergy = 5, OrderApproach = 3, ConflictManagement = 3, SharingStyle = 3, LifeRhythm = 3, CommunicationStyle = 3 };
             var result = _sut.Calculate(current, candidate);
-            Assert.InRange(result, 83.0, 84.0);
+            Assert.InRange(result!.Value, 83.0, 84.0);
         }
     }
 }

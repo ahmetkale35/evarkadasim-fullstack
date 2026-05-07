@@ -5,13 +5,12 @@ namespace EvArkadasimV2.Application.Services
 {
     public class CompatibilityService : ICompatibilityService
     {
-        private const double DefaultScore = 50.0;
         private const double MaxDiff = 4.0; // 1-5 ölçek: maksimum fark 4
 
-        public double Calculate(BasicTestResults? current, BasicTestResults? candidate)
+        public double? Calculate(BasicTestResults? current, BasicTestResults? candidate)
         {
             if (current == null || candidate == null)
-                return DefaultScore;
+                return null;
 
             var totalDiff =
                 Math.Abs(current.SocialEnergy - candidate.SocialEnergy) +
