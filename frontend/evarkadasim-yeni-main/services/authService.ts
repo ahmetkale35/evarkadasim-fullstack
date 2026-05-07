@@ -16,8 +16,10 @@ interface LoginPayload {
 
 interface RegisterPayload {
   name: string;
+  lastName: string;
   email: string;
   password: string;
+  lookingFor: 'Roommate' | 'Room';
 }
 
 export const authService = {

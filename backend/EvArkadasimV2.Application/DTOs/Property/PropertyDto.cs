@@ -18,6 +18,8 @@ namespace EvArkadasimV2.Application.DTOs.Property
         public bool Furnished { get; set; }
         public bool PetsAllowed { get; set; }
         public bool SmokingAllowed { get; set; }
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
         public string OwnerId { get; set; } = string.Empty;
         public string OwnerName { get; set; } = string.Empty;
     }

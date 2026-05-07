@@ -34,5 +34,18 @@ namespace EvArkadasimV2.API.Controllers
             var result = await _feedService.GetFeedAsync(userId, skip, take);
             return Ok(result);
         }
+
+        /// <summary>Belirli bir kullanıcının profilini ve uyumluluk skorunu döndürür.</summary>
+        [HttpGet("{id}")]
+        [ProducesResponseType(typeof(UserSummaryDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetById(string id)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var result = await _feedService.GetUserByIdAsync(currentUserId, id);
+            if (result is null) return NotFound();
+            return Ok(result);
+        }
     }
 }

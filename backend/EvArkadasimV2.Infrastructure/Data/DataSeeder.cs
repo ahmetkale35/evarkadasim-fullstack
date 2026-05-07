@@ -30,6 +30,15 @@ namespace EvArkadasimV2.Infrastructure.Data
             "Eren", "Arda", "Mert", "Ege", "Barış", "Sinan", "Tuna", "Yiğit", "Furkan", "Berkay"
         };
 
+        private static readonly string[] LastNames =
+        {
+            "Yılmaz", "Kaya", "Demir", "Çelik", "Şahin", "Doğan", "Arslan", "Aydın", "Öztürk", "Erdoğan",
+            "Güneş", "Çetin", "Koç", "Kurt", "Özdemir", "Yıldız", "Polat", "Kılıç", "Coşkun", "Bulut",
+            "Akın", "Şimşek", "Karahan", "Toprak", "Güler", "Acar", "Tekin", "Ateş", "Bozkurt", "Özcan",
+            "Demirci", "Yücel", "Kaplan", "Ertürk", "Güven", "Saygın", "Aksoy", "Tunç", "Çakır", "Aslan",
+            "Erol", "Bayrak", "Sevim", "Işık", "Gündüz", "Kara", "Soylu", "Özer", "Uçar", "Duman"
+        };
+
         private static readonly string[] Cities =
         {
             "İstanbul", "Ankara", "İzmir", "Bursa", "Antalya", "Eskişehir", "Konya", "Adana", "Trabzon", "Gaziantep"
@@ -113,12 +122,14 @@ namespace EvArkadasimV2.Infrastructure.Data
                         continue;
 
                     var firstName = FirstNames[(i - 1) % FirstNames.Length];
+                    var lastName = LastNames[(i - 1) % LastNames.Length];
                     var user = new AppUser
                     {
                         UserName = email,
                         Email = email,
                         Name = firstName,
-                        Profile = BuildProfile(random, firstName)
+                        LastName = lastName,
+                        Profile = BuildProfile(random, firstName, noTestResults: i >= 46)
                     };
 
                     var result = await userManager.CreateAsync(user, SeedPassword);
@@ -181,6 +192,7 @@ namespace EvArkadasimV2.Infrastructure.Data
                     AvailableFrom = DateTime.UtcNow.AddDays(7),
                     Amenities = new List<string> { "Wi-Fi", "Çamaşır Makinesi", "Bulaşık Makinesi" },
                     Images = new List<string>(),
+                    Latitude = 41.0422, Longitude = 29.0077,
                     OwnerId = ownerIds[0]
                 },
                 new() {
@@ -194,6 +206,7 @@ namespace EvArkadasimV2.Infrastructure.Data
                     AvailableFrom = DateTime.UtcNow.AddDays(14),
                     Amenities = new List<string> { "Wi-Fi", "Klima" },
                     Images = new List<string>(),
+                    Latitude = 40.9905, Longitude = 29.0269,
                     OwnerId = ownerIds[1 % ownerIds.Count]
                 },
                 new() {
@@ -207,6 +220,7 @@ namespace EvArkadasimV2.Infrastructure.Data
                     AvailableFrom = DateTime.UtcNow.AddDays(30),
                     Amenities = new List<string> { "Otopark", "Güvenlik", "Bahçe" },
                     Images = new List<string>(),
+                    Latitude = 39.9083, Longitude = 32.8575,
                     OwnerId = ownerIds[2 % ownerIds.Count]
                 },
                 new() {
@@ -220,6 +234,7 @@ namespace EvArkadasimV2.Infrastructure.Data
                     AvailableFrom = DateTime.UtcNow.AddDays(3),
                     Amenities = new List<string> { "Wi-Fi", "Çamaşır Makinesi" },
                     Images = new List<string>(),
+                    Latitude = 38.4374, Longitude = 27.1429,
                     OwnerId = ownerIds[3 % ownerIds.Count]
                 },
                 new() {
@@ -233,6 +248,7 @@ namespace EvArkadasimV2.Infrastructure.Data
                     AvailableFrom = DateTime.UtcNow.AddDays(10),
                     Amenities = new List<string> { "Asansör", "Kapıcı" },
                     Images = new List<string>(),
+                    Latitude = 41.0603, Longitude = 28.9877,
                     OwnerId = ownerIds[4 % ownerIds.Count]
                 },
                 new() {
@@ -246,6 +262,7 @@ namespace EvArkadasimV2.Infrastructure.Data
                     AvailableFrom = DateTime.UtcNow.AddDays(20),
                     Amenities = new List<string> { "Wi-Fi", "Klima", "Çamaşır Makinesi" },
                     Images = new List<string>(),
+                    Latitude = 39.9199, Longitude = 32.8543,
                     OwnerId = ownerIds[0]
                 },
                 new() {
@@ -259,6 +276,7 @@ namespace EvArkadasimV2.Infrastructure.Data
                     AvailableFrom = DateTime.UtcNow.AddDays(5),
                     Amenities = new List<string> { "Wi-Fi", "Klima", "Balkon" },
                     Images = new List<string>(),
+                    Latitude = 41.0228, Longitude = 29.0128,
                     OwnerId = ownerIds[1 % ownerIds.Count]
                 },
                 new() {
@@ -272,6 +290,7 @@ namespace EvArkadasimV2.Infrastructure.Data
                     AvailableFrom = DateTime.UtcNow.AddDays(1),
                     Amenities = new List<string> { "Wi-Fi" },
                     Images = new List<string>(),
+                    Latitude = 38.4597, Longitude = 27.2258,
                     OwnerId = ownerIds[2 % ownerIds.Count]
                 },
                 new() {
@@ -285,6 +304,7 @@ namespace EvArkadasimV2.Infrastructure.Data
                     AvailableFrom = DateTime.UtcNow.AddDays(45),
                     Amenities = new List<string> { "Bahçe", "Otopark", "Depo" },
                     Images = new List<string>(),
+                    Latitude = 40.1870, Longitude = 29.0612,
                     OwnerId = ownerIds[3 % ownerIds.Count]
                 },
                 new() {
@@ -298,6 +318,7 @@ namespace EvArkadasimV2.Infrastructure.Data
                     AvailableFrom = DateTime.UtcNow.AddDays(15),
                     Amenities = new List<string> { "Havuz", "Güvenlik", "Wi-Fi" },
                     Images = new List<string>(),
+                    Latitude = 36.8969, Longitude = 30.7133,
                     OwnerId = ownerIds[4 % ownerIds.Count]
                 },
             };
@@ -305,6 +326,14 @@ namespace EvArkadasimV2.Infrastructure.Data
             await context.Properties.AddRangeAsync(properties);
             await context.SaveChangesAsync();
             logger.LogInformation("Property seed tamamlandı: {Count} ilan eklendi.", properties.Count);
+
+            var owners = await context.Users
+                .Include(u => u.Profile)
+                .Where(u => ownerIds.Contains(u.Id))
+                .ToListAsync();
+            foreach (var owner in owners.Where(o => o.Profile != null))
+                owner.Profile!.LookingFor = LookingFor.Roommate;
+            await context.SaveChangesAsync();
         }
 
         private static async Task SeedMatchesAndMessagesAsync(AppDbContext context, ILogger logger)
@@ -378,7 +407,7 @@ namespace EvArkadasimV2.Infrastructure.Data
             };
         }
 
-        private static UserProfile BuildProfile(Random random, string firstName)
+        private static UserProfile BuildProfile(Random random, string firstName, bool noTestResults = false)
         {
             // BasicTestResults: eşleşme algoritması FinalScores üzerinden çalıştığı için
             // her sahte kullanıcının da rastgele bir karakter profili olması gerekir.
@@ -418,7 +447,7 @@ namespace EvArkadasimV2.Infrastructure.Data
                 // RoomType: 4'te 1 ihtimalle null (kullanıcının "fark etmez" dediği durum).
                 // Enum'da 3 değer var (Private=0, Shared=1, Studio=2); 3 değeri null'a map.
                 RoomType = random.Next(0, 4) is var rt && rt == 3 ? null : (RoomType?)rt,
-                LookingFor = (LookingFor)random.Next(0, 3),
+                LookingFor = (LookingFor)random.Next(0, 2),
                 // Ölçek 1-5: profil tercihleri ve karakter testi skorları aynı ölçeği kullanır.
                 // CompatibilityService MaxDiff=4 bu ölçeği varsayar.
                 Cleanliness = random.Next(1, 6),
@@ -427,8 +456,8 @@ namespace EvArkadasimV2.Infrastructure.Data
                 Interests = InterestOptions.OrderBy(_ => random.Next()).Take(3).ToList(),
                 Photos = new List<string>(),
                 IsVerified = false,
-                InitialBasicTestResults = NewScores(),
-                FinalScores = NewScores()
+                InitialBasicTestResults = noTestResults ? null : NewScores(),
+                FinalScores = noTestResults ? null : NewScores()
             };
         }
     }

@@ -15,5 +15,6 @@ namespace EvArkadasimV2.Application.Interfaces.Repositories
             int take);
 
         Task<Property?> GetByIdWithOwnerAsync(int id);
+        Task<List<Property>> GetWithCoordinatesAsync();
     }
 }

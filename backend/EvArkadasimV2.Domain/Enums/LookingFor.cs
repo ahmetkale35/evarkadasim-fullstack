@@ -10,6 +10,5 @@ namespace EvArkadasimV2.Domain.Enums
     {
         Roommate,
         Room,
-        Both
     }
 }

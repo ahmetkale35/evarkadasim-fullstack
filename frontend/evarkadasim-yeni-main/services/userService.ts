@@ -16,7 +16,7 @@ interface UserSummaryDto {
   occupation?: string;
   education?: string;
   roomType?: 'Private' | 'Shared' | 'Studio';
-  lookingFor?: 'Roommate' | 'Room' | 'Both';
+  lookingFor?: 'Roommate' | 'Room';
   isVerified: boolean;
   lastActive: string;
   cleanliness: number;
@@ -52,9 +52,8 @@ function mapLookingFor(val?: string): User['lookingFor'] {
   const map: Record<string, User['lookingFor']> = {
     Roommate: 'roommate',
     Room: 'room',
-    Both: 'both',
   };
-  return (val && map[val]) || 'both';
+  return (val && map[val]) || 'roommate';
 }
 
 function toUser(dto: UserSummaryDto): User {
@@ -77,7 +76,7 @@ function toUser(dto: UserSummaryDto): User {
     lastActive: new Date(dto.lastActive),
     cleanliness: dto.cleanliness,
     socialLevel: dto.socialLevel,
-    compatibility: dto.compatibility ?? undefined,
+    compatibility: dto.compatibility !== undefined ? dto.compatibility : undefined,
   };
 }
 
@@ -88,6 +87,15 @@ export const userService = {
       users: data.users.map(toUser),
       hasMore: data.hasMore,
     };
+  },
+
+  getById: async (targetId: string): Promise<User | null> => {
+    try {
+      const { data } = await apiClient.get<UserSummaryDto>(`/users/${targetId}`);
+      return toUser(data);
+    } catch {
+      return null;
+    }
   },
 
   swipe: async (receiverId: string, action: 'like' | 'pass' | 'superlike'): Promise<SwipeResultDto> => {

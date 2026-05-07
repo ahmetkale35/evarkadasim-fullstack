@@ -1,4 +1,4 @@
-import { Property } from '@/types';
+import { Property, PropertyMapPin } from '@/types';
 import { apiClient } from './apiClient';
 
 interface PropertyDto {
@@ -17,6 +17,20 @@ interface PropertyDto {
   furnished: boolean;
   petsAllowed: boolean;
   smokingAllowed: boolean;
+  latitude?: number;
+  longitude?: number;
+  ownerId: string;
+  ownerName: string;
+}
+
+interface PropertyMapPinDto {
+  id: number;
+  latitude: number;
+  longitude: number;
+  title: string;
+  price: string;
+  location: string;
+  propertyType: 'Apartment' | 'Studio' | 'House' | 'Room';
   ownerId: string;
   ownerName: string;
 }
@@ -48,6 +62,24 @@ function toProperty(dto: PropertyDto): Property {
     furnished: dto.furnished,
     petsAllowed: dto.petsAllowed,
     smokingAllowed: dto.smokingAllowed,
+    latitude: dto.latitude,
+    longitude: dto.longitude,
+    ownerId: dto.ownerId,
+    ownerName: dto.ownerName,
+  };
+}
+
+function toMapPin(dto: PropertyMapPinDto): PropertyMapPin {
+  return {
+    id: dto.id.toString(),
+    latitude: dto.latitude,
+    longitude: dto.longitude,
+    title: dto.title,
+    price: dto.price,
+    location: dto.location,
+    propertyType: mapPropertyType(dto.propertyType),
+    ownerId: dto.ownerId,
+    ownerName: dto.ownerName,
   };
 }
 
@@ -55,5 +87,10 @@ export const propertyService = {
   getList: async (skip = 0, take = 20): Promise<Property[]> => {
     const { data } = await apiClient.get<PropertyDto[]>('/property', { params: { skip, take } });
     return data.map(toProperty);
+  },
+
+  getMapPins: async (): Promise<PropertyMapPin[]> => {
+    const { data } = await apiClient.get<PropertyMapPinDto[]>('/property/map');
+    return data.map(toMapPin);
   },
 };

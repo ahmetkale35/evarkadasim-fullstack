@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Heart, Home, Users, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
+import { Heart, Home, Users, Mail, Lock, Eye, EyeOff, User, Search } from 'lucide-react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
 import { authService } from '@/services/authService';
 
@@ -14,6 +14,9 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
     const [isLoginMode, setIsLoginMode] = useState(true);
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [lookingFor, setLookingFor] = useState<'Roommate' | 'Room' | null>(null);
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
 
@@ -36,16 +39,27 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
             Alert.alert('Hata', 'Lütfen tüm alanları doldurun.');
             return;
         }
+        if (!isLoginMode && (!firstName.trim() || !lastName.trim())) {
+            Alert.alert('Hata', 'Lütfen ad ve soyadınızı girin.');
+            return;
+        }
+        if (!isLoginMode && !lookingFor) {
+            Alert.alert('Hata', 'Lütfen ne aradığınızı seçin.');
+            return;
+        }
 
         setLoading(true);
         try {
             if (isLoginMode) {
                 await authService.login({ email: username.trim(), password });
             } else {
-                // Kayıt sırasında name olarak email'in @ öncesi kısmı kullanılır,
-                // kullanıcı profil ekranında sonradan düzenleyebilir
-                const name = username.split('@')[0];
-                await authService.register({ name, email: username.trim(), password });
+                await authService.register({
+                    name: firstName.trim(),
+                    lastName: lastName.trim(),
+                    email: username.trim(),
+                    password,
+                    lookingFor: lookingFor!,
+                });
             }
             onAuthSuccess();
         } catch (error: any) {
@@ -60,6 +74,9 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
         setIsLoginMode(!isLoginMode);
         setUsername('');
         setPassword('');
+        setFirstName('');
+        setLastName('');
+        setLookingFor(null);
     };
 
     return (
@@ -105,7 +122,64 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
                                     }
                                 </Text>
 
-                                {/* Kullanıcı adı input */}
+                                {/* Ad + Soyad — sadece kayıt modunda */}
+                                {!isLoginMode && (
+                                    <View style={styles.nameRow}>
+                                        <View style={[styles.inputContainer, styles.nameInput]}>
+                                            <View style={styles.inputWrapper}>
+                                                <User size={20} color="#9CA3AF" style={styles.inputIcon} />
+                                                <TextInput
+                                                    style={styles.textInput}
+                                                    placeholder="Ad"
+                                                    value={firstName}
+                                                    onChangeText={setFirstName}
+                                                    autoCorrect={false}
+                                                    placeholderTextColor="#9CA3AF"
+                                                />
+                                            </View>
+                                        </View>
+                                        <View style={[styles.inputContainer, styles.nameInput]}>
+                                            <View style={styles.inputWrapper}>
+                                                <User size={20} color="#9CA3AF" style={styles.inputIcon} />
+                                                <TextInput
+                                                    style={styles.textInput}
+                                                    placeholder="Soyad"
+                                                    value={lastName}
+                                                    onChangeText={setLastName}
+                                                    autoCorrect={false}
+                                                    placeholderTextColor="#9CA3AF"
+                                                />
+                                            </View>
+                                        </View>
+                                    </View>
+                                )}
+
+                                {/* Kullanıcı tipi seçimi — sadece kayıt modunda */}
+                                {!isLoginMode && (
+                                    <View style={styles.typeSelectContainer}>
+                                        <Text style={styles.typeSelectLabel}>Ne arıyorsunuz?</Text>
+                                        <View style={styles.typeSelectRow}>
+                                            <TouchableOpacity
+                                                style={[styles.typeBtn, lookingFor === 'Roommate' && styles.typeBtnActive]}
+                                                onPress={() => setLookingFor('Roommate')}
+                                            >
+                                                <Home size={18} color={lookingFor === 'Roommate' ? '#fff' : '#059669'} />
+                                                <Text style={[styles.typeBtnText, lookingFor === 'Roommate' && styles.typeBtnTextActive]}>Ev Sahibiyim</Text>
+                                                <Text style={[styles.typeBtnSub, lookingFor === 'Roommate' && { color: 'rgba(255,255,255,0.8)' }]}>Ev arkadaşı arıyorum</Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                style={[styles.typeBtn, lookingFor === 'Room' && styles.typeBtnRoomActive]}
+                                                onPress={() => setLookingFor('Room')}
+                                            >
+                                                <Search size={18} color={lookingFor === 'Room' ? '#fff' : '#7C3AED'} />
+                                                <Text style={[styles.typeBtnText, lookingFor === 'Room' && styles.typeBtnTextActive]}>Ev Arıyorum</Text>
+                                                <Text style={[styles.typeBtnSub, lookingFor === 'Room' && { color: 'rgba(255,255,255,0.8)' }]}>Kalacak yer arıyorum</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
+                                )}
+
+                                {/* E-posta input */}
                                 <View style={styles.inputContainer}>
                                     <View style={styles.inputWrapper}>
                                         <Mail size={20} color="#9CA3AF" style={styles.inputIcon} />
@@ -267,6 +341,13 @@ const styles = StyleSheet.create({
     inputContainer: {
         marginBottom: 20,
     },
+    nameRow: {
+        flexDirection: 'row',
+        gap: 10,
+    },
+    nameInput: {
+        flex: 1,
+    },
     inputWrapper: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -301,6 +382,51 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#1E40AF',
         fontWeight: '500',
+        textAlign: 'center',
+    },
+    typeSelectContainer: {
+        marginBottom: 20,
+    },
+    typeSelectLabel: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#374151',
+        marginBottom: 10,
+    },
+    typeSelectRow: {
+        flexDirection: 'row',
+        gap: 10,
+    },
+    typeBtn: {
+        flex: 1,
+        alignItems: 'center',
+        gap: 4,
+        paddingVertical: 14,
+        paddingHorizontal: 10,
+        borderRadius: 16,
+        borderWidth: 2,
+        borderColor: '#E5E7EB',
+        backgroundColor: '#F9FAFB',
+    },
+    typeBtnActive: {
+        borderColor: '#059669',
+        backgroundColor: '#059669',
+    },
+    typeBtnRoomActive: {
+        borderColor: '#7C3AED',
+        backgroundColor: '#7C3AED',
+    },
+    typeBtnText: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: '#374151',
+    },
+    typeBtnTextActive: {
+        color: '#fff',
+    },
+    typeBtnSub: {
+        fontSize: 10,
+        color: '#9CA3AF',
         textAlign: 'center',
     },
     authButton: {

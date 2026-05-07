@@ -68,10 +68,21 @@ namespace EvArkadasimV2.Application.Services
             };
         }
 
+        public async Task<UserSummaryDto?> GetUserByIdAsync(string currentUserId, string targetUserId)
+        {
+            var target = await _userRepository.GetUserWithProfileAsync(targetUserId, tracking: false);
+            if (target?.Profile == null) return null;
+
+            var currentUser = await _userRepository.GetUserWithProfileAsync(currentUserId, tracking: false);
+            var dto = MapToDto(target);
+            dto.Compatibility = _compatibilityService.Calculate(currentUser?.Profile?.FinalScores, target.Profile.FinalScores);
+            return dto;
+        }
+
         private static UserSummaryDto MapToDto(AppUser u) => new()
         {
             Id = u.Id,
-            Name = u.Name ?? string.Empty,
+            Name = $"{u.Name} {u.LastName}".Trim(),
             Age = u.Profile.Age,
             Bio = u.Profile.Bio,
             Budget = u.Profile.Budget,

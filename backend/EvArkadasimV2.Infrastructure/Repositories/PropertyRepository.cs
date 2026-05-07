@@ -55,5 +55,14 @@ namespace EvArkadasimV2.Infrastructure.Repositories
                 .Include(p => p.Owner)
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
+
+        public async Task<List<Property>> GetWithCoordinatesAsync()
+        {
+            return await _context.Properties
+                .AsNoTracking()
+                .Include(p => p.Owner)
+                .Where(p => p.Latitude != null && p.Longitude != null)
+                .ToListAsync();
+        }
     }
 }

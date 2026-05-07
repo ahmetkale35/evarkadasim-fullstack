@@ -18,5 +18,6 @@ namespace EvArkadasimV2.Application.Interfaces.Services
         Task<PropertyDto> CreateAsync(string ownerId, CreatePropertyDto dto);
         Task<PropertyDto> UpdateAsync(int id, string currentUserId, UpdatePropertyDto dto);
         Task DeleteAsync(int id, string currentUserId);
+        Task<IEnumerable<PropertyMapPinDto>> GetMapPinsAsync();
     }
 }

@@ -32,6 +32,9 @@ namespace EvArkadasimV2.Domain.Entities
         public bool PetsAllowed { get; set; }
         public bool SmokingAllowed { get; set; }
 
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
+
         public string OwnerId { get; set; } = null!;
         public AppUser Owner { get; set; } = null!;
     }

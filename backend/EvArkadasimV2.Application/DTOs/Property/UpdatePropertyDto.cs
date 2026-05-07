@@ -41,5 +41,11 @@ namespace EvArkadasimV2.Application.DTOs.Property
         public bool Furnished { get; set; }
         public bool PetsAllowed { get; set; }
         public bool SmokingAllowed { get; set; }
+
+        [Range(-90.0, 90.0)]
+        public double? Latitude { get; set; }
+
+        [Range(-180.0, 180.0)]
+        public double? Longitude { get; set; }
     }
 }

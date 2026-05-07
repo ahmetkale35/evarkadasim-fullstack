@@ -1,7 +1,40 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
-import { MessageCircle, EggFried as Verified } from 'lucide-react-native';
+import { MessageCircle, EggFried as Verified, Home, Search, MapPin } from 'lucide-react-native';
 import { Match } from '@/types';
+
+function UserTypeBadge({ lookingFor }: { lookingFor: string }) {
+  return (
+    <View style={{ flexDirection: 'row', gap: 4, marginTop: 3 }}>
+      {lookingFor === 'roommate' && (
+        <View style={[badgeStyles.badge, badgeStyles.ownerBadge]}>
+          <Home size={10} color="#059669" />
+          <Text style={[badgeStyles.text, { color: '#059669' }]}>Ev Sahibi</Text>
+        </View>
+      )}
+      {lookingFor === 'room' && (
+        <View style={[badgeStyles.badge, badgeStyles.seekerBadge]}>
+          <Search size={10} color="#7C3AED" />
+          <Text style={[badgeStyles.text, { color: '#7C3AED' }]}>Ev Arıyor</Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+const badgeStyles = StyleSheet.create({
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  ownerBadge: { backgroundColor: '#ECFDF5', borderWidth: 1, borderColor: '#6EE7B7' },
+  seekerBadge: { backgroundColor: '#F3E8FF', borderWidth: 1, borderColor: '#C4B5FD' },
+  text: { fontSize: 10, fontWeight: '600' },
+});
 
 interface MatchCardProps {
   match: Match;
@@ -30,18 +63,24 @@ export function MatchCard({ match, onPress }: MatchCardProps) {
       
       <View style={styles.content}>
         <View style={styles.header}>
-          <View style={styles.nameRow}>
-            <Text style={styles.name}>{user.name}</Text>
-            {user.isVerified && (
-              <Verified size={16} color="#3B82F6" fill="#3B82F6" />
-            )}
+          <View style={{ flex: 1 }}>
+            <View style={styles.nameRow}>
+              <Text style={styles.name}>{user.name}</Text>
+              {user.isVerified && <Verified size={16} color="#3B82F6" fill="#3B82F6" />}
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
+              <UserTypeBadge lookingFor={user.lookingFor} />
+              {user.location?.city ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                  <MapPin size={10} color="#9CA3AF" />
+                  <Text style={{ fontSize: 10, color: '#9CA3AF' }}>{user.location.city}</Text>
+                </View>
+              ) : null}
+            </View>
           </View>
-          
-          {lastMessage && (
-            <Text style={styles.time}>{formatTime(lastMessage.timestamp)}</Text>
-          )}
+          {lastMessage && <Text style={styles.time}>{formatTime(lastMessage.timestamp)}</Text>}
         </View>
-        
+
         <View style={styles.messageRow}>
           {lastMessage ? (
             <Text style={[styles.message, !lastMessage.isRead && styles.unread]} numberOfLines={1}>

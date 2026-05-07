@@ -15,13 +15,13 @@ export interface User {
   occupation?: string;
   education?: string;
   roomType: 'private' | 'shared' | 'studio' | 'any';
-  lookingFor: 'roommate' | 'room' | 'both';
+  lookingFor: 'roommate' | 'room';
   isVerified: boolean;
   lastActive: Date;
   cleanliness: number; // 1-5 scale
   socialLevel: number; // 1-5 scale
   characterProfile?: TestResults;
-  compatibility?: number;
+  compatibility?: number | null;
 }
 
 export interface TestResults {
@@ -66,6 +66,22 @@ export interface Property {
   furnished: boolean;
   petsAllowed: boolean;
   smokingAllowed: boolean;
+  latitude?: number;
+  longitude?: number;
+  ownerId: string;
+  ownerName: string;
+}
+
+export interface PropertyMapPin {
+  id: string;
+  latitude: number;
+  longitude: number;
+  title: string;
+  price: string;
+  location: string;
+  propertyType: 'apartment' | 'house' | 'studio' | 'shared';
+  ownerId: string;
+  ownerName: string;
 }
 
 export interface Match {

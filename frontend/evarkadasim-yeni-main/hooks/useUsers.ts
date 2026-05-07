@@ -37,11 +37,17 @@ export function useUsers() {
 
   const removeUser = (userId: string) => {
     setUsers(prev => prev.filter(u => u.id !== userId));
-    // Kart bitiminde sıradaki sayfa yüklenir
     if (users.length <= 3 && hasMore) {
       fetchFeed(skip);
     }
   };
 
-  return { users, loading, error, removeUser };
+  const refresh = useCallback(() => {
+    didLoad.current = false;
+    setSkip(0);
+    setLoading(true);
+    fetchFeed(0);
+  }, [fetchFeed]);
+
+  return { users, loading, error, removeUser, refresh };
 }
