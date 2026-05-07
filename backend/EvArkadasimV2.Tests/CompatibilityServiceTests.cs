@@ -17,26 +17,26 @@ namespace EvArkadasimV2.Tests
             SharingStyle = v, LifeRhythm = v, CommunicationStyle = v
         };
 
-        // Profil henüz doldurulmamış kullanıcılar için varsayılan 50 dönmeli.
+        // Test tamamlanmamış kullanıcılar için null dönmeli — frontend kilit badge gösterir.
         [Fact]
-        public void Calculate_BothNull_ReturnsDefault50()
+        public void Calculate_BothNull_ReturnsNull()
         {
             var result = _sut.Calculate(null, null);
-            Assert.Equal(50.0, result);
+            Assert.Null(result);
         }
 
         [Fact]
-        public void Calculate_CurrentNull_ReturnsDefault50()
+        public void Calculate_CurrentNull_ReturnsNull()
         {
             var result = _sut.Calculate(null, Scores(3));
-            Assert.Equal(50.0, result);
+            Assert.Null(result);
         }
 
         [Fact]
-        public void Calculate_CandidateNull_ReturnsDefault50()
+        public void Calculate_CandidateNull_ReturnsNull()
         {
             var result = _sut.Calculate(Scores(3), null);
-            Assert.Equal(50.0, result);
+            Assert.Null(result);
         }
 
         // Tüm boyutlar eşitse fark=0 → skor %100 olmalı.
