@@ -8,6 +8,7 @@ import { useCharacterTest, clearCharacterTestStorage } from '@/hooks/useCharacte
 import { useProfile } from '@/hooks/useProfile';
 import { profileService } from '@/services/profileService';
 import { authService } from '@/services/authService';
+import { CityPicker } from '@/components/CityPicker';
 import { authEvents } from '@/services/authEvents';
 import { feedEvents } from '@/services/feedEvents';
 
@@ -157,7 +158,6 @@ export default function ProfileScreen() {
               { label: 'Ad', key: 'firstName', placeholder: 'Adınız' },
               { label: 'Soyad', key: 'lastName', placeholder: 'Soyadınız' },
               { label: 'Yaş', key: 'age', placeholder: '25', keyboard: 'numeric' as const },
-              { label: 'Şehir', key: 'city', placeholder: 'İstanbul' },
               { label: 'Meslek', key: 'occupation', placeholder: 'Yazılım Mühendisi' },
               { label: 'Eğitim', key: 'education', placeholder: 'Üniversite' },
               { label: 'Hakkımda', key: 'bio', placeholder: 'Kendinizi tanıtın...', multiline: true },
@@ -176,6 +176,13 @@ export default function ProfileScreen() {
                 />
               </View>
             ))}
+            <View style={editStyles.field}>
+              <Text style={editStyles.label}>Şehir</Text>
+              <CityPicker
+                value={editForm.city}
+                onChange={v => setEditForm(f => ({ ...f, city: v }))}
+              />
+            </View>
           </ScrollView>
           <View style={editStyles.footer}>
             <TouchableOpacity

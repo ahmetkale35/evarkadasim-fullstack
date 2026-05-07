@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Heart, Home, Users, Mail, Lock, Eye, EyeOff, User, Search, MapPin } from 'lucide-react-native';
+import { Heart, Home, Users, Mail, Lock, Eye, EyeOff, User, Search } from 'lucide-react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
 import { authService } from '@/services/authService';
+import { CityPicker } from '@/components/CityPicker';
 
 interface AuthScreenProps {
     onAuthSuccess: () => void;
@@ -186,20 +187,10 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
                                     </View>
                                 )}
 
-                                {/* Şehir input — sadece kayıt modunda */}
+                                {/* Şehir seçici — sadece kayıt modunda */}
                                 {!isLoginMode && (
                                     <View style={styles.inputContainer}>
-                                        <View style={styles.inputWrapper}>
-                                            <MapPin size={20} color="#9CA3AF" style={styles.inputIcon} />
-                                            <TextInput
-                                                style={styles.textInput}
-                                                placeholder="Şehir (örn. İstanbul)"
-                                                value={city}
-                                                onChangeText={setCity}
-                                                autoCorrect={false}
-                                                placeholderTextColor="#9CA3AF"
-                                            />
-                                        </View>
+                                        <CityPicker value={city} onChange={setCity} placeholder="Şehir seç" />
                                     </View>
                                 )}
 
