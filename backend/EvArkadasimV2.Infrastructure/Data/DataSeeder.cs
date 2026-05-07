@@ -447,7 +447,7 @@ namespace EvArkadasimV2.Infrastructure.Data
                 // RoomType: 4'te 1 ihtimalle null (kullanıcının "fark etmez" dediği durum).
                 // Enum'da 3 değer var (Private=0, Shared=1, Studio=2); 3 değeri null'a map.
                 RoomType = random.Next(0, 4) is var rt && rt == 3 ? null : (RoomType?)rt,
-                LookingFor = (LookingFor)random.Next(0, 2),
+                LookingFor = LookingFor.Room,
                 // Ölçek 1-5: profil tercihleri ve karakter testi skorları aynı ölçeği kullanır.
                 // CompatibilityService MaxDiff=4 bu ölçeği varsayar.
                 Cleanliness = random.Next(1, 6),

@@ -135,9 +135,14 @@ namespace EvArkadasimV2.Application.Services
             await _propertyRepository.SaveChangesAsync();
         }
 
-        public async Task<IEnumerable<PropertyMapPinDto>> GetMapPinsAsync()
+        public async Task<IEnumerable<PropertyMapPinDto>> GetMapPinsAsync(string? city = null)
         {
             var properties = await _propertyRepository.GetWithCoordinatesAsync();
+
+            if (!string.IsNullOrEmpty(city))
+                properties = properties.Where(p =>
+                    p.Location.Contains(city, StringComparison.OrdinalIgnoreCase)).ToList();
+
             return properties.Select(p => new PropertyMapPinDto
             {
                 Id = p.Id,

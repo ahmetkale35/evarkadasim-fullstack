@@ -40,13 +40,13 @@ namespace EvArkadasimV2.API.Controllers
             return Ok(result);
         }
 
-        /// <summary>Koordinatı olan tüm ilanları harita pin'i olarak döner.</summary>
+        /// <summary>Koordinatı olan ilanları harita pin'i olarak döner. city parametresi verilirse sadece o şehrin sahibi olan ilanlar gelir.</summary>
         [HttpGet("map")]
         [ProducesResponseType(typeof(List<PropertyMapPinDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> GetMapPins()
+        public async Task<IActionResult> GetMapPins([FromQuery] string? city = null)
         {
-            var result = await _propertyService.GetMapPinsAsync();
+            var result = await _propertyService.GetMapPinsAsync(city);
             return Ok(result);
         }
 

@@ -89,8 +89,10 @@ export const propertyService = {
     return data.map(toProperty);
   },
 
-  getMapPins: async (): Promise<PropertyMapPin[]> => {
-    const { data } = await apiClient.get<PropertyMapPinDto[]>('/property/map');
+  getMapPins: async (city?: string): Promise<PropertyMapPin[]> => {
+    const { data } = await apiClient.get<PropertyMapPinDto[]>('/property/map', {
+      params: city ? { city } : undefined,
+    });
     return data.map(toMapPin);
   },
 };
