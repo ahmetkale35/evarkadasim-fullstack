@@ -1,5 +1,6 @@
 using EvArkadasimV2.Application.Exceptions;
 using EvArkadasimV2.Application.Interfaces.Repositories;
+using EvArkadasimV2.Application.Interfaces.Services;
 using EvArkadasimV2.Application.Services;
 using EvArkadasimV2.Domain.Entities;
 using EvArkadasimV2.Domain.ValueObjects;
@@ -13,11 +14,12 @@ namespace EvArkadasimV2.Tests
     public class ProfileServiceTests
     {
         private readonly Mock<IUserRepository> _userRepo = new();
+        private readonly Mock<ICacheService> _cache = new();
         private readonly ProfileService _sut;
 
         public ProfileServiceTests()
         {
-            _sut = new ProfileService(_userRepo.Object);
+            _sut = new ProfileService(_userRepo.Object, _cache.Object);
         }
 
         // Hem InitialBasicTestResults hem FinalScores dolu kullanıcı için
