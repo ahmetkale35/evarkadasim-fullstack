@@ -6,5 +6,6 @@ namespace EvArkadasimV2.Application.Interfaces.Services
     {
         // Önce bu kullanıcıya Like/SuperLike atanlar, sonra LastActive DESC. Daha önce swipe edilenler hariç.
         Task<PagedFeedDto> GetFeedAsync(string currentUserId, int skip, int take);
+        Task<UserSummaryDto?> GetUserByIdAsync(string currentUserId, string targetUserId);
     }
 }

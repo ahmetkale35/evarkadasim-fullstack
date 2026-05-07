@@ -28,6 +28,7 @@ namespace EvArkadasimV2.Application.Services
                 UserName = request.Email,
                 Email = request.Email,
                 Name = request.Name,
+                LastName = request.LastName,
                 Profile = new UserProfile()
             };
 
