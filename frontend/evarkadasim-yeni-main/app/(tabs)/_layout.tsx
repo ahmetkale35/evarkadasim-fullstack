@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Heart, MessageCircle, Search, User, Chrome as Home } from 'lucide-react-native';
+import { Heart, MessageCircle, Search, User, Map } from 'lucide-react-native';
 
 export default function TabLayout() {
   return (
@@ -34,9 +34,9 @@ export default function TabLayout() {
       <Tabs.Screen
         name="properties"
         options={{
-          title: 'Properties',
+          title: 'Keşfet',
           tabBarIcon: ({ size, color }) => (
-            <Home size={size} color={color} />
+            <Map size={size} color={color} />
           ),
         }}
       />
