@@ -69,7 +69,7 @@ function toMatch(dto: MatchDto): Match {
       occupation: dto.matchedUser.occupation,
       education: dto.matchedUser.education,
       roomType: 'any',
-      lookingFor: 'both',
+      lookingFor: dto.matchedUser.lookingFor === 'Room' ? 'room' : 'roommate',
       isVerified: dto.matchedUser.isVerified,
       lastActive: new Date(dto.matchedUser.lastActive),
       cleanliness: dto.matchedUser.cleanliness,
