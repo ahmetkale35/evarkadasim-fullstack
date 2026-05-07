@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, ScrollView, RefreshControl, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Menu, User as UserIcon, X, Lock } from 'lucide-react-native';
+import { Menu, User as UserIcon, X, Lock, RotateCcw } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { storage } from '@/services/storage';
 import { ProfileCard } from '@/components/ProfileCard';
@@ -20,6 +20,32 @@ export default function FindRoommatesScreen() {
   const { hasCompletedBasicTest, setBasicTestResults } = useCharacterTest();
 
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const lastRefreshAt = useRef(0);
+  const REFRESH_COOLDOWN_MS = 15_000;
+  const toastOpacity = useRef(new Animated.Value(0)).current;
+  const [toastMsg, setToastMsg] = useState('');
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    Animated.sequence([
+      Animated.timing(toastOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+      Animated.delay(1500),
+      Animated.timing(toastOpacity, { toValue: 0, duration: 400, useNativeDriver: true }),
+    ]).start();
+  };
+
+  const canRefresh = () => Date.now() - lastRefreshAt.current > REFRESH_COOLDOWN_MS;
+
+  const throttledRefresh = () => {
+    if (!canRefresh()) {
+      const remaining = Math.ceil((REFRESH_COOLDOWN_MS - (Date.now() - lastRefreshAt.current)) / 1000);
+      showToast(`${remaining}s sonra yenileyebilirsin`);
+      return;
+    }
+    lastRefreshAt.current = Date.now();
+    refresh();
+  };
   const [showTestPopup, setShowTestPopup] = useState(false);
   const [showTest, setShowTest] = useState(false);
   const [showTestBanner, setShowTestBanner] = useState(false);
@@ -146,17 +172,42 @@ export default function FindRoommatesScreen() {
     );
   }
 
+  const handlePullRefresh = async () => {
+    if (!canRefresh()) {
+      const remaining = Math.ceil((REFRESH_COOLDOWN_MS - (Date.now() - lastRefreshAt.current)) / 1000);
+      setRefreshing(false);
+      showToast(`${remaining}s sonra yenileyebilirsin`);
+      return;
+    }
+    lastRefreshAt.current = Date.now();
+    setRefreshing(true);
+    await refresh();
+    setRefreshing(false);
+  };
+
   if (!currentUser) {
     return (
       <LinearGradient
         colors={['#EC4899', '#8B5CF6']}
         style={styles.emptyContainer}
       >
-        <SafeAreaView style={styles.emptyContent}>
-          <Text style={styles.emptyTitle}>{"That's everyone for now!"}</Text>
-          <Text style={styles.emptySubtitle}>
-            Check back later for more roommate profiles, or expand your search settings.
-          </Text>
+        <SafeAreaView style={{ flex: 1 }}>
+          <ScrollView
+            contentContainerStyle={styles.emptyContent}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handlePullRefresh}
+                tintColor="#fff"
+                colors={['#fff']}
+              />
+            }
+          >
+            <Text style={styles.emptyTitle}>{"That's everyone for now!"}</Text>
+            <Text style={styles.emptySubtitle}>
+              Check back later for more roommate profiles, or expand your search settings.
+            </Text>
+          </ScrollView>
         </SafeAreaView>
       </LinearGradient>
     );
@@ -169,8 +220,8 @@ export default function FindRoommatesScreen() {
     >
       <SafeAreaView style={styles.content}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.menuButton}>
-            <Menu size={24} color="#111827" />
+          <TouchableOpacity style={styles.menuButton} onPress={throttledRefresh}>
+            <RotateCcw size={22} color="#111827" />
           </TouchableOpacity>
           <View style={styles.titleContainer}>
             <Text style={styles.title}>Find Roommates</Text>
@@ -190,7 +241,7 @@ export default function FindRoommatesScreen() {
           </Text>
         </View>
 
-        {showTestBanner && !hasCompletedBasicTest() && (
+        {showTestBanner && !hasCompletedBasicTest() && currentUser?.compatibility == null && (
           <View style={styles.testBanner}>
             <Lock size={14} color="#7C3AED" />
             <Text style={styles.testBannerText}>Uyumluluk skorlarını görmek için karakterini test et</Text>
@@ -222,6 +273,10 @@ export default function FindRoommatesScreen() {
         onClose={handleClosePopup}
         onStartTest={handleStartTest}
       />
+
+      <Animated.View style={[styles.toast, { opacity: toastOpacity }]} pointerEvents="none">
+        <Text style={styles.toastText}>{toastMsg}</Text>
+      </Animated.View>
     </LinearGradient>
   );
 }
@@ -340,5 +395,19 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.8)',
     textAlign: 'center',
     lineHeight: 24,
+  },
+  toast: {
+    position: 'absolute',
+    bottom: 100,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(17,24,39,0.85)',
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  toastText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '500',
   },
 });
