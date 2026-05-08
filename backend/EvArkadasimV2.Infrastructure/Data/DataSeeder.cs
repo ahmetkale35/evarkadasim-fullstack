@@ -75,7 +75,10 @@ namespace EvArkadasimV2.Infrastructure.Data
             ("Yiğit",   "Sevim",   27, "Trabzon",  "Mühendis",          LookingFor.Room, "KTÜ yakını ev arıyorum.",                                                    4, 3),
             ("Tuna",    "Işık",    23, "Trabzon",  "Öğrenci",           LookingFor.Room, "KTÜ 3. sınıf, uygun bütçe.",                                                3, 4),
             ("Barış",   "Gündüz",  29, "Gaziantep","Mühendis",          LookingFor.Room, "İş yerime yakın yer arıyorum.",                                              4, 3),
-        }; // toplam: 50
+            // ── TEST ÇÖZMEMIŞ KULLANICILAR (user51–52) ── compatibility=null, kilit badge testi için
+            ("Melis",   "Korkmaz", 24, "İstanbul", "Öğrenci",           LookingFor.Room, "Yeni üye, henüz kişilik testini çözmedim.",                                 3, 4),
+            ("Tarık",   "Yıldırım",27, "Ankara",   "Mühendis",          LookingFor.Room, "Yeni üye, henüz kişilik testini çözmedim.",                                 4, 3),
+        }; // toplam: 52 (son 2: test çözmemiş)
 
         // Her Roommate user için bir property. OwnerEmail → user{N}@test.com ile eşleşir.
         private static readonly (string Email, string Title, decimal Price, string Loc, int Beds, int Baths, PropertyType Type, bool Furnished, bool Pets, bool Smoke, string Desc, double Lat, double Lng)[] PropertyDefs =
@@ -297,6 +300,9 @@ namespace EvArkadasimV2.Infrastructure.Data
             };
         }
 
+        // Son 2 kullanıcı (index 50-51) test çözmemiş — compatibility null, frontend kilit badge testi için
+        private const int NoTestFromIndex = 50;
+
         private static UserProfile BuildProfile(int index, (string F, string L, int Age, string City, string Job, LookingFor LF, string Bio, int Clean, int Social) def)
         {
             // Her kullanıcı için deterministik ama farklı test skorları
@@ -309,6 +315,8 @@ namespace EvArkadasimV2.Infrastructure.Data
                 LifeRhythm         = (double)((index * 7 + offset + 4) % 5) + 1,
                 CommunicationStyle = (double)((index * 7 + offset + 5) % 5) + 1,
             };
+
+            var hasTest = index < NoTestFromIndex;
 
             return new UserProfile
             {
@@ -327,8 +335,8 @@ namespace EvArkadasimV2.Infrastructure.Data
                 Interests    = InterestSets[index % InterestSets.Length],
                 Photos       = new List<string>(),
                 IsVerified   = index % 7 == 0,
-                InitialBasicTestResults = MakeScores(0),
-                FinalScores             = MakeScores(1), // ayrı instance — EF owned type gerektiriyor
+                InitialBasicTestResults = hasTest ? MakeScores(0) : null,
+                FinalScores             = hasTest ? MakeScores(1) : null,
             };
         }
     }
