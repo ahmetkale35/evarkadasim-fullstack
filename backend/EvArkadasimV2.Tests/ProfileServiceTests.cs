@@ -1,8 +1,10 @@
+using EvArkadasimV2.Application.DTOs.User;
 using EvArkadasimV2.Application.Exceptions;
 using EvArkadasimV2.Application.Interfaces.Repositories;
 using EvArkadasimV2.Application.Interfaces.Services;
 using EvArkadasimV2.Application.Services;
 using EvArkadasimV2.Domain.Entities;
+using EvArkadasimV2.Domain.Enums;
 using EvArkadasimV2.Domain.ValueObjects;
 using Moq;
 using Xunit;
@@ -118,6 +120,25 @@ namespace EvArkadasimV2.Tests
             _userRepo.Setup(r => r.GetUserWithProfileAsync("u1", false)).ReturnsAsync(user);
 
             await Assert.ThrowsAsync<NotFoundException>(() => _sut.GetProfileAsync("u1"));
+        }
+
+        // LookingFor=Roommate güncellemesi yapılırken kullanıcının ilanı yoksa DomainException fırlatılmalı.
+        // İş kuralı: ev sahibi olmak için önce ilan girilmeli.
+        [Fact]
+        public async Task UpdateProfileAsync_LookingForRoommate_WithoutProperty_ThrowsDomainException()
+        {
+            var user = new AppUser
+            {
+                Id = "u1",
+                Name = "Test",
+                Properties = new List<Property>(),
+                Profile = new UserProfile { Age = 25, LookingFor = LookingFor.Room }
+            };
+            _userRepo.Setup(r => r.GetUserWithProfileAsync("u1", true)).ReturnsAsync(user);
+
+            var dto = new UpdateProfileDto { LookingFor = LookingFor.Roommate };
+
+            await Assert.ThrowsAsync<DomainException>(() => _sut.UpdateProfileAsync("u1", dto));
         }
 
         private static AppUser MakeUser(string id, BasicTestResults? initialScores, BasicTestResults? finalScores) =>

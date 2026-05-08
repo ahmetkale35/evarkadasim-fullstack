@@ -2,6 +2,7 @@ using EvArkadasimV2.Application.Interfaces.Repositories;
 using EvArkadasimV2.Application.Interfaces.Services;
 using EvArkadasimV2.Application.Services;
 using EvArkadasimV2.Domain.Entities;
+using EvArkadasimV2.Domain.Enums;
 using EvArkadasimV2.Domain.ValueObjects;
 using Moq;
 using Xunit;
@@ -155,6 +156,98 @@ namespace EvArkadasimV2.Tests
             var result = await _sut.GetFeedAsync("current", -5, 20);
 
             Assert.Single(result.Users);
+        }
+
+        // Ev sahibi (Roommate) sadece ev arayanları (Room) görür — diğer Roommate'ler filtrelenmeli.
+        [Fact]
+        public async Task GetFeedAsync_RoommateUser_SeesOnlyRoomSeekers()
+        {
+            var current = new AppUser
+            {
+                Id = "owner", Email = "owner@test.com", Name = "Owner",
+                Profile = new UserProfile
+                {
+                    Age = 30, LastActive = DateTime.UtcNow,
+                    LookingFor = LookingFor.Roommate,
+                    Location = new Location { City = "İstanbul" }
+                }
+            };
+            var roomSeeker = new AppUser
+            {
+                Id = "seeker", Email = "seeker@test.com", Name = "Seeker",
+                Profile = new UserProfile { Age = 25, LastActive = DateTime.UtcNow, LookingFor = LookingFor.Room, Location = new Location { City = "İstanbul" } }
+            };
+            var otherOwner = new AppUser
+            {
+                Id = "owner2", Email = "owner2@test.com", Name = "Owner2",
+                Profile = new UserProfile { Age = 28, LastActive = DateTime.UtcNow, LookingFor = LookingFor.Roommate, Location = new Location { City = "İstanbul" } }
+            };
+
+            _userRepo.Setup(r => r.GetUserWithProfileAsync("owner", false)).ReturnsAsync(current);
+            _userRepo.Setup(r => r.GetFeedCandidatesWithLikeStatusAsync("owner"))
+                     .ReturnsAsync(new List<(AppUser, bool)> { (roomSeeker, false), (otherOwner, false) });
+
+            var result = await _sut.GetFeedAsync("owner", 0, 20);
+
+            // Roommate filtresi: sadece roomSeeker görünmeli
+            Assert.Single(result.Users);
+            Assert.Equal("seeker", result.Users[0].Id);
+        }
+
+        // Şehir filtresi: kullanıcının şehriyle eşleşmeyen adaylar feed'de görünmemeli.
+        [Fact]
+        public async Task GetFeedAsync_CityFilter_OnlyMatchingCity()
+        {
+            var current = new AppUser
+            {
+                Id = "current", Email = "c@test.com", Name = "Current",
+                Profile = new UserProfile
+                {
+                    Age = 25, LastActive = DateTime.UtcNow,
+                    LookingFor = LookingFor.Room,
+                    Location = new Location { City = "İstanbul" }
+                }
+            };
+            var istanbul = new AppUser
+            {
+                Id = "istanbul", Email = "i@test.com", Name = "Istanbul",
+                Profile = new UserProfile { Age = 26, LastActive = DateTime.UtcNow, LookingFor = LookingFor.Room, Location = new Location { City = "İstanbul" } }
+            };
+            var ankara = new AppUser
+            {
+                Id = "ankara", Email = "a@test.com", Name = "Ankara",
+                Profile = new UserProfile { Age = 27, LastActive = DateTime.UtcNow, LookingFor = LookingFor.Room, Location = new Location { City = "Ankara" } }
+            };
+
+            _userRepo.Setup(r => r.GetUserWithProfileAsync("current", false)).ReturnsAsync(current);
+            _userRepo.Setup(r => r.GetFeedCandidatesWithLikeStatusAsync("current"))
+                     .ReturnsAsync(new List<(AppUser, bool)> { (istanbul, false), (ankara, false) });
+
+            var result = await _sut.GetFeedAsync("current", 0, 20);
+
+            Assert.Single(result.Users);
+            Assert.Equal("istanbul", result.Users[0].Id);
+        }
+
+        // Şehir null olan kullanıcı tüm adayları görür — filtre uygulanmamalı.
+        [Fact]
+        public async Task GetFeedAsync_NullCity_SeesAllCandidates()
+        {
+            var current = new AppUser
+            {
+                Id = "current", Email = "c@test.com", Name = "Current",
+                Profile = new UserProfile { Age = 25, LastActive = DateTime.UtcNow, Location = null }
+            };
+            var u1 = MakeUser("u1", "u1@test.com");
+            var u2 = MakeUser("u2", "u2@test.com");
+
+            _userRepo.Setup(r => r.GetUserWithProfileAsync("current", false)).ReturnsAsync(current);
+            _userRepo.Setup(r => r.GetFeedCandidatesWithLikeStatusAsync("current"))
+                     .ReturnsAsync(new List<(AppUser, bool)> { (u1, false), (u2, false) });
+
+            var result = await _sut.GetFeedAsync("current", 0, 20);
+
+            Assert.Equal(2, result.Users.Count);
         }
     }
 }

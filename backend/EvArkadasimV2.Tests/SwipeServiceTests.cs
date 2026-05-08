@@ -147,5 +147,49 @@ namespace EvArkadasimV2.Tests
             Assert.Equal(1, sender.Profile!.MatchesCount);
             Assert.Equal(1, receiver.Profile!.MatchesCount);
         }
+
+        // GetMyMatchesAsync — match listesi dönmeli, uyumluluk skoru hesaplanmalı
+        [Fact]
+        public async Task GetMyMatchesAsync_HappyPath_ReturnsMatchesWithCompatibility()
+        {
+            var currentUser = MakeUser("user1");
+            var otherUser = MakeUser("user2");
+            var match = new UserMatch
+            {
+                Id = 1,
+                User1Id = "user1",
+                User2Id = "user2",
+                User1 = currentUser,
+                User2 = otherUser,
+                MatchedAt = DateTime.UtcNow
+            };
+
+            _userRepo.Setup(r => r.GetUserWithProfileAsync("user1", false)).ReturnsAsync(currentUser);
+            _matchRepo.Setup(r => r.GetMatchesForUserAsync("user1"))
+                      .ReturnsAsync(new List<UserMatch> { match });
+            _compatibility.Setup(c => c.Calculate(It.IsAny<EvArkadasimV2.Domain.ValueObjects.BasicTestResults?>(),
+                                                   It.IsAny<EvArkadasimV2.Domain.ValueObjects.BasicTestResults?>()))
+                          .Returns((double?)82.0);
+
+            var result = await _sut.GetMyMatchesAsync("user1");
+
+            Assert.Single(result);
+            Assert.Equal(1, result[0].MatchId);
+            Assert.Equal("user2", result[0].MatchedUser.Id);
+            Assert.Equal(82.0, result[0].MatchedUser.Compatibility);
+        }
+
+        // GetMyMatchesAsync — match yoksa boş liste dönmeli
+        [Fact]
+        public async Task GetMyMatchesAsync_NoMatches_ReturnsEmptyList()
+        {
+            _userRepo.Setup(r => r.GetUserWithProfileAsync("user1", false)).ReturnsAsync(MakeUser("user1"));
+            _matchRepo.Setup(r => r.GetMatchesForUserAsync("user1"))
+                      .ReturnsAsync(new List<UserMatch>());
+
+            var result = await _sut.GetMyMatchesAsync("user1");
+
+            Assert.Empty(result);
+        }
     }
 }
