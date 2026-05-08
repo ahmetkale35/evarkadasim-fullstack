@@ -317,7 +317,7 @@ namespace EvArkadasimV2.Infrastructure.Data
                 Budget     = def.City == "İstanbul" ? $"{10 + index % 10}000 TL" : $"{6 + index % 8}000 TL",
                 MoveInDate = DateTime.UtcNow.AddDays(index % 45 + 3).ToString("yyyy-MM-dd"),
                 Occupation = def.Job,
-                Education  = index % 3 switch { 0 => "Yüksek Lisans", 1 => "Lisans", _ => "Önlisans" },
+                Education  = (index % 3) switch { 0 => "Yüksek Lisans", 1 => "Lisans", _ => "Önlisans" },
                 Location   = new Location { City = def.City, Distance = index % 20 + 1 },
                 RoomType   = index % 4 == 3 ? null : (RoomType?)(index % 3),
                 LookingFor = def.LF,
