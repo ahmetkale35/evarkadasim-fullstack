@@ -9,7 +9,6 @@ import {
   Modal,
   Alert,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import MapView, { Marker } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MapPin, X, ChevronRight, User, Home, Lock } from 'lucide-react-native';
@@ -19,9 +18,9 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { usePropertyMapPins } from '@/hooks/usePropertyMapPins';
 import { useProfile } from '@/hooks/useProfile';
 import { ProfileCard } from '@/components/ProfileCard';
+import { CharacterTest, TestResults } from '@/components/CharacterTest';
 import { PropertyMapPin, User as UserType } from '@/types';
 import { userService } from '@/services/userService';
-import { storage } from '@/services/storage';
 import { useCharacterTest } from '@/hooks/useCharacterTest';
 import { CITY_COORDINATES } from '@/constants/cityCoordinates';
 
@@ -75,23 +74,15 @@ export default function ExploreScreen() {
   const swipedRef = useRef(false);
   const [swipeKey, setSwipeKey] = useState(0);
   const router = useRouter();
-  const { hasCompletedBasicTest } = useCharacterTest();
+  const { hasCompletedBasicTest, setBasicTestResults } = useCharacterTest();
+  const [showTest, setShowTest] = useState(false);
 
-  useEffect(() => {
-    if (!hasCompletedBasicTest()) {
-      storage.getUserId().then(uid => {
-        if (!uid) return;
-        AsyncStorage.getItem(`test_banner_dismissed_${uid}`).then(val => {
-          if (!val) setShowTestBanner(true);
-        });
-      });
-    }
-  }, []);
+  const dismissTestBanner = () => setShowTestBanner(false);
 
-  const dismissTestBanner = async () => {
-    const uid = await storage.getUserId();
-    if (uid) await AsyncStorage.setItem(`test_banner_dismissed_${uid}`, '1');
-    setShowTestBanner(false);
+  const handleTestComplete = (results: TestResults | null) => {
+    if (results) setBasicTestResults(results);
+    setShowTest(false);
+    Alert.alert('Test Tamamlandı! 🎉', 'Artık uyumluluk skorlarını görmeye başlayacaksın.', [{ text: 'Harika!' }]);
   };
 
   const handleMarkerPress = (pin: PropertyMapPin) => setSelected(pin);
@@ -103,6 +94,7 @@ export default function ExploreScreen() {
     setOwnerUser(null);
     swipedRef.current = false;
     setSwipeKey((k) => k + 1);
+    setShowTestBanner(!hasCompletedBasicTest());
     setOwnerModalVisible(true);
     setOwnerLoading(true);
     const user = await userService.getById(pin.ownerId);
@@ -130,6 +122,10 @@ export default function ExploreScreen() {
     setOwnerUser(null);
     swipedRef.current = false;
   };
+
+  if (showTest) {
+    return <CharacterTest onComplete={handleTestComplete} onBack={() => setShowTest(false)} />;
+  }
 
   if (loading) {
     return (
@@ -248,7 +244,7 @@ export default function ExploreScreen() {
               <View style={styles.testBanner}>
                 <Lock size={14} color="#7C3AED" />
                 <Text style={styles.testBannerText}>Uyumluluk skorunu görmek için karakterini test et</Text>
-                <TouchableOpacity onPress={() => { closeModal(); router.push('/'); }}>
+                <TouchableOpacity onPress={() => { closeModal(); setShowTest(true); }}>
                   <Text style={styles.testBannerCta}>Teste Git</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={dismissTestBanner} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -270,7 +266,7 @@ export default function ExploreScreen() {
                   compatibility={ownerUser.compatibility}
                   onSwipeLeft={() => handleSwipe('pass')}
                   onSwipeRight={() => handleSwipe('like')}
-                  onLockPress={() => { closeModal(); router.push('/'); }}
+                  onLockPress={() => { closeModal(); setShowTest(true); }}
                 />
               </View>
             ) : (
