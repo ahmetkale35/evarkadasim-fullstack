@@ -9,10 +9,12 @@ namespace EvArkadasimV2.Application.Services
     public class TestService : ITestService
     {
         private readonly IUserRepository _userRepository;
+        private readonly ICacheService _cache;
 
-        public TestService(IUserRepository userRepository)
+        public TestService(IUserRepository userRepository, ICacheService cache)
         {
             _userRepository = userRepository;
+            _cache = cache;
         }
 
         public async Task<bool> SubmitBasicTestAsync(string userId, BasicTestResultDto dto)
@@ -48,7 +50,11 @@ namespace EvArkadasimV2.Application.Services
             };
 
             _userRepository.Update(user);
-            return await _userRepository.SaveChangesAsync();
+            var result = await _userRepository.SaveChangesAsync();
+
+            // FinalScores değişti — feed cache'i temizle, bir sonraki istekte compatibility yeniden hesaplansın
+            await _cache.RemoveAsync($"feed:{userId}");
+            return result;
         }
 
         public async Task<bool> SubmitDetailedTestAsync(string userId, DetailedTestResultDto dto)
@@ -88,7 +94,11 @@ namespace EvArkadasimV2.Application.Services
             };
 
             _userRepository.Update(user);
-            return await _userRepository.SaveChangesAsync();
+            var result = await _userRepository.SaveChangesAsync();
+
+            // FinalScores değişti — feed cache'i temizle
+            await _cache.RemoveAsync($"feed:{userId}");
+            return result;
         }
 
         private static void ValidateDetailedTestDto(DetailedTestResultDto dto)

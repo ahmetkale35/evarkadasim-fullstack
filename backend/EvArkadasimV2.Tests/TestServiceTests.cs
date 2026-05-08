@@ -1,6 +1,7 @@
 using EvArkadasimV2.Application.DTOs.Test;
 using EvArkadasimV2.Application.Exceptions;
 using EvArkadasimV2.Application.Interfaces.Repositories;
+using EvArkadasimV2.Application.Interfaces.Services;
 using EvArkadasimV2.Application.Services;
 using EvArkadasimV2.Domain.Entities;
 using EvArkadasimV2.Domain.ValueObjects;
@@ -14,11 +15,13 @@ namespace EvArkadasimV2.Tests
     public class TestServiceTests
     {
         private readonly Mock<IUserRepository> _userRepo = new();
+        private readonly Mock<ICacheService> _cache = new();
         private readonly TestService _sut;
 
         public TestServiceTests()
         {
-            _sut = new TestService(_userRepo.Object);
+            _cache.Setup(c => c.RemoveAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
+            _sut = new TestService(_userRepo.Object, _cache.Object);
         }
 
         // Temel test gönderilince InitialBasicTestResults DTO değerlerini almalı.
