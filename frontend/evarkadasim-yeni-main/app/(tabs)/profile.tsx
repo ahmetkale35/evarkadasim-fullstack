@@ -12,18 +12,18 @@ import { CityPicker } from '@/components/CityPicker';
 import { authEvents } from '@/services/authEvents';
 import { feedEvents } from '@/services/feedEvents';
 import { profileEvents } from '@/services/profileEvents';
-import { PropertyEditModal } from '@/components/PropertyEditModal';
+import { useRouter } from 'expo-router';
 import { propertyService } from '@/services/propertyService';
 
 export default function ProfileScreen() {
   const { profile, loading, refresh } = useProfile();
+  const router = useRouter();
 
   const [notifications, setNotifications] = useState(true);
   const [showOnline, setShowOnline] = useState(true);
   const [showBasicTest, setShowBasicTest] = useState(false);
   const [showDetailedTest, setShowDetailedTest] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showPropertyModal, setShowPropertyModal] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
   const [editForm, setEditForm] = useState({
     firstName: '',
@@ -151,11 +151,6 @@ export default function ProfileScreen() {
 
   return (
     <>
-    <PropertyEditModal
-      visible={showPropertyModal}
-      onClose={() => { setShowPropertyModal(false); setShowEditModal(true); }}
-      onSaved={() => { refresh(); feedEvents.emitRefreshNeeded(); }}
-    />
     <Modal visible={showEditModal} animationType="slide" presentationStyle="pageSheet">
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1, backgroundColor: '#fff' }}>
         <SafeAreaView style={{ flex: 1 }}>
@@ -228,7 +223,7 @@ export default function ProfileScreen() {
               {editForm.lookingFor === 'Roommate' && (
                 <TouchableOpacity
                   style={editStyles.propertyEditBtn}
-                  onPress={() => { setShowEditModal(false); setShowPropertyModal(true); }}
+                  onPress={() => { setShowEditModal(false); router.push('/property/new'); }}
                 >
                   <Home size={16} color="#EC4899" />
                   <Text style={editStyles.propertyEditBtnText}>
