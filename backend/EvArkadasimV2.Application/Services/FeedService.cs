@@ -106,7 +106,8 @@ namespace EvArkadasimV2.Application.Services
             SocialLevel = u.Profile.SocialLevel,
             Location = u.Profile.Location != null
                 ? new LocationDto { City = u.Profile.Location.City, Distance = u.Profile.Location.Distance ?? 0 }
-                : null
+                : null,
+            HasProperty = u.Properties?.Any() ?? false
         };
     }
 }

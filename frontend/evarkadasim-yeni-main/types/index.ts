@@ -22,6 +22,7 @@ export interface User {
   socialLevel: number; // 1-5 scale
   characterProfile?: TestResults;
   compatibility?: number | null;
+  hasProperty?: boolean;
 }
 
 export interface TestResults {

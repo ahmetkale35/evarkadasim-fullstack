@@ -3,10 +3,10 @@ import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { MessageCircle, EggFried as Verified, Home, Search, MapPin } from 'lucide-react-native';
 import { Match } from '@/types';
 
-function UserTypeBadge({ lookingFor }: { lookingFor: string }) {
+function UserTypeBadge({ lookingFor, hasProperty }: { lookingFor: string; hasProperty?: boolean }) {
   return (
     <View style={{ flexDirection: 'row', gap: 4, marginTop: 3 }}>
-      {lookingFor === 'roommate' && (
+      {lookingFor === 'roommate' && hasProperty && (
         <View style={[badgeStyles.badge, badgeStyles.ownerBadge]}>
           <Home size={10} color="#059669" />
           <Text style={[badgeStyles.text, { color: '#059669' }]}>Ev Sahibi</Text>
@@ -69,7 +69,7 @@ export function MatchCard({ match, onPress }: MatchCardProps) {
               {user.isVerified && <Verified size={16} color="#3B82F6" fill="#3B82F6" />}
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
-              <UserTypeBadge lookingFor={user.lookingFor} />
+              <UserTypeBadge lookingFor={user.lookingFor} hasProperty={user.hasProperty} />
               {user.location?.city ? (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
                   <MapPin size={10} color="#9CA3AF" />
