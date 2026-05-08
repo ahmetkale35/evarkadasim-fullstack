@@ -6,7 +6,7 @@ import { Match } from '@/types';
 function UserTypeBadge({ lookingFor, hasProperty }: { lookingFor: string; hasProperty?: boolean }) {
   return (
     <View style={{ flexDirection: 'row', gap: 4, marginTop: 3 }}>
-      {lookingFor === 'roommate' && hasProperty && (
+      {hasProperty && (
         <View style={[badgeStyles.badge, badgeStyles.ownerBadge]}>
           <Home size={10} color="#059669" />
           <Text style={[badgeStyles.text, { color: '#059669' }]}>Ev Sahibi</Text>

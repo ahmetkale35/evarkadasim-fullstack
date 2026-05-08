@@ -212,7 +212,7 @@ export function ProfileCard({ user, compatibility, onSwipeLeft, onSwipeRight, on
       >
         {/* Kullanıcı tipi */}
         <View style={styles.typeBadgeRow}>
-          {user.lookingFor === 'roommate' && user.hasProperty && (
+          {user.hasProperty && (
             <View style={[styles.typeBadge, styles.ownerTypeBadge]}>
               <Home size={12} color="#059669" />
               <Text style={[styles.typeBadgeText, { color: '#059669' }]}>Ev Sahibi</Text>

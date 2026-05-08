@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, ScrollView, RefreshControl, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Menu, User as UserIcon, X, Lock, RotateCcw } from 'lucide-react-native';
+import { Menu, User as UserIcon, X, Lock, RotateCcw, Chrome as Home, Search } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { storage } from '@/services/storage';
 import { ProfileCard } from '@/components/ProfileCard';
@@ -11,6 +11,7 @@ import { CharacterTest } from '@/components/CharacterTest';
 import { useUsers } from '@/hooks/useUsers';
 import { useMatches } from '@/hooks/useMatches';
 import { useCharacterTest } from '@/hooks/useCharacterTest';
+import { useProfile } from '@/hooks/useProfile';
 import { userService } from '@/services/userService';
 import { TestResults } from '@/types';
 
@@ -18,6 +19,7 @@ export default function FindRoommatesScreen() {
   const { users, loading, removeUser, refresh } = useUsers();
   const { addMatch } = useMatches();
   const { hasCompletedBasicTest, setBasicTestResults } = useCharacterTest();
+  const { profile } = useProfile();
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
@@ -239,6 +241,18 @@ export default function FindRoommatesScreen() {
           <Text style={styles.subtitle}>
             {sortedUsers.length - currentIndex} potential roommates nearby
           </Text>
+          {profile && (
+            <View style={styles.feedInfoRow}>
+              <View style={[styles.feedInfoTag, profile.hasProperty ? styles.feedInfoTagOwner : styles.feedInfoTagSeeker]}>
+                {profile.hasProperty
+                  ? <Home size={11} color="#059669" />
+                  : <Search size={11} color="#7C3AED" />}
+                <Text style={[styles.feedInfoTagText, { color: profile.hasProperty ? '#059669' : '#7C3AED' }]}>
+                  {profile.hasProperty ? 'Ev Sahibiyim' : 'Ev Arıyorum'}
+                </Text>
+              </View>
+            </View>
+          )}
         </View>
 
         {showTestBanner && !hasCompletedBasicTest() && currentUser?.compatibility == null && (
@@ -348,11 +362,38 @@ const styles = StyleSheet.create({
   },
   subHeader: {
     alignItems: 'center',
-    paddingBottom: 16,
+    paddingBottom: 12,
+    gap: 6,
   },
   subtitle: {
     fontSize: 16,
     color: '#6B7280',
+  },
+  feedInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  feedInfoTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  feedInfoTagOwner: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#6EE7B7',
+  },
+  feedInfoTagSeeker: {
+    backgroundColor: '#F3E8FF',
+    borderColor: '#C4B5FD',
+  },
+  feedInfoTagText: {
+    fontSize: 11,
+    fontWeight: '700',
   },
   cardContainer: {
     flex: 1,
