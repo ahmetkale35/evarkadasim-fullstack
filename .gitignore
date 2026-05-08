@@ -68,6 +68,7 @@ Desktop.ini
 # =====================
 *.log
 backend/logs/
+backend/coverage-tmp*/
 
 # Graphify (Code analysis cache)
 graphify-out/
