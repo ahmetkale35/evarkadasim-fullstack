@@ -3,6 +3,7 @@ using EvArkadasimV2.Application.DTOs.User;
 using EvArkadasimV2.Application.Exceptions;
 using EvArkadasimV2.Application.Interfaces.Repositories;
 using EvArkadasimV2.Application.Interfaces.Services;
+using EvArkadasimV2.Domain.Enums;
 using EvArkadasimV2.Domain.ValueObjects;
 
 namespace EvArkadasimV2.Application.Services
@@ -50,7 +51,8 @@ namespace EvArkadasimV2.Application.Services
                 Interests = user.Profile.Interests ?? new List<string>(),
                 CharacterProfile = MapScores(user.Profile.FinalScores),
                 InitialBasicTestResults = MapScores(user.Profile.InitialBasicTestResults),
-                FinalScores = MapScores(user.Profile.FinalScores)
+                FinalScores = MapScores(user.Profile.FinalScores),
+                HasProperty = user.Properties?.Any() ?? false
             };
         }
 
@@ -83,6 +85,12 @@ namespace EvArkadasimV2.Application.Services
             if (updateDto.SocialLevel.HasValue) user.Profile.SocialLevel = updateDto.SocialLevel.Value;
             if (updateDto.IsOnlineStatusVisible.HasValue) user.Profile.IsOnlineStatusVisible = updateDto.IsOnlineStatusVisible.Value;
             if (updateDto.NotificationsEnabled.HasValue) user.Profile.NotificationsEnabled = updateDto.NotificationsEnabled.Value;
+            if (updateDto.LookingFor.HasValue)
+            {
+                if (updateDto.LookingFor == LookingFor.Roommate && !(user.Properties?.Any() ?? false))
+                    throw new DomainException("Ev sahibi olmak için önce bir ilan eklemelisiniz.");
+                user.Profile.LookingFor = updateDto.LookingFor.Value;
+            }
 
             _userRepository.Update(user);
             await _userRepository.SaveChangesAsync();

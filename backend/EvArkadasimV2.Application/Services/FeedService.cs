@@ -2,6 +2,7 @@ using EvArkadasimV2.Application.DTOs.User;
 using EvArkadasimV2.Application.Interfaces.Repositories;
 using EvArkadasimV2.Application.Interfaces.Services;
 using EvArkadasimV2.Domain.Entities;
+using EvArkadasimV2.Domain.Enums;
 
 namespace EvArkadasimV2.Application.Services
 {
@@ -39,12 +40,17 @@ namespace EvArkadasimV2.Application.Services
                 var currentUser = await _userRepository.GetUserWithProfileAsync(currentUserId, tracking: false);
                 var currentScores = currentUser?.Profile?.FinalScores;
                 var currentCity = currentUser?.Profile?.Location?.City;
+                var currentLookingFor = currentUser?.Profile?.LookingFor;
                 var candidates = await _userRepository.GetFeedCandidatesWithLikeStatusAsync(currentUserId);
 
                 var filtered = string.IsNullOrEmpty(currentCity)
                     ? candidates
                     : candidates.Where(x => string.Equals(
                         x.User.Profile?.Location?.City, currentCity, StringComparison.OrdinalIgnoreCase));
+
+                // Ev sahibi sadece ev arayanları görür; ev arıyor ise herkesi görür
+                if (currentLookingFor == LookingFor.Roommate)
+                    filtered = filtered.Where(x => x.User.Profile?.LookingFor == LookingFor.Room);
 
                 sorted = filtered
                     .Select(item =>

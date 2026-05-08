@@ -144,6 +144,10 @@ namespace EvArkadasimV2.Infrastructure.Data
                 entity.Property(e => e.Amenities).HasConversion(
                         v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
                         v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null) ?? new());
+
+                entity.HasOne(p => p.Owner)
+                      .WithMany(u => u.Properties)
+                      .HasForeignKey(p => p.OwnerId);
             });
         }
     }

@@ -33,6 +33,7 @@ namespace EvArkadasimV2.Application.DTOs.User
         public int LikedProfilesCount { get; set; }
         public int MatchesCount { get; set; }
         public double CompatibilityScore { get; set; }
+        public bool HasProperty { get; set; }
     }
 
     public class LocationDto

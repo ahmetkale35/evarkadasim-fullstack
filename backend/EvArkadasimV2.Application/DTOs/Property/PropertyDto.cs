@@ -7,6 +7,9 @@ namespace EvArkadasimV2.Application.DTOs.Property
         public int Id { get; set; }
         public string Title { get; set; } = string.Empty;
         public string Price { get; set; } = string.Empty; // "$2,800/month" formatında
+        public decimal PriceAmount { get; set; }
+        public string Currency { get; set; } = "₺";
+        public string PricePeriod { get; set; } = "ay";
         public string Location { get; set; } = string.Empty;
         public int Bedrooms { get; set; }
         public int Bathrooms { get; set; }

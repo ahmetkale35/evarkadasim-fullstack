@@ -1,3 +1,4 @@
+using EvArkadasimV2.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace EvArkadasimV2.Application.DTOs.User
@@ -44,5 +45,6 @@ namespace EvArkadasimV2.Application.DTOs.User
 
         public bool? IsOnlineStatusVisible { get; set; }
         public bool? NotificationsEnabled { get; set; }
+        public LookingFor? LookingFor { get; set; }
     }
 }
