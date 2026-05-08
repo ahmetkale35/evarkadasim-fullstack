@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, ScrollView, RefreshControl, Animated } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, ScrollView, RefreshControl, Animated, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Menu, User as UserIcon, X, Lock, RotateCcw, Chrome as Home, Search } from 'lucide-react-native';
+import { X, Lock, RotateCcw, Chrome as Home, Search } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { storage } from '@/services/storage';
 import { ProfileCard } from '@/components/ProfileCard';
@@ -13,13 +14,20 @@ import { useMatches } from '@/hooks/useMatches';
 import { useCharacterTest } from '@/hooks/useCharacterTest';
 import { useProfile } from '@/hooks/useProfile';
 import { userService } from '@/services/userService';
+import { profileService } from '@/services/profileService';
+import { propertyService } from '@/services/propertyService';
+import { profileEvents } from '@/services/profileEvents';
+import { feedEvents } from '@/services/feedEvents';
+import { propertyEvents } from '@/services/propertyEvents';
 import { TestResults } from '@/types';
 
 export default function FindRoommatesScreen() {
   const { users, loading, removeUser, refresh } = useUsers();
   const { addMatch } = useMatches();
   const { hasCompletedBasicTest, setBasicTestResults } = useCharacterTest();
-  const { profile } = useProfile();
+  const { profile, refresh: refreshProfile } = useProfile();
+  const router = useRouter();
+  const [showLookingForModal, setShowLookingForModal] = useState(false);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
@@ -35,6 +43,57 @@ export default function FindRoommatesScreen() {
       Animated.delay(1500),
       Animated.timing(toastOpacity, { toValue: 0, duration: 400, useNativeDriver: true }),
     ]).start();
+  };
+
+  const handleSelectRoommate = async () => {
+    setShowLookingForModal(false);
+    if (!profile?.hasProperty) {
+      router.push('/property/new');
+      return;
+    }
+    await profileService.updateProfile({ lookingFor: 'Roommate' });
+    profileEvents.emitRefreshNeeded();
+    feedEvents.emitRefreshNeeded();
+    refreshProfile();
+    refresh();
+  };
+
+  const handleSelectRoom = () => {
+    if (profile?.hasProperty) {
+      Alert.alert(
+        'Ev İlanı Silinecek',
+        'Ev arıyorum seçeneğini seçerseniz mevcut ev ilanınız silinecek. Emin misiniz?',
+        [
+          { text: 'İptal', style: 'cancel' },
+          {
+            text: 'Sil ve Devam Et',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await propertyService.deleteMine();
+                await profileService.updateProfile({ lookingFor: 'Room' });
+                setShowLookingForModal(false);
+                profileEvents.emitRefreshNeeded();
+                feedEvents.emitRefreshNeeded();
+                propertyEvents.emitRefreshNeeded();
+                refreshProfile();
+                refresh();
+              } catch {
+                Alert.alert('Hata', 'İlan silinemedi. Lütfen tekrar dene.');
+              }
+            },
+          },
+        ]
+      );
+    } else {
+      setShowLookingForModal(false);
+      profileService.updateProfile({ lookingFor: 'Room' }).then(() => {
+        profileEvents.emitRefreshNeeded();
+        feedEvents.emitRefreshNeeded();
+        refreshProfile();
+        refresh();
+      });
+    }
   };
 
   const canRefresh = () => Date.now() - lastRefreshAt.current > REFRESH_COOLDOWN_MS;
@@ -233,8 +292,15 @@ export default function FindRoommatesScreen() {
               </Text>
             )}
           </View>
-          <TouchableOpacity style={styles.profileButton}>
-            <UserIcon size={24} color="#111827" />
+          <TouchableOpacity
+            style={[styles.statusBtn, { backgroundColor: profile?.hasProperty ? '#059669' : '#7C3AED' }]}
+            onPress={() => setShowLookingForModal(true)}
+          >
+            {profile?.hasProperty ? (
+              <Home size={22} color="#fff" />
+            ) : (
+              <Search size={22} color="#fff" />
+            )}
           </TouchableOpacity>
         </View>
         <View style={styles.subHeader}>
@@ -245,8 +311,8 @@ export default function FindRoommatesScreen() {
             <View style={styles.feedInfoRow}>
               <View style={[styles.feedInfoTag, profile.hasProperty ? styles.feedInfoTagOwner : styles.feedInfoTagSeeker]}>
                 {profile.hasProperty
-                  ? <Home size={11} color="#059669" />
-                  : <Search size={11} color="#7C3AED" />}
+                  ? <Home size={13} color="#059669" />
+                  : <Search size={13} color="#7C3AED" />}
                 <Text style={[styles.feedInfoTagText, { color: profile.hasProperty ? '#059669' : '#7C3AED' }]}>
                   {profile.hasProperty ? 'Ev Sahibiyim' : 'Ev Arıyorum'}
                 </Text>
@@ -280,6 +346,62 @@ export default function FindRoommatesScreen() {
           />
         </View>
       </SafeAreaView>
+
+      {/* Ne arıyorsun seçici */}
+      <Modal
+        visible={showLookingForModal}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowLookingForModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowLookingForModal(false)}
+        >
+          <View style={styles.lookingForSheet}>
+            <View style={styles.sheetHandle} />
+            <Text style={styles.sheetTitle}>Ne Arıyorsunuz?</Text>
+
+            {/* Ev sahibiyim kartı */}
+            <TouchableOpacity
+              style={[styles.typeCard, profile?.hasProperty && styles.typeCardActiveGreen]}
+              onPress={handleSelectRoommate}
+            >
+              <View style={[styles.typeCardIcon, { backgroundColor: profile?.hasProperty ? '#D1FAE5' : '#ECFDF5' }]}>
+                <Home size={22} color="#059669" />
+              </View>
+              <View style={styles.typeCardText}>
+                <Text style={[styles.typeCardTitle, profile?.hasProperty && { color: '#065F46' }]}>Şuan ev sahibiyim</Text>
+                <Text style={styles.typeCardSub}>Ev arkadaşı arıyorum</Text>
+              </View>
+              {profile?.hasProperty && (
+                <TouchableOpacity
+                  style={styles.inlineEditBtn}
+                  onPress={() => { setShowLookingForModal(false); router.push('/property/new'); }}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Text style={styles.inlineEditBtnText}>Düzenle</Text>
+                </TouchableOpacity>
+              )}
+            </TouchableOpacity>
+
+            {/* Ev sahibi değilim kartı */}
+            <TouchableOpacity
+              style={[styles.typeCard, !profile?.hasProperty && styles.typeCardActivePurple]}
+              onPress={handleSelectRoom}
+            >
+              <View style={[styles.typeCardIcon, { backgroundColor: !profile?.hasProperty ? '#EDE9FE' : '#F3E8FF' }]}>
+                <Search size={22} color="#7C3AED" />
+              </View>
+              <View style={styles.typeCardText}>
+                <Text style={[styles.typeCardTitle, !profile?.hasProperty && { color: '#4C1D95' }]}>Şuan ev sahibi değilim</Text>
+                <Text style={styles.typeCardSub}>Ev veya uygun bir ev arkadaşı arıyorum</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Karakter testi pop-up */}
       <CharacterTestPopup
@@ -347,19 +469,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 2,
   },
-  profileButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
   subHeader: {
     alignItems: 'center',
     paddingBottom: 12,
@@ -392,7 +501,7 @@ const styles = StyleSheet.create({
     borderColor: '#C4B5FD',
   },
   feedInfoTagText: {
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: '700',
   },
   cardContainer: {
@@ -451,4 +560,43 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
   },
+  statusBtn: {
+    width: 46, height: 46, borderRadius: 23,
+    alignItems: 'center', justifyContent: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2, shadowRadius: 5, elevation: 4,
+  },
+  modalOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
+  },
+  lookingForSheet: {
+    backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    padding: 24, gap: 12,
+  },
+  sheetHandle: {
+    width: 40, height: 4, borderRadius: 2,
+    backgroundColor: '#E5E7EB', alignSelf: 'center', marginBottom: 4,
+  },
+  sheetTitle: { fontSize: 17, fontWeight: '700', color: '#111827', marginBottom: 4 },
+  typeCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    padding: 16, borderRadius: 14,
+    backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#F3F4F6',
+  },
+  typeCardIcon: { width: 46, height: 46, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  typeCardText: { flex: 1 },
+  typeCardTitle: { fontSize: 15, fontWeight: '700', color: '#111827' },
+  typeCardSub: { fontSize: 12, color: '#6B7280', marginTop: 2 },
+  typeCardActiveGreen: {
+    backgroundColor: '#F0FDF4', borderColor: '#6EE7B7', borderWidth: 1.5,
+  },
+  typeCardActivePurple: {
+    backgroundColor: '#F5F3FF', borderColor: '#C4B5FD', borderWidth: 1.5,
+  },
+  inlineEditBtn: {
+    paddingHorizontal: 10, paddingVertical: 5,
+    borderRadius: 8, borderWidth: 1, borderColor: '#059669',
+  },
+  inlineEditBtnText: { fontSize: 12, fontWeight: '700', color: '#059669' },
 });
