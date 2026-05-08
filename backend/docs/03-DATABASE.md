@@ -11,9 +11,9 @@
 │ UserName             │         │ Age (int)                          │
 │ PasswordHash         │         │ Bio (string?)                      │
 │ Name (string?)       │         │ Budget (string?)                   │
-│ ...Identity alanları │         │ MoveInDate (string?)               │
-└───────┬──────────────┘         │ Lifestyle (TEXT/JSON)              │
-        │                         │ Photos (TEXT/JSON)                 │
+│ LastName (string?)   │         │ MoveInDate (string?)               │
+│ ...Identity alanları │         │ Lifestyle (TEXT/JSON)              │
+└───────┬──────────────┘         │ Photos (TEXT/JSON)                 │
         │                         │ Interests (TEXT/JSON)              │
         │                         │ Occupation (string?)               │
         │ N:1                     │ Education (string?)                │
@@ -56,6 +56,8 @@
 │ IsRead (bool)        │      │ Furnished (bool)     │
 └──────────────────────┘      │ PetsAllowed (bool)   │
                                │ SmokingAllowed (bool)│
+                               │ Latitude (double?)   │
+                               │ Longitude (double?)  │
                                └──────────────────────┘
 ```
 
@@ -73,7 +75,9 @@ Bu tablo ASP.NET Identity tarafından yönetilir. `IdentityUser` base class'ı a
 | `Email` | string | E-posta adresi (benzersiz) |
 | `NormalizedEmail` | string | E-posta karşılaştırması için büyük harfle normalize edilmiş hali |
 | `UserName` | string | Kullanıcı adı (bu projede e-posta ile aynı) |
-| `PasswordHash` | string | Hashlenmiş şifre. Düz metin ASLA saklanmaz |
+| `Name` | string? | Kullanıcının adı |
+| `LastName` | string? | Kullanıcının soyadı |
+| `PasswordHash` | string | PBKDF2 hash (ASP.NET Identity) şifre. Düz metin ASLA saklanmaz |
 | `SecurityStamp` | string | Şifre değiştiğinde güncellenir, eski token'ları geçersiz kılar |
 | `ConcurrencyStamp` | string | Eşzamanlı güncelleme çakışmalarını tespit eder |
 | `PhoneNumber` | string? | Telefon numarası (opsiyonel) |
@@ -84,8 +88,10 @@ Bu tablo ASP.NET Identity tarafından yönetilir. `IdentityUser` base class'ı a
 Bu projenin eklediği alanlar:
 
 | Sütun | Tip | Açıklama |
-|-------|-----|----------|
+|-------|-----|-----------|
 | `Name` | string? | Kullanıcının görünen adı |
+| `LastName` | string? | Kullanıcının soyadı |
+| `Properties` | ICollection | Kullanıcının sahip olduğu ilanlar (navigation property) |
 
 **Neden `Id` string (GUID)?** Identity varsayılan olarak GUID kullanır. Integer auto-increment yerine GUID tercih edilmesinin nedenleri:
 - Distributed sistemlerde çakışma riski yok

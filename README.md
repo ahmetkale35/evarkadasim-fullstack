@@ -2,7 +2,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/.NET-6.0-512BD4?style=flat&logo=dotnet" alt=".NET 6" />
-  <img src="https://img.shields.io/badge/React_Native-Expo-61DAFB?style=flat&logo=react" alt="React Native" />
+  <img src="https://img.shields.io/badge/React_Native-Expo_SDK_53-61DAFB?style=flat&logo=react" alt="React Native" />
   <img src="https://img.shields.io/badge/Architecture-Clean_Architecture-brightgreen" alt="Clean Architecture" />
   <img src="https://img.shields.io/badge/Database-SQLite_&_EF_Core-003B57?style=flat&logo=sqlite" alt="SQLite" />
   <img src="https://img.shields.io/badge/Cache-Redis-DC382D?style=flat&logo=redis" alt="Redis" />
@@ -11,20 +11,22 @@
   <img src="https://github.com/ahmetkale35/evarkadasim-fullstack/actions/workflows/ci-frontend.yml/badge.svg" alt="CI Frontend" />
 </p>
 
-EvArkadaşım is a personality-driven roommate matchmaking platform. It uses a **6-dimensional compatibility algorithm** to suggest the best possible matches based on personality tests and lifestyle habits — not just property listings.
+EvArkadaşım is a personality-driven roommate matchmaking platform. It uses a **6-dimensional compatibility algorithm** to suggest the best possible matches based on personality tests and lifestyle habits — not just property listings. The platform connects **property owners** looking for roommates with **room seekers**, filtering by city and role for relevant matches.
 
 ---
 
 ## Features
 
-- **Smart Matching** — Manhattan Distance compatibility score (0–100%) across 6 personality dimensions
+- **Smart Matching** — Manhattan Distance compatibility score (0–100%) across 6 personality dimensions; `null` returned for users who haven't completed their personality test
+- **Role-Based Feed** — Property owners see only room seekers; room seekers see all candidates in their city
 - **Swipe Mechanics** — Like / Pass / SuperLike with automatic mutual match detection
-- **Intelligent Feed** — Dynamic sorting: SuperLike boosts → Like boosts → compatibility score
+- **Intelligent Feed** — Three-tier sorting: Like boosts → compatibility score → last active. Results cached in Redis (5-min TTL); invalidated on swipe
+- **City Filtering** — Feed automatically filtered by user's city; property map pins filterable by city
 - **Real-time Messaging** — SignalR WebSocket hub; match notifications and new messages pushed instantly
-- **Redis Cache** — Feed results cached (5-min TTL); invalidated automatically on swipe
-- **Property Listings** — Full CRUD with filters (city, price, type, pets)
-- **JWT Authentication** — ASP.NET Identity + JWT Bearer; token revocation middleware
-- **Secure** — Rate limiting, HTML encoding on message content, role-based authorization
+- **Property Listings** — Full CRUD with map view (lat/lng coordinates), city/price/type/pets filters, owner's own listing endpoint
+- **JWT Authentication** — ASP.NET Identity + JWT Bearer + Refresh Token rotation; token revocation middleware
+- **Secure** — IP-based rate limiting, HTML encoding on message content, IDOR protection, global exception handler
+- **Interactive Map** — Property map pins with coordinates, auto-zoom to user's city
 - **Structured Logging** — Serilog with console + rolling file sinks; request logging middleware
 - **49 Unit Tests** — xUnit + Moq; covers swipe, feed, messaging, compatibility, profile, character test
 
@@ -40,7 +42,8 @@ EvArkadaşım is a personality-driven roommate matchmaking platform. It uses a *
 | Database | SQLite + Entity Framework Core 6 |
 | Cache | Redis via `StackExchange.Redis` |
 | Real-time | ASP.NET Core SignalR |
-| Auth | ASP.NET Identity + JWT Bearer |
+| Auth | ASP.NET Identity + JWT Bearer + Refresh Token |
+| Security | Rate Limiting (`AspNetCoreRateLimit`) |
 | Logging | Serilog (console + file sinks) |
 | Testing | xUnit + Moq (49 tests) |
 
@@ -50,6 +53,7 @@ EvArkadaşım is a personality-driven roommate matchmaking platform. It uses a *
 | Framework | React Native 0.79 + Expo SDK 53 |
 | Routing | Expo Router (file-based) |
 | HTTP | Axios with JWT interceptor + auto-refresh |
+| Maps | `react-native-maps` with city-filtered property pins |
 | Storage | `@react-native-async-storage/async-storage` |
 | Language | TypeScript 5.8 |
 
@@ -108,7 +112,7 @@ dotnet run
 ```
 
 Database is created and seeded automatically on first run:
-50 users, 10 properties, 3 pre-built matches, 18 messages.
+50 users (across 9 cities), 10 property listings (with coordinates), 3 pre-built matches, 18 messages.
 
 ```bash
 # Frontend
@@ -136,13 +140,14 @@ dotnet test EvArkadasimV2.slnx -c Release
 
 | Group | Endpoints |
 |-------|-----------|
-| Auth | `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout` |
-| Feed | `GET /api/users` (paginated, Redis-cached) |
+| Auth | `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/refresh`, `POST /api/auth/logout` |
+| Feed | `GET /api/users` (paginated, city-filtered, role-filtered, Redis-cached) |
+| User Detail | `GET /api/users/{id}` (single user profile with compatibility score) |
 | Swipe | `POST /api/swipe` (Like / Pass / SuperLike) |
-| Matches | `GET /api/matches` |
+| Matches | `GET /api/swipe/matches` |
 | Messages | `GET /api/messages/{matchId}`, `POST /api/messages`, `PUT /api/messages/{matchId}/read` |
-| Properties | Full CRUD `GET/POST/PUT/DELETE /api/properties` |
-| Profile | `GET/PUT /api/profile` |
+| Properties | `GET /POST /PUT /DELETE /api/property`, `GET /api/property/map`, `GET /api/property/mine`, `DELETE /api/property/mine` |
+| Profile | `GET /PUT /api/profile` |
 | Test | `POST /api/test/Basic`, `POST /api/test/Detailed` |
 | Health | `GET /health` |
 

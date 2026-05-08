@@ -437,6 +437,11 @@ dotnet ef migrations add AddUserBlocks ...
 | **Health Check** | ✅ Tamamlandı | `GET /health` liveness endpoint |
 | **HSTS** | ✅ Tamamlandı | Production'da UseHsts() aktif |
 | **CORS (ortam bazlı)** | ✅ Tamamlandı | Dev: AllowAnyOrigin, Prod: appsettings'ten AllowedOrigins |
+| **Şehir Filtreleme** | ✅ Tamamlandı | Feed şehir bazında filtreleme, harita pin filtreleme |
+| **Rol Filtreleme** | ✅ Tamamlandı | Ev sahibi → sadece ev arayanları görür |
+| **Property Map** | ✅ Tamamlandı | Koordinat bazlı harita pinleri (`GET /api/property/map`) |
+| **Property Mine** | ✅ Tamamlandı | Kendi ilanını görüntuleme/silme (`GET/DELETE /api/property/mine`) |
+| **User Detail** | ✅ Tamamlandı | Tekil kullanıcı profili + uyumluluk skoru (`GET /api/users/{id}`) |
 | **Frontend Bağlama** | ✅ Tamamlandı | Mock'tan gerçek API'ye geçiş (Faz 6) — Expo React Native |
 | **Unit Tests** | ✅ Tamamlandı | 49 test — xUnit + Moq (6 servis sınıfı) |
 | **Seed Verisi** | ✅ Tamamlandı | 50 kullanıcı, 10 ilan, 3 match, 18 mesaj |

@@ -26,21 +26,34 @@ Yeni kullanıcı kaydı oluşturur ve JWT token döner.
 {
   "email": "ahmet@example.com",
   "password": "Test1234!",
-  "name": "Ahmet"
+  "name": "Ahmet",
+  "lastName": "Kale",
+  "lookingFor": "Room",
+  "city": "İstanbul"
 }
 ```
+
+| Alan | Zorunlu | Açıklama |
+|------|---------|----------|
+| `email` | ✅ | Geçerli e-posta, max 256 karakter |
+| `password` | ✅ | Min 8 karakter, büyük harf + rakam + özel karakter |
+| `name` | ✅ | 2-100 karakter |
+| `lastName` | ✅ | 2-100 karakter |
+| `lookingFor` | ✅ | `"Roommate"` veya `"Room"` |
+| `city` | — | Opsiyonel, max 100 karakter |
 
 **201 Created — Başarılı**:
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIs...",
+  "refreshToken": "d4e5f6a7-b8c9-...",
   "expiration": "2026-04-29T14:30:00.0000000Z",
   "userId": "a1b2c3d4-e5f6-...",
   "name": "Ahmet"
 }
 ```
 
-**400 Bad Request — E-posta zaten kayıtlı**:
+**400 Bad Request — E-posta zaten kullanımda**:
 ```json
 { "message": "Bu e-posta adresi zaten kullanımda." }
 ```
@@ -148,6 +161,7 @@ Giriş yapmış kullanıcının profilini getirir.
 {
   "id": "a1b2c3d4-e5f6-...",
   "name": "Ahmet",
+  "lastName": "Kale",
   "age": 25,
   "bio": "Yazılım mühendisi, ev arkadaşı arıyorum.",
   "budget": "5000 TL",
@@ -164,17 +178,13 @@ Giriş yapmış kullanıcının profilini getirir.
   "lastActive": "2026-04-28T10:00:00Z",
   "cleanliness": 4,
   "socialLevel": 3,
-  "characterProfile": {
-    "socialEnergy": 3.5,
-    "orderApproach": 4.0,
-    "conflictManagement": 2.5,
-    "sharingStyle": 4.0,
-    "lifeRhythm": 3.0,
-    "communicationStyle": 4.5
-  },
+  "characterProfile": { ... },
+  "initialBasicTestResults": { ... },
+  "finalScores": { ... },
   "likedProfilesCount": 12,
   "matchesCount": 3,
-  "compatibilityScore": 0
+  "compatibilityScore": 0,
+  "hasProperty": true
 }
 ```
 
@@ -188,20 +198,30 @@ Kullanıcının profilini kısmen günceller. Sadece gönderilen alanlar güncel
 
 **Auth**: Bearer Token (Zorunlu)
 
-**Request Body** (tüm alanlar opsiyonel):
+**Request Body** (tüm alanlar opsiyonel — null gelen alanlar atlanır):
 ```json
 {
+  "firstName": "Ahmet",
+  "lastName": "Kale",
+  "age": 26,
   "bio": "Yeni bio metnim",
+  "city": "İstanbul",
   "budget": "6000 TL",
   "moveInDate": "2026-07-01",
+  "occupation": "Yazılım Mühendisi",
+  "education": "Yüksek Lisans",
   "lifestyle": ["Sigara içmez", "Erken kalkar"],
   "interests": ["Müzik", "Yemek", "Seyahat"],
   "photos": ["https://new-photo-url.jpg"],
   "cleanliness": 5,
   "socialLevel": 4,
   "isOnlineStatusVisible": true,
-  "notificationsEnabled": false
+  "notificationsEnabled": false,
+  "lookingFor": "Roommate"
 }
+```
+
+**İş Kuralı**: `lookingFor` alanı `"Roommate"` olarak ayarlanırken kullanıcının en az bir property ilanı olmalıdır. Yoksa `400 DomainException` döner: "Ev sahibi olmak için önce bir ilan eklemelisiniz."
 ```
 
 **200 OK**: `{ "message": "Profil başarıyla güncellendi." }`
@@ -229,6 +249,8 @@ Swipe edilecek aday kullanıcı listesini döndürür.
 - Kullanıcının kendisi listede yer almaz
 - Daha önce swipe edilen kullanıcılar listede yer almaz
 - Profili olmayan kullanıcılar filtrelenir
+- **Şehir filtresi**: Kullanıcının şehriyle eşleşen adaylar gösterilir (şehir yoksa tümü)
+- **Rol filtresi**: `LookingFor = Roommate` olan kullanıcılar yalnızca `Room` arayanları görür
 
 **Sıralama Önceliği**:
 1. Kullanıcıyı beğenmiş kişiler önce (like-boost)
@@ -258,7 +280,8 @@ Swipe edilecek aday kullanıcı listesini döndürür.
       "lastActive": "2026-04-28T09:00:00Z",
       "cleanliness": 5,
       "socialLevel": 4,
-      "compatibility": 78.3
+      "compatibility": 78.3,
+      "hasProperty": false
     }
   ],
   "skip": 0,
@@ -277,6 +300,18 @@ Swipe edilecek aday kullanıcı listesini döndürür.
 | `take` | int | İstenen kayıt sayısı (clamp edilmiş) |
 | `totalCount` | int | Filtreleme sonrası toplam aday sayısı |
 | `hasMore` | bool | `skip + take < totalCount` ise `true` — daha fazla sayfa var |
+
+---
+
+### GET `/api/users/{id}`
+
+Belirli bir kullanıcının profilini ve uyumluluk skorunu döndürür.
+
+**Auth**: Bearer Token (Zorunlu)
+
+**200 OK**: `UserSummaryDto` formatında tek nesne (compatibility skoru dahil).
+
+**404 Not Found**: Kullanıcı veya profili bulunamazsa.
 
 ---
 
@@ -440,9 +475,13 @@ Yeni ilan oluşturur. `ownerId` otomatik olarak token'dan alınır.
   "propertyType": "Studio",
   "furnished": true,
   "petsAllowed": true,
-  "smokingAllowed": false
+  "smokingAllowed": false,
+  "latitude": 41.0422,
+  "longitude": 29.0077
 }
 ```
+
+**Yan Etki**: İlan oluşturulduğunda, kullanıcının `LookingFor` alanı henüz `Roommate` değilse otomatik olarak `Roommate` olarak güncellenir.
 
 **Validation Kuralları**:
 
@@ -487,6 +526,55 @@ Mevcut ilanı günceller. **Sadece ilan sahibi güncelleyebilir.**
 **404 Not Found**: `{ "message": "İlan bulunamadı. Id: 99" }`
 
 **403 Forbidden**: Token'daki kullanıcı ilan sahibi değilse.
+
+---
+
+### GET `/api/property/map?city=İstanbul`
+
+Koordinatı olan tüm ilanları harita pin'i olarak döner.
+
+**Auth**: Bearer Token (Zorunlu)
+
+**Query Parameters**: `city` (opsiyonel) — belirtilirse sadece o şehirdeki ilanlar gelir.
+
+**200 OK**:
+```json
+[
+  {
+    "id": 1,
+    "latitude": 41.0422,
+    "longitude": 29.0077,
+    "title": "Beşiktaş'ta Ferah 2+1 Daire",
+    "price": "₺15,000/ay",
+    "location": "İstanbul, Beşiktaş",
+    "propertyType": "Apartment",
+    "ownerId": "a1b2c3d4-...",
+    "ownerName": "Can Akın"
+  }
+]
+```
+
+---
+
+### GET `/api/property/mine`
+
+Oturum açan kullanıcının kendi ilanını döner.
+
+**Auth**: Bearer Token (Zorunlu)
+
+**200 OK**: `PropertyDto` formatında tek nesne.
+
+**204 No Content**: Kullanıcının ilanı yoksa.
+
+---
+
+### DELETE `/api/property/mine`
+
+Oturum açan kullanıcının tüm ilanlarını siler.
+
+**Auth**: Bearer Token (Zorunlu)
+
+**204 No Content**: Başarılı silme.
 
 ---
 

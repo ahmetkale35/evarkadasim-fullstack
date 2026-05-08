@@ -284,11 +284,10 @@ public async Task<SwipeResultDto> SwipeAsync(string senderId, SwipeRequestDto re
 ### Algoritma: Manhattan Distance Tabanlı Benzerlik
 
 ```csharp
-public double Calculate(BasicTestResults? current, BasicTestResults? candidate)
+public double? Calculate(BasicTestResults? current, BasicTestResults? candidate)
 {
-    // Test çözmemiş kullanıcılar için orta değer
     if (current == null || candidate == null)
-        return 50.0;  // "Belirsiz" — ne çok uyumlu ne uyumsuz
+        return null;  // Test tamamlanmamış → null dön. Frontend kilit badge gösterir.
 
     // Her boyutta mutlak farkları topla (Manhattan Distance)
     var totalDiff =
@@ -344,9 +343,21 @@ public async Task<PagedFeedDto> GetFeedAsync(string currentUserId, int skip, int
     {
         var currentUser = await _userRepository.GetUserWithProfileAsync(currentUserId, tracking: false);
         var currentScores = currentUser?.Profile?.FinalScores;
+        var currentCity = currentUser?.Profile?.Location?.City;
+        var currentLookingFor = currentUser?.Profile?.LookingFor;
         var candidates = await _userRepository.GetFeedCandidatesWithLikeStatusAsync(currentUserId);
 
-        sorted = candidates
+        // 1. ŞEHİR FİLTRESİ: Kullanıcının şehriyle eşleşen adaylar (şehir yoksa tümü)
+        var filtered = string.IsNullOrEmpty(currentCity)
+            ? candidates
+            : candidates.Where(x => string.Equals(
+                x.User.Profile?.Location?.City, currentCity, StringComparison.OrdinalIgnoreCase));
+
+        // 2. ROL FİLTRESİ: Ev sahibi (Roommate) sadece ev arayanları (Room) görür
+        if (currentLookingFor == LookingFor.Roommate)
+            filtered = filtered.Where(x => x.User.Profile?.LookingFor == LookingFor.Room);
+
+        sorted = filtered
             .Select(item =>
             {
                 var dto = MapToDto(item.User);
@@ -539,9 +550,9 @@ Postman testleri entegrasyon testidir — gerçek veritabanı, gerçek HTTP yı�
 EvArkadasimV2.Tests/
 ├── CompatibilityServiceTests.cs   # 8 test — matematiksel algoritma
 ├── FeedServiceTests.cs            # 7 test — sıralama ve sayfalama
-├── SwipeServiceTests.cs           # 8 test — swipe iş kuralları ve match mantığı
+├── SwipeServiceTests.cs           # 8 test — swipe iş kuralları, match, SignalR
 ├── MessageServiceTests.cs         # 13 test — yetki, gönderim, XSS, okundu işaretleme
-├── ProfileServiceTests.cs         # 6 test — profil mapping, null kontrolleri
+├── ProfileServiceTests.cs         # 6 test — profil mapping, null kontrolleri, cache
 └── TestServiceTests.cs            # 7 test — temel/detaylı test akışı, validation
 ```
 
@@ -578,11 +589,11 @@ _matchRepo.Verify(r => r.AddAsync(It.IsAny<UserMatch>()), Times.Once);
 
 | Test Sınıfı | Test Sayısı | Kapsanan Davranışlar |
 |-------------|-------------|----------------------|
-| `CompatibilityServiceTests` | 8 | Null girdiler → 50, eşit skorlar → 100, maksimum zıtlık → 0, simetri, aralık garantisi, kısmi fark |
+| `CompatibilityServiceTests` | 8 | Null girdiler → null, eşit skorlar → 100, maksimum zıtlık → 0, simetri, aralık garantisi, kısmi fark |
 | `FeedServiceTests` | 7 | Kullanıcı kendi feed'inde yok, liker önce gelir, boş liste, skip/take doğru, HasMore hesabı, take clamp (≤50), negatif skip |
 | `SwipeServiceTests` | 8 | Self-swipe, geçersiz tip, mükerrer swipe, bulunamayan kullanıcı, Pass → match yok, tek taraflı Like, karşılıklı Like → match, MatchesCount artışı |
 | `MessageServiceTests` | 13 | NotFoundException, ForbiddenException, gönderim yönü, HTML encoding (XSS), okundu işaretleme, geçersiz tip fallback, SignalR bildirim dispatch |
-| `ProfileServiceTests` | 6 | InitialScores/FinalScores mapping, null kontrolleri, CharacterProfile dönüşümü, UserNotFound/ProfileNull hataları |
+| `ProfileServiceTests` | 6 | InitialScores/FinalScores mapping, null kontrolleri, CharacterProfile dönüşümü, UserNotFound/ProfileNull hataları, ICacheService |
 | `TestServiceTests` | 7 | Temel test kaydı (Initial + Final), detaylı test ortalamaları, InitialBasicTestResults korunması, temel test olmadan detaylı test gönderimi |
 | **Toplam** | **49** | |
 
