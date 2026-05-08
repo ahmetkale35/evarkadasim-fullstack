@@ -17,6 +17,7 @@ interface UserSummaryDto {
   education?: string;
   roomType?: 'Private' | 'Shared' | 'Studio';
   lookingFor?: 'Roommate' | 'Room';
+  hasProperty?: boolean;
   isVerified: boolean;
   lastActive: string;
   cleanliness: number;
@@ -72,6 +73,7 @@ function toUser(dto: UserSummaryDto): User {
     education: dto.education,
     roomType: mapRoomType(dto.roomType),
     lookingFor: mapLookingFor(dto.lookingFor),
+    hasProperty: dto.hasProperty ?? false,
     isVerified: dto.isVerified,
     lastActive: new Date(dto.lastActive),
     cleanliness: dto.cleanliness,

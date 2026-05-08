@@ -14,6 +14,8 @@ export interface MyProfile {
   isVerified: boolean;
   likedProfilesCount: number;
   matchesCount: number;
+  lookingFor?: 'roommate' | 'room';
+  hasProperty?: boolean;
 }
 
 export interface UpdateProfilePayload {
@@ -24,6 +26,7 @@ export interface UpdateProfilePayload {
   occupation?: string;
   education?: string;
   city?: string;
+  lookingFor?: 'Roommate' | 'Room';
 }
 
 export const profileService = {

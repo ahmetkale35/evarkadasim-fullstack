@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { profileService, MyProfile } from '@/services/profileService';
+import { profileEvents } from '@/services/profileEvents';
 
 export function useProfile() {
   const [profile, setProfile] = useState<MyProfile | null>(null);
@@ -14,6 +15,8 @@ export function useProfile() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => profileEvents.onRefreshNeeded(load), [load]);
 
   return { profile, loading, refresh: load };
 }
