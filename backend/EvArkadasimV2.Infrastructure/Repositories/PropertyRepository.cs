@@ -64,5 +64,12 @@ namespace EvArkadasimV2.Infrastructure.Repositories
                 .Where(p => p.Latitude != null && p.Longitude != null)
                 .ToListAsync();
         }
+
+        public async Task<List<Property>> GetByOwnerAsync(string ownerId)
+        {
+            return await _context.Properties
+                .Where(p => p.OwnerId == ownerId)
+                .ToListAsync();
+        }
     }
 }

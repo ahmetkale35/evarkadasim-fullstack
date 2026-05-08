@@ -14,11 +14,13 @@ namespace EvArkadasimV2.Application.Services
 
         private readonly IPropertyRepository _propertyRepository;
         private readonly IUserRepository _userRepository;
+        private readonly ICacheService _cache;
 
-        public PropertyService(IPropertyRepository propertyRepository, IUserRepository userRepository)
+        public PropertyService(IPropertyRepository propertyRepository, IUserRepository userRepository, ICacheService cache)
         {
             _propertyRepository = propertyRepository;
             _userRepository = userRepository;
+            _cache = cache;
         }
 
         public async Task<IEnumerable<PropertyDto>> GetListAsync(
@@ -83,6 +85,8 @@ namespace EvArkadasimV2.Application.Services
                 await _userRepository.SaveChangesAsync();
             }
 
+            await _cache.RemoveAsync($"feed:{ownerId}");
+
             // Owner navigation property olmadan dönmemek için tekrar çek
             var created = await _propertyRepository.GetByIdWithOwnerAsync(property.Id);
             return MapToDto(created!);
@@ -133,6 +137,17 @@ namespace EvArkadasimV2.Application.Services
 
             _propertyRepository.Remove(property);
             await _propertyRepository.SaveChangesAsync();
+            await _cache.RemoveAsync($"feed:{property.OwnerId}");
+        }
+
+        public async Task DeleteAllByOwnerAsync(string ownerId)
+        {
+            var properties = await _propertyRepository.GetByOwnerAsync(ownerId);
+            if (!properties.Any()) return;
+            foreach (var p in properties)
+                _propertyRepository.Remove(p);
+            await _propertyRepository.SaveChangesAsync();
+            await _cache.RemoveAsync($"feed:{ownerId}");
         }
 
         public async Task<IEnumerable<PropertyMapPinDto>> GetMapPinsAsync(string? city = null)
@@ -157,11 +172,23 @@ namespace EvArkadasimV2.Application.Services
             });
         }
 
+        public async Task<PropertyDto?> GetMyPropertyAsync(string ownerId)
+        {
+            var user = await _userRepository.GetUserWithProfileAsync(ownerId, tracking: false);
+            var property = user?.Properties?.FirstOrDefault();
+            if (property == null) return null;
+            var withOwner = await _propertyRepository.GetByIdWithOwnerAsync(property.Id);
+            return withOwner == null ? null : MapToDto(withOwner);
+        }
+
         private static PropertyDto MapToDto(Property p) => new()
         {
             Id = p.Id,
             Title = p.Title,
             Price = $"{p.Currency}{p.PriceAmount:N0}/{p.PricePeriod}",
+            PriceAmount = p.PriceAmount,
+            Currency = p.Currency,
+            PricePeriod = p.PricePeriod,
             Location = p.Location,
             Bedrooms = p.Bedrooms,
             Bathrooms = p.Bathrooms,
