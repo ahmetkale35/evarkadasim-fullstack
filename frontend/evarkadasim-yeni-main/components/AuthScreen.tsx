@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Heart, Home, Users, Mail, Lock, Eye, EyeOff, User, Search } from 'lucide-react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
 import { authService } from '@/services/authService';
+import { CityPicker } from '@/components/CityPicker';
 
 interface AuthScreenProps {
     onAuthSuccess: () => void;
@@ -17,6 +18,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [lookingFor, setLookingFor] = useState<'Roommate' | 'Room' | null>(null);
+    const [city, setCity] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
 
@@ -47,6 +49,10 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
             Alert.alert('Hata', 'Lütfen ne aradığınızı seçin.');
             return;
         }
+        if (!isLoginMode && !city.trim()) {
+            Alert.alert('Hata', 'Lütfen şehrinizi girin.');
+            return;
+        }
 
         setLoading(true);
         try {
@@ -59,6 +65,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
                     email: username.trim(),
                     password,
                     lookingFor: lookingFor!,
+                    city: city.trim(),
                 });
             }
             onAuthSuccess();
@@ -77,6 +84,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
         setFirstName('');
         setLastName('');
         setLookingFor(null);
+        setCity('');
     };
 
     return (
@@ -176,6 +184,13 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
                                                 <Text style={[styles.typeBtnSub, lookingFor === 'Room' && { color: 'rgba(255,255,255,0.8)' }]}>Kalacak yer arıyorum</Text>
                                             </TouchableOpacity>
                                         </View>
+                                    </View>
+                                )}
+
+                                {/* Şehir seçici — sadece kayıt modunda */}
+                                {!isLoginMode && (
+                                    <View style={styles.inputContainer}>
+                                        <CityPicker value={city} onChange={setCity} placeholder="Şehir seç" />
                                     </View>
                                 )}
 

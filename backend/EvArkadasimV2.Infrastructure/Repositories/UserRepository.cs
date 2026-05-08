@@ -14,7 +14,7 @@ namespace EvArkadasimV2.Infrastructure.Repositories
 
         public async Task<AppUser?> GetUserWithProfileAsync(string userId, bool tracking = true)
         {
-            var query = _context.Users.Include(u => u.Profile).AsQueryable();
+            var query = _context.Users.Include(u => u.Profile).Include(u => u.Properties).AsQueryable();
 
             if (!tracking)
                 query = query.AsNoTracking(); // Sadece profil görüntülenecekse hızlı çalışır
@@ -56,6 +56,7 @@ namespace EvArkadasimV2.Infrastructure.Repositories
             var candidates = await _context.Users
                 .AsNoTracking()
                 .Include(u => u.Profile)
+                .Include(u => u.Properties)
                 .Where(u => u.Id != currentUserId)
                 .Where(u => u.Profile != null)
                 .Where(u => !_context.UserSwipes

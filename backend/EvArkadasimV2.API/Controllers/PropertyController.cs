@@ -40,13 +40,13 @@ namespace EvArkadasimV2.API.Controllers
             return Ok(result);
         }
 
-        /// <summary>Koordinatı olan tüm ilanları harita pin'i olarak döner.</summary>
+        /// <summary>Koordinatı olan ilanları harita pin'i olarak döner. city parametresi verilirse sadece o şehrin sahibi olan ilanlar gelir.</summary>
         [HttpGet("map")]
         [ProducesResponseType(typeof(List<PropertyMapPinDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> GetMapPins()
+        public async Task<IActionResult> GetMapPins([FromQuery] string? city = null)
         {
-            var result = await _propertyService.GetMapPinsAsync();
+            var result = await _propertyService.GetMapPinsAsync(city);
             return Ok(result);
         }
 
@@ -61,6 +61,18 @@ namespace EvArkadasimV2.API.Controllers
         {
             var result = await _propertyService.GetByIdAsync(id);
             return Ok(result);
+        }
+
+        /// <summary>Oturum açan kullanıcının kendi ilanını döner.</summary>
+        [HttpGet("mine")]
+        [ProducesResponseType(typeof(PropertyDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetMine()
+        {
+            var ownerId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var result = await _propertyService.GetMyPropertyAsync(ownerId);
+            return result == null ? NoContent() : Ok(result);
         }
 
         /// <summary>Yeni emlak ilanı oluşturur.</summary>
@@ -89,6 +101,17 @@ namespace EvArkadasimV2.API.Controllers
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
             var result = await _propertyService.UpdateAsync(id, currentUserId, dto);
             return Ok(result);
+        }
+
+        /// <summary>Oturum açan kullanıcının tüm ilanlarını siler.</summary>
+        [HttpDelete("mine")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> DeleteMine()
+        {
+            var ownerId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            await _propertyService.DeleteAllByOwnerAsync(ownerId);
+            return NoContent();
         }
 
         /// <summary>İlanı siler. Yalnızca ilan sahibi silebilir.</summary>

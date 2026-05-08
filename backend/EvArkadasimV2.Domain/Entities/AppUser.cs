@@ -10,5 +10,6 @@ namespace EvArkadasimV2.Domain.Entities
         // Her zaman cascade insert ile oluşturulur; Include() olmadan yüklenen sorgularda null olabilir.
         public UserProfile Profile { get; set; } = null!;
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+        public ICollection<Property> Properties { get; set; } = new List<Property>();
     }
 }

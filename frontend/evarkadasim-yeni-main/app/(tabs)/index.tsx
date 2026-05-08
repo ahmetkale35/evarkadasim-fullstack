@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, ScrollView, RefreshControl, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Menu, User as UserIcon, X, Lock } from 'lucide-react-native';
+import { Menu, User as UserIcon, X, Lock, RotateCcw, Chrome as Home, Search } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { storage } from '@/services/storage';
 import { ProfileCard } from '@/components/ProfileCard';
@@ -11,6 +11,7 @@ import { CharacterTest } from '@/components/CharacterTest';
 import { useUsers } from '@/hooks/useUsers';
 import { useMatches } from '@/hooks/useMatches';
 import { useCharacterTest } from '@/hooks/useCharacterTest';
+import { useProfile } from '@/hooks/useProfile';
 import { userService } from '@/services/userService';
 import { TestResults } from '@/types';
 
@@ -18,8 +19,35 @@ export default function FindRoommatesScreen() {
   const { users, loading, removeUser, refresh } = useUsers();
   const { addMatch } = useMatches();
   const { hasCompletedBasicTest, setBasicTestResults } = useCharacterTest();
+  const { profile } = useProfile();
 
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const lastRefreshAt = useRef(0);
+  const REFRESH_COOLDOWN_MS = 15_000;
+  const toastOpacity = useRef(new Animated.Value(0)).current;
+  const [toastMsg, setToastMsg] = useState('');
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    Animated.sequence([
+      Animated.timing(toastOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+      Animated.delay(1500),
+      Animated.timing(toastOpacity, { toValue: 0, duration: 400, useNativeDriver: true }),
+    ]).start();
+  };
+
+  const canRefresh = () => Date.now() - lastRefreshAt.current > REFRESH_COOLDOWN_MS;
+
+  const throttledRefresh = () => {
+    if (!canRefresh()) {
+      const remaining = Math.ceil((REFRESH_COOLDOWN_MS - (Date.now() - lastRefreshAt.current)) / 1000);
+      showToast(`${remaining}s sonra yenileyebilirsin`);
+      return;
+    }
+    lastRefreshAt.current = Date.now();
+    refresh();
+  };
   const [showTestPopup, setShowTestPopup] = useState(false);
   const [showTest, setShowTest] = useState(false);
   const [showTestBanner, setShowTestBanner] = useState(false);
@@ -146,17 +174,42 @@ export default function FindRoommatesScreen() {
     );
   }
 
+  const handlePullRefresh = async () => {
+    if (!canRefresh()) {
+      const remaining = Math.ceil((REFRESH_COOLDOWN_MS - (Date.now() - lastRefreshAt.current)) / 1000);
+      setRefreshing(false);
+      showToast(`${remaining}s sonra yenileyebilirsin`);
+      return;
+    }
+    lastRefreshAt.current = Date.now();
+    setRefreshing(true);
+    await refresh();
+    setRefreshing(false);
+  };
+
   if (!currentUser) {
     return (
       <LinearGradient
         colors={['#EC4899', '#8B5CF6']}
         style={styles.emptyContainer}
       >
-        <SafeAreaView style={styles.emptyContent}>
-          <Text style={styles.emptyTitle}>{"That's everyone for now!"}</Text>
-          <Text style={styles.emptySubtitle}>
-            Check back later for more roommate profiles, or expand your search settings.
-          </Text>
+        <SafeAreaView style={{ flex: 1 }}>
+          <ScrollView
+            contentContainerStyle={styles.emptyContent}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handlePullRefresh}
+                tintColor="#fff"
+                colors={['#fff']}
+              />
+            }
+          >
+            <Text style={styles.emptyTitle}>{"That's everyone for now!"}</Text>
+            <Text style={styles.emptySubtitle}>
+              Check back later for more roommate profiles, or expand your search settings.
+            </Text>
+          </ScrollView>
         </SafeAreaView>
       </LinearGradient>
     );
@@ -169,8 +222,8 @@ export default function FindRoommatesScreen() {
     >
       <SafeAreaView style={styles.content}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.menuButton}>
-            <Menu size={24} color="#111827" />
+          <TouchableOpacity style={styles.menuButton} onPress={throttledRefresh}>
+            <RotateCcw size={22} color="#111827" />
           </TouchableOpacity>
           <View style={styles.titleContainer}>
             <Text style={styles.title}>Find Roommates</Text>
@@ -188,9 +241,21 @@ export default function FindRoommatesScreen() {
           <Text style={styles.subtitle}>
             {sortedUsers.length - currentIndex} potential roommates nearby
           </Text>
+          {profile && (
+            <View style={styles.feedInfoRow}>
+              <View style={[styles.feedInfoTag, profile.hasProperty ? styles.feedInfoTagOwner : styles.feedInfoTagSeeker]}>
+                {profile.hasProperty
+                  ? <Home size={11} color="#059669" />
+                  : <Search size={11} color="#7C3AED" />}
+                <Text style={[styles.feedInfoTagText, { color: profile.hasProperty ? '#059669' : '#7C3AED' }]}>
+                  {profile.hasProperty ? 'Ev Sahibiyim' : 'Ev Arıyorum'}
+                </Text>
+              </View>
+            </View>
+          )}
         </View>
 
-        {showTestBanner && !hasCompletedBasicTest() && (
+        {showTestBanner && !hasCompletedBasicTest() && currentUser?.compatibility == null && (
           <View style={styles.testBanner}>
             <Lock size={14} color="#7C3AED" />
             <Text style={styles.testBannerText}>Uyumluluk skorlarını görmek için karakterini test et</Text>
@@ -222,6 +287,10 @@ export default function FindRoommatesScreen() {
         onClose={handleClosePopup}
         onStartTest={handleStartTest}
       />
+
+      <Animated.View style={[styles.toast, { opacity: toastOpacity }]} pointerEvents="none">
+        <Text style={styles.toastText}>{toastMsg}</Text>
+      </Animated.View>
     </LinearGradient>
   );
 }
@@ -293,11 +362,38 @@ const styles = StyleSheet.create({
   },
   subHeader: {
     alignItems: 'center',
-    paddingBottom: 16,
+    paddingBottom: 12,
+    gap: 6,
   },
   subtitle: {
     fontSize: 16,
     color: '#6B7280',
+  },
+  feedInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  feedInfoTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  feedInfoTagOwner: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#6EE7B7',
+  },
+  feedInfoTagSeeker: {
+    backgroundColor: '#F3E8FF',
+    borderColor: '#C4B5FD',
+  },
+  feedInfoTagText: {
+    fontSize: 11,
+    fontWeight: '700',
   },
   cardContainer: {
     flex: 1,
@@ -340,5 +436,19 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.8)',
     textAlign: 'center',
     lineHeight: 24,
+  },
+  toast: {
+    position: 'absolute',
+    bottom: 100,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(17,24,39,0.85)',
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  toastText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '500',
   },
 });

@@ -2,6 +2,7 @@ using EvArkadasimV2.Application.DTOs.Auth;
 using EvArkadasimV2.Application.Exceptions;
 using EvArkadasimV2.Application.Interfaces.Services;
 using EvArkadasimV2.Domain.Entities;
+using EvArkadasimV2.Domain.ValueObjects;
 using Microsoft.AspNetCore.Identity;
 
 namespace EvArkadasimV2.Application.Services
@@ -29,7 +30,11 @@ namespace EvArkadasimV2.Application.Services
                 Email = request.Email,
                 Name = request.Name,
                 LastName = request.LastName,
-                Profile = new UserProfile { LookingFor = request.LookingFor }
+                Profile = new UserProfile
+                {
+                    LookingFor = request.LookingFor,
+                    Location = request.City != null ? new Location { City = request.City } : null
+                }
             };
 
             var result = await _userManager.CreateAsync(user, request.Password);

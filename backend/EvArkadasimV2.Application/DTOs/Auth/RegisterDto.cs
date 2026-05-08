@@ -26,5 +26,8 @@ namespace EvArkadasimV2.Application.DTOs.Auth
         [Required]
         [EnumDataType(typeof(LookingFor))]
         public LookingFor LookingFor { get; set; }
+
+        [MaxLength(100)]
+        public string? City { get; set; }
     }
 }

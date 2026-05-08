@@ -5,6 +5,9 @@ interface PropertyDto {
   id: number;
   title: string;
   price: string;
+  priceAmount: number;
+  currency: string;
+  pricePeriod: string;
   location: string;
   bedrooms: number;
   bathrooms: number;
@@ -83,14 +86,97 @@ function toMapPin(dto: PropertyMapPinDto): PropertyMapPin {
   };
 }
 
+export interface PropertyFormData {
+  title: string;
+  location: string;
+  priceAmount: number;
+  currency: string;
+  pricePeriod: string;
+  bedrooms: number;
+  bathrooms: number;
+  propertyType: 'Apartment' | 'Studio' | 'House' | 'Room';
+  furnished: boolean;
+  petsAllowed: boolean;
+  smokingAllowed: boolean;
+  description: string;
+  availableFrom: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+export { PropertyDto };
+
 export const propertyService = {
   getList: async (skip = 0, take = 20): Promise<Property[]> => {
     const { data } = await apiClient.get<PropertyDto[]>('/property', { params: { skip, take } });
     return data.map(toProperty);
   },
 
-  getMapPins: async (): Promise<PropertyMapPin[]> => {
-    const { data } = await apiClient.get<PropertyMapPinDto[]>('/property/map');
+  getMapPins: async (city?: string): Promise<PropertyMapPin[]> => {
+    const { data } = await apiClient.get<PropertyMapPinDto[]>('/property/map', {
+      params: city ? { city } : undefined,
+    });
     return data.map(toMapPin);
+  },
+
+  getMine: async (): Promise<PropertyDto | null> => {
+    const { data, status } = await apiClient.get<PropertyDto>('/property/mine', {
+      validateStatus: (s) => s === 200 || s === 204,
+    });
+    return status === 204 ? null : data;
+  },
+
+  create: async (form: PropertyFormData): Promise<PropertyDto> => {
+    const { data } = await apiClient.post<PropertyDto>('/property', {
+      title: form.title,
+      priceAmount: form.priceAmount,
+      currency: form.currency,
+      pricePeriod: form.pricePeriod,
+      location: form.location,
+      bedrooms: form.bedrooms,
+      bathrooms: form.bathrooms,
+      propertyType: form.propertyType,
+      furnished: form.furnished,
+      petsAllowed: form.petsAllowed,
+      smokingAllowed: form.smokingAllowed,
+      description: form.description,
+      availableFrom: form.availableFrom,
+      images: [],
+      amenities: [],
+      latitude: form.latitude,
+      longitude: form.longitude,
+    });
+    return data;
+  },
+
+  update: async (id: number, form: PropertyFormData): Promise<PropertyDto> => {
+    const { data } = await apiClient.put<PropertyDto>(`/property/${id}`, {
+      title: form.title,
+      priceAmount: form.priceAmount,
+      currency: form.currency,
+      pricePeriod: form.pricePeriod,
+      location: form.location,
+      bedrooms: form.bedrooms,
+      bathrooms: form.bathrooms,
+      propertyType: form.propertyType,
+      furnished: form.furnished,
+      petsAllowed: form.petsAllowed,
+      smokingAllowed: form.smokingAllowed,
+      description: form.description,
+      availableFrom: form.availableFrom,
+      images: [],
+      amenities: [],
+      latitude: form.latitude,
+      longitude: form.longitude,
+    });
+    return data;
+  },
+
+  delete: async (id: number): Promise<void> => {
+    await apiClient.delete(`/property/${id}`);
+  },
+
+  deleteMine: async (): Promise<void> => {
+    await apiClient.delete('/property/mine');
   },
 };

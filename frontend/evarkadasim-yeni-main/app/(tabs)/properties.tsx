@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -14,13 +14,16 @@ import MapView, { Marker } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MapPin, X, ChevronRight, User, Home, Lock } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { usePropertyMapPins } from '@/hooks/usePropertyMapPins';
+import { useProfile } from '@/hooks/useProfile';
 import { ProfileCard } from '@/components/ProfileCard';
 import { PropertyMapPin, User as UserType } from '@/types';
 import { userService } from '@/services/userService';
 import { storage } from '@/services/storage';
 import { useCharacterTest } from '@/hooks/useCharacterTest';
+import { CITY_COORDINATES } from '@/constants/cityCoordinates';
 
 const { height: SCREEN_H } = Dimensions.get('window');
 
@@ -41,7 +44,29 @@ const PROPERTY_TYPE_LABELS: Record<PropertyMapPin['propertyType'], string> = {
 
 // ─────────────────────────────────────────────
 export default function ExploreScreen() {
-  const { pins, loading, error } = usePropertyMapPins();
+  const { profile, refresh: refreshProfile } = useProfile();
+  const userCity = profile?.location?.city;
+  const { pins, loading, error } = usePropertyMapPins(userCity);
+  const mapRef = useRef<MapView>(null);
+  const [mapReady, setMapReady] = useState(false);
+
+  // Tab'a her dönüşte profili yenile — şehir değişimi profile.tsx'ten gelir
+  useFocusEffect(useCallback(() => { refreshProfile(); }, [refreshProfile]));
+
+  const initialRegion = useMemo(() => TURKEY_CENTER, []);
+
+  const zoomToCity = useCallback((city: string) => {
+    const region = CITY_COORDINATES[city];
+    if (!region || !mapRef.current) return;
+    mapRef.current.animateToRegion(region, 600);
+  }, []);
+
+  // Map hazır olduğunda veya city değiştiğinde zoom yap
+  useEffect(() => {
+    if (!mapReady || !userCity) return;
+    zoomToCity(userCity);
+  }, [mapReady, userCity, zoomToCity]);
+
   const [selected, setSelected] = useState<PropertyMapPin | null>(null);
   const [ownerUser, setOwnerUser] = useState<UserType | null>(null);
   const [ownerLoading, setOwnerLoading] = useState(false);
@@ -127,8 +152,10 @@ export default function ExploreScreen() {
   return (
     <View style={styles.container}>
       <MapView
+        ref={mapRef}
         style={styles.map}
-        initialRegion={TURKEY_CENTER}
+        initialRegion={initialRegion}
+        onMapReady={() => setMapReady(true)}
         onPress={() => setSelected(null)}
       >
         {pins.map((pin) => (
@@ -221,7 +248,7 @@ export default function ExploreScreen() {
               <View style={styles.testBanner}>
                 <Lock size={14} color="#7C3AED" />
                 <Text style={styles.testBannerText}>Uyumluluk skorunu görmek için karakterini test et</Text>
-                <TouchableOpacity onPress={() => { closeModal(); router.push('/(tabs)/'); }}>
+                <TouchableOpacity onPress={() => { closeModal(); router.push('/'); }}>
                   <Text style={styles.testBannerCta}>Teste Git</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={dismissTestBanner} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -243,7 +270,7 @@ export default function ExploreScreen() {
                   compatibility={ownerUser.compatibility}
                   onSwipeLeft={() => handleSwipe('pass')}
                   onSwipeRight={() => handleSwipe('like')}
-                  onLockPress={() => { closeModal(); router.push('/(tabs)/'); }}
+                  onLockPress={() => { closeModal(); router.push('/'); }}
                 />
               </View>
             ) : (

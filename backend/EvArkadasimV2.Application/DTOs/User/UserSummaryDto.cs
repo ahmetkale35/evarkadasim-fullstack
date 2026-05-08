@@ -28,5 +28,6 @@ namespace EvArkadasimV2.Application.DTOs.User
         public int Cleanliness { get; set; }
         public int SocialLevel { get; set; }
         public double? Compatibility { get; set; }
+        public bool HasProperty { get; set; }
     }
 }
