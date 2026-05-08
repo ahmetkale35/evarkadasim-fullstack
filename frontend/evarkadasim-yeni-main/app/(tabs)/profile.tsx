@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Switch, ActivityIndicator, Alert, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Settings, Camera, MapPin, Heart, Star, Shield, Bell, Eye, CreditCard as Edit, Shield as Verified, Brain, Lock, CheckCircle2, LogOut, X } from 'lucide-react-native';
+import { Settings, Camera, MapPin, Heart, Star, Shield, Bell, Eye, CreditCard as Edit, Shield as Verified, Brain, Lock, CheckCircle2, LogOut, X, Home, Search } from 'lucide-react-native';
 import { CharacterTest } from '@/components/CharacterTest';
 import { useCharacterTest, clearCharacterTestStorage } from '@/hooks/useCharacterTest';
 import { useProfile } from '@/hooks/useProfile';
@@ -11,6 +11,9 @@ import { authService } from '@/services/authService';
 import { CityPicker } from '@/components/CityPicker';
 import { authEvents } from '@/services/authEvents';
 import { feedEvents } from '@/services/feedEvents';
+import { profileEvents } from '@/services/profileEvents';
+import { PropertyEditModal } from '@/components/PropertyEditModal';
+import { propertyService } from '@/services/propertyService';
 
 export default function ProfileScreen() {
   const { profile, loading, refresh } = useProfile();
@@ -20,6 +23,7 @@ export default function ProfileScreen() {
   const [showBasicTest, setShowBasicTest] = useState(false);
   const [showDetailedTest, setShowDetailedTest] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showPropertyModal, setShowPropertyModal] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
   const [editForm, setEditForm] = useState({
     firstName: '',
@@ -29,6 +33,7 @@ export default function ProfileScreen() {
     occupation: '',
     education: '',
     city: '',
+    lookingFor: '' as 'Roommate' | 'Room' | '',
   });
 
   const openEditModal = () => {
@@ -40,6 +45,7 @@ export default function ProfileScreen() {
       occupation: profile?.occupation ?? '',
       education: profile?.education ?? '',
       city: profile?.location?.city ?? '',
+      lookingFor: profile?.hasProperty ? 'Roommate' : 'Room',
     });
     setShowEditModal(true);
   };
@@ -55,6 +61,7 @@ export default function ProfileScreen() {
         occupation: editForm.occupation.trim() || undefined,
         education: editForm.education.trim() || undefined,
         city: editForm.city.trim() || undefined,
+        lookingFor: editForm.lookingFor || undefined,
       });
       setShowEditModal(false);
       refresh();
@@ -144,6 +151,11 @@ export default function ProfileScreen() {
 
   return (
     <>
+    <PropertyEditModal
+      visible={showPropertyModal}
+      onClose={() => { setShowPropertyModal(false); setShowEditModal(true); }}
+      onSaved={() => { refresh(); feedEvents.emitRefreshNeeded(); }}
+    />
     <Modal visible={showEditModal} animationType="slide" presentationStyle="pageSheet">
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1, backgroundColor: '#fff' }}>
         <SafeAreaView style={{ flex: 1 }}>
@@ -154,6 +166,77 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={editStyles.form}>
+            <LinearGradient
+              colors={['#FDF2F8', '#EDE9FE']}
+              style={editStyles.lookingForCard}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <View style={editStyles.lookingForHeader}>
+                <Text style={editStyles.lookingForHeading}>Ne Arıyorsunuz?</Text>
+                <Text style={editStyles.lookingForSub}>Profilinizin nasıl görüneceğini belirler</Text>
+              </View>
+              <View style={editStyles.lookingForBtns}>
+                <TouchableOpacity
+                  style={[editStyles.typeBtn, editForm.lookingFor === 'Roommate' && editStyles.typeBtnActive]}
+                  onPress={() => {
+                    if (!profile?.hasProperty) {
+                      Alert.alert('İlan Gerekli', 'Ev sahibi olmak için önce bir ilan eklemelisiniz.');
+                      return;
+                    }
+                    setEditForm(f => ({ ...f, lookingFor: 'Roommate' }));
+                  }}
+                >
+                  <Home size={18} color={editForm.lookingFor === 'Roommate' ? '#fff' : '#059669'} />
+                  <Text style={[editStyles.typeBtnText, editForm.lookingFor === 'Roommate' && { color: '#fff' }]}>Ev Sahibiyim</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[editStyles.typeBtn, editForm.lookingFor === 'Room' && editStyles.typeBtnRoomActive]}
+                  onPress={() => {
+                    if (profile?.hasProperty) {
+                      Alert.alert(
+                        'Ev İlanı Silinecek',
+                        'Ev arıyorum seçeneğini seçerseniz mevcut ev ilanınız silinecek. Emin misiniz?',
+                        [
+                          { text: 'İptal', style: 'cancel' },
+                          {
+                            text: 'Sil ve Devam Et',
+                            style: 'destructive',
+                            onPress: async () => {
+                              try {
+                                await propertyService.deleteMine();
+                                await profileService.updateProfile({ lookingFor: 'Room' });
+                                setEditForm(f => ({ ...f, lookingFor: 'Room' }));
+                                profileEvents.emitRefreshNeeded();
+                                feedEvents.emitRefreshNeeded();
+                              } catch {
+                                Alert.alert('Hata', 'İlan silinemedi. Lütfen tekrar dene.');
+                              }
+                            },
+                          },
+                        ]
+                      );
+                    } else {
+                      setEditForm(f => ({ ...f, lookingFor: 'Room' }));
+                    }
+                  }}
+                >
+                  <Search size={18} color={editForm.lookingFor === 'Room' ? '#fff' : '#7C3AED'} />
+                  <Text style={[editStyles.typeBtnText, editForm.lookingFor === 'Room' && { color: '#fff' }]}>Ev Arıyorum</Text>
+                </TouchableOpacity>
+              </View>
+              {editForm.lookingFor === 'Roommate' && (
+                <TouchableOpacity
+                  style={editStyles.propertyEditBtn}
+                  onPress={() => { setShowEditModal(false); setShowPropertyModal(true); }}
+                >
+                  <Home size={16} color="#EC4899" />
+                  <Text style={editStyles.propertyEditBtnText}>
+                    {profile?.hasProperty ? 'Ev İlanını Düzenle →' : 'Ev İlanı Oluştur →'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </LinearGradient>
             {[
               { label: 'Ad', key: 'firstName', placeholder: 'Adınız' },
               { label: 'Soyad', key: 'lastName', placeholder: 'Soyadınız' },
@@ -833,5 +916,83 @@ const editStyles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '600',
     color: '#fff',
+  },
+  lookingForCard: {
+    borderRadius: 18,
+    padding: 18,
+    gap: 14,
+    shadowColor: '#EC4899',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  lookingForHeader: {
+    gap: 3,
+  },
+  lookingForHeading: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  lookingForSub: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    fontWeight: '400',
+  },
+  lookingForBtns: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  typeBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    backgroundColor: 'rgba(255,255,255,0.7)',
+  },
+  typeBtnActive: {
+    backgroundColor: '#059669',
+    borderColor: '#059669',
+    shadowColor: '#059669',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  typeBtnRoomActive: {
+    backgroundColor: '#7C3AED',
+    borderColor: '#7C3AED',
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  typeBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  propertyEditBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#FBCFE8',
+    backgroundColor: 'rgba(255,255,255,0.8)',
+  },
+  propertyEditBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#EC4899',
   },
 });
