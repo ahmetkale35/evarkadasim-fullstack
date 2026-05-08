@@ -45,12 +45,13 @@ jobs:
         with:
           filename: coverage/**/coverage.cobertura.xml
           badge: true
+          fail_below_min: true
           format: markdown
           hide_branch_rate: false
           hide_complexity: false
           indicators: true
           output: both
-          thresholds: '50 80'
+          thresholds: '70 80'
 
       - name: PR coverage comment
         if: github.event_name == 'pull_request'
