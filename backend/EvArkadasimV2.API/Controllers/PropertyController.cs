@@ -91,6 +91,7 @@ namespace EvArkadasimV2.API.Controllers
 
         /// <summary>Mevcut ilanı günceller. Yalnızca ilan sahibi güncelleyebilir.</summary>
         /// <param name="id">İlan ID'si.</param>
+        /// <param name="dto">Güncellenecek ilan detayları.</param>
         [HttpPut("{id}")]
         [ProducesResponseType(typeof(PropertyDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
