@@ -40,7 +40,7 @@ export function useUsers() {
 
   const removeUser = (userId: string) => {
     setUsers(prev => prev.filter(u => u.id !== userId));
-    if (users.length <= 3 && hasMore) {
+    if (users.length <= 4 && hasMore) {
       fetchFeed(skip);
     }
   };

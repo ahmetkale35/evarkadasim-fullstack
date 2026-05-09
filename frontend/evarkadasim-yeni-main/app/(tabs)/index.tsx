@@ -204,10 +204,9 @@ export default function FindRoommatesScreen() {
     setCurrentIndex(prev => Math.min(prev, sortedUsers.length - 1));
     try {
       const result = await userService.swipe(currentUser.id, 'superlike');
-      addMatch(currentUser);
       Alert.alert("Süper Beğeni! ⭐", `${currentUser.name} süper beğenildiğine dair bildirim alacak!`);
-      if (!result.isMatch) {
-        // Karşı taraf henüz beğenmedi; match listesine yeni eşleşme olarak eklendi
+      if (result.isMatch) {
+        addMatch(currentUser);
       }
     } catch {
       // Süper beğeni başarısız — kullanıcıya gösterme
