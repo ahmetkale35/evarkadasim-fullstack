@@ -48,7 +48,7 @@ builder.Host.UseSerilog((ctx, services, config) => config
 // --- VERİTABANI ---
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
+        builder.Configuration.GetConnectionString("DefaultConnection")!,
         b => b.MigrationsAssembly("EvArkadasimV2.Infrastructure")));
 
 // --- KİMLİK SİSTEMİ ---

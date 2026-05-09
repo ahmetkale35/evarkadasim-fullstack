@@ -94,7 +94,7 @@ namespace EvArkadasimV2.Application.Services
         private static UserSummaryDto MapToDto(AppUser u) => new()
         {
             Id = u.Id,
-            Name = $"{u.Name} {u.LastName}".Trim(),
+            Name = $"{u.Name ?? ""} {u.LastName ?? ""}".Trim(),
             Age = u.Profile.Age,
             Bio = u.Profile.Bio,
             Budget = u.Profile.Budget,
