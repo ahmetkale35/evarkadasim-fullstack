@@ -76,6 +76,7 @@ namespace EvArkadasimV2.API.Controllers
         }
 
         /// <summary>Yeni emlak ilanı oluşturur.</summary>
+        /// <param name="dto">İlan detayları.</param>
         /// <remarks>İlan sahibi JWT token'dan belirlenir; body'den alınmaz.</remarks>
         [HttpPost]
         [ProducesResponseType(typeof(PropertyDto), StatusCodes.Status201Created)]

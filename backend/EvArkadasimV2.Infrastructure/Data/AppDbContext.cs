@@ -66,16 +66,16 @@ namespace EvArkadasimV2.Infrastructure.Data
             {
                 // List<string> Dönüşümleri
                 entity.Property(e => e.Lifestyle)
-                    .HasConversion(v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
-                                   v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null) ?? new());
+                    .HasConversion(v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                                   v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new());
 
                 entity.Property(e => e.Photos)
-                    .HasConversion(v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
-                                   v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null) ?? new());
+                    .HasConversion(v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                                   v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new());
 
                 entity.Property(e => e.Interests)
-                    .HasConversion(v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
-                                   v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null) ?? new());
+                    .HasConversion(v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                                   v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new());
 
                 // Owned Types (Alt Sınıflar)
                 entity.OwnsOne(p => p.Location);
@@ -86,29 +86,29 @@ namespace EvArkadasimV2.Infrastructure.Data
                 entity.OwnsOne(p => p.DetailedTestResults, dtr =>
                 {
                     dtr.Property(e => e.DetailedSocialEnergy).HasConversion(
-                        v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
-                        v => JsonSerializer.Deserialize<List<int>>(v, (JsonSerializerOptions)null) ?? new());
+                        v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                        v => JsonSerializer.Deserialize<List<int>>(v, (JsonSerializerOptions?)null) ?? new());
 
                     dtr.Property(e => e.DetailedOrderApproach).HasConversion(
-                        v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
-                        v => JsonSerializer.Deserialize<List<int>>(v, (JsonSerializerOptions)null) ?? new());
+                        v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                        v => JsonSerializer.Deserialize<List<int>>(v, (JsonSerializerOptions?)null) ?? new());
 
                     dtr.Property(e => e.DetailedConflictManagement).HasConversion(
-                        v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
-                        v => JsonSerializer.Deserialize<List<int>>(v, (JsonSerializerOptions)null) ?? new());
+                        v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                        v => JsonSerializer.Deserialize<List<int>>(v, (JsonSerializerOptions?)null) ?? new());
 
                     dtr.Property(e => e.DetailedSharingStyle).HasConversion(
-                        v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
-                        v => JsonSerializer.Deserialize<List<int>>(v, (JsonSerializerOptions)null) ?? new());
+                        v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                        v => JsonSerializer.Deserialize<List<int>>(v, (JsonSerializerOptions?)null) ?? new());
 
                     dtr.Property(e => e.DetailedLifeRhythm).HasConversion(
-                        v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
-                        v => JsonSerializer.Deserialize<List<int>>(v, (JsonSerializerOptions)null) ?? new());
+                        v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                        v => JsonSerializer.Deserialize<List<int>>(v, (JsonSerializerOptions?)null) ?? new());
 
                     // EKSİK OLAN BU ALANI EKLEDİK (Hatayı bu da tetikliyor olabilir):
                     dtr.Property(e => e.DetailedCommunicationStyle).HasConversion(
-                        v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
-                        v => JsonSerializer.Deserialize<List<int>>(v, (JsonSerializerOptions)null) ?? new());
+                        v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                        v => JsonSerializer.Deserialize<List<int>>(v, (JsonSerializerOptions?)null) ?? new());
                 });
             });
 
@@ -138,12 +138,12 @@ namespace EvArkadasimV2.Infrastructure.Data
                 entity.Property(p => p.PriceAmount).HasColumnType("decimal(18,2)");
 
                 entity.Property(e => e.Images).HasConversion(
-                        v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
-                        v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null) ?? new());
+                        v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                        v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new());
 
                 entity.Property(e => e.Amenities).HasConversion(
-                        v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
-                        v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null) ?? new());
+                        v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                        v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new());
 
                 entity.HasOne(p => p.Owner)
                       .WithMany(u => u.Properties)
