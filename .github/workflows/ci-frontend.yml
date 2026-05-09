@@ -39,3 +39,7 @@ jobs:
       - name: Lint
         working-directory: frontend/evarkadasim-yeni-main
         run: npm run lint
+
+      - name: Audit dependencies
+        working-directory: frontend/evarkadasim-yeni-main
+        run: npm audit --audit-level=high

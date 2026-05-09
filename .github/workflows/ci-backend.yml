@@ -37,6 +37,12 @@ jobs:
       - name: Build
         run: dotnet build backend/EvArkadasimV2.slnx --no-restore -c Release
 
+      - name: Install EF tools
+        run: dotnet tool install --global dotnet-ef
+
+      - name: Check pending model changes
+        run: dotnet ef migrations has-pending-model-changes --project backend/EvArkadasimV2.Infrastructure --startup-project backend/EvArkadasimV2.API
+
       - name: Test with coverage
         run: dotnet test backend/EvArkadasimV2.Tests/EvArkadasimV2.Tests.csproj --no-build -c Release --logger "console;verbosity=minimal" --collect:"XPlat Code Coverage" --results-directory ./coverage
 
