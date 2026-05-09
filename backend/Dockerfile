@@ -12,7 +12,7 @@ COPY . .
 RUN dotnet publish "EvArkadasimV2.API/EvArkadasimV2.API.csproj" -c Release -o /app/publish --no-restore
 
 # Aşama 2: Runtime (~200MB vs SDK'nın ~800MB)
-FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 
 RUN mkdir -p /data && chmod 777 /data
