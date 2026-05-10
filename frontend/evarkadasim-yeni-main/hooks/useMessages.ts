@@ -25,8 +25,8 @@ export function useMessages(matchId: string | null) {
     messageService.markAsRead(matchId).catch(() => {});
   }, [matchId]);
 
-  const sendMessage = useCallback(async (content: string) => {
-    if (!matchId || !content.trim()) return;
+  const sendMessage = useCallback(async (content: string): Promise<boolean> => {
+    if (!matchId || !content.trim()) return false;
 
     // Optimistic update — API yanıtını beklemeden UI'a ekle
     const tempMessage: Message = {
@@ -43,9 +43,11 @@ export function useMessages(matchId: string | null) {
       const sent = await messageService.send(matchId, content.trim());
       // Temp mesajı gerçek sunucu yanıtıyla değiştir
       setMessages(prev => prev.map(m => m.id === tempMessage.id ? sent : m));
+      return true;
     } catch {
       // Gönderim başarısız — temp mesajı kaldır
       setMessages(prev => prev.filter(m => m.id !== tempMessage.id));
+      return false;
     }
   }, [matchId, currentUserId]);
 

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Send, ArrowLeft } from 'lucide-react-native';
@@ -30,7 +30,8 @@ export default function MessagesScreen() {
     if (!messageText.trim()) return;
     const text = messageText;
     setMessageText('');
-    await sendMessage(text);
+    const ok = await sendMessage(text);
+    if (!ok) Alert.alert('Hata', 'Mesaj gönderilemedi. Tekrar dene.');
   };
 
   if (selectedMatchId && currentMatch) {
@@ -48,6 +49,10 @@ export default function MessagesScreen() {
           {messagesLoading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="small" color="#EC4899" />
+            </View>
+          ) : messages.length === 0 ? (
+            <View style={styles.emptyChat}>
+              <Text style={styles.emptyChatText}>Henüz mesaj yok. İlk mesajı sen gönder!</Text>
             </View>
           ) : (
             <FlatList
@@ -160,6 +165,8 @@ const styles = StyleSheet.create({
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
   emptyTitle: { fontSize: 24, fontWeight: '600', color: '#374151', marginTop: 16, marginBottom: 8 },
   emptySubtitle: { fontSize: 16, color: '#9CA3AF', textAlign: 'center', lineHeight: 22 },
+  emptyChat: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
+  emptyChatText: { fontSize: 15, color: '#9CA3AF', textAlign: 'center', paddingHorizontal: 32 },
   chatContainer: { flex: 1 },
   chatHeader: {
     flexDirection: 'row',
