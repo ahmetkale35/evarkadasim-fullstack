@@ -5,12 +5,14 @@ import { profileEvents } from '@/services/profileEvents';
 export function useProfile() {
   const [profile, setProfile] = useState<MyProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
+    setError(false);
     profileService.getMyProfile()
       .then(setProfile)
-      .catch(() => {})
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -18,5 +20,5 @@ export function useProfile() {
 
   useEffect(() => profileEvents.onRefreshNeeded(load), [load]);
 
-  return { profile, loading, refresh: load };
+  return { profile, loading, error, refresh: load };
 }
