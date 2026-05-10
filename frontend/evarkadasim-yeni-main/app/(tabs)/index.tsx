@@ -175,7 +175,7 @@ export default function FindRoommatesScreen() {
   const handleLike = async () => {
     if (!currentUser) return;
     removeUser(currentUser.id);
-    setCurrentIndex(prev => Math.min(prev, sortedUsers.length - 1));
+    setCurrentIndex(prev => Math.max(0, Math.min(prev, sortedUsers.length - 2)));
     try {
       const result = await userService.swipe(currentUser.id, 'like');
       if (result.isMatch) {
@@ -190,7 +190,7 @@ export default function FindRoommatesScreen() {
   const handlePass = async () => {
     if (!currentUser) return;
     removeUser(currentUser.id);
-    setCurrentIndex(prev => Math.min(prev, sortedUsers.length - 1));
+    setCurrentIndex(prev => Math.max(0, Math.min(prev, sortedUsers.length - 2)));
     try {
       await userService.swipe(currentUser.id, 'pass');
     } catch {
@@ -201,7 +201,7 @@ export default function FindRoommatesScreen() {
   const handleSuperLike = async () => {
     if (!currentUser) return;
     removeUser(currentUser.id);
-    setCurrentIndex(prev => Math.min(prev, sortedUsers.length - 1));
+    setCurrentIndex(prev => Math.max(0, Math.min(prev, sortedUsers.length - 2)));
     try {
       const result = await userService.swipe(currentUser.id, 'superlike');
       Alert.alert("Süper Beğeni! ⭐", `${currentUser.name} süper beğenildiğine dair bildirim alacak!`);
