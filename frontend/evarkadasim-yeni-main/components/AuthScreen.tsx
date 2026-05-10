@@ -41,6 +41,11 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
             Alert.alert('Hata', 'Lütfen tüm alanları doldurun.');
             return;
         }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(username.trim())) {
+            Alert.alert('Hata', 'Geçerli bir e-posta adresi girin.');
+            return;
+        }
         if (!isLoginMode && (!firstName.trim() || !lastName.trim())) {
             Alert.alert('Hata', 'Lütfen ad ve soyadınızı girin.');
             return;
