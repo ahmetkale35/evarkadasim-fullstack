@@ -10,15 +10,19 @@ interface PropertyCardProps {
 
 export function PropertyCard({ property, onPress }: PropertyCardProps) {
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric' 
+    return date.toLocaleDateString('tr-TR', {
+      month: 'short',
+      day: 'numeric'
     });
   };
 
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
-      <Image source={{ uri: property.images[0] }} style={styles.image} />
+      {property.images.length > 0
+        ? <Image source={{ uri: property.images[0] }} style={styles.image} />
+        : <View style={[styles.image, { backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' }]}>
+            <Text style={{ color: '#9CA3AF', fontSize: 12 }}>Fotoğraf yok</Text>
+          </View>}
       
       <View style={styles.content}>
         <View style={styles.header}>

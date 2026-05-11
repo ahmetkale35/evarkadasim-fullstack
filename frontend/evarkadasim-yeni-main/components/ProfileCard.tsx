@@ -143,13 +143,15 @@ export function ProfileCard({ user, compatibility, onSwipeLeft, onSwipeRight, on
           <Text style={styles.imageName}>{user.name}, {user.age}</Text>
           {user.isVerified && <Verified size={18} color="#fff" fill="#fff" />}
         </View>
-        <View style={styles.locationRow}>
-          <MapPin size={13} color="rgba(255,255,255,0.85)" />
-          <Text style={styles.imageLocation}>{user.location.city}</Text>
-          {user.location.distance && (
-            <Text style={styles.imageDistance}>• {user.location.distance} km</Text>
-          )}
-        </View>
+        {user.location && (
+          <View style={styles.locationRow}>
+            <MapPin size={13} color="rgba(255,255,255,0.85)" />
+            <Text style={styles.imageLocation}>{user.location.city}</Text>
+            {user.location.distance && (
+              <Text style={styles.imageDistance}>• {user.location.distance} km</Text>
+            )}
+          </View>
+        )}
       </View>
 
       {/* Uyumluluk badge — sağ üst */}

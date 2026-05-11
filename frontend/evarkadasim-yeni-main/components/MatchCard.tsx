@@ -49,15 +49,17 @@ export function MatchCard({ match, onPress }: MatchCardProps) {
     const diff = now.getTime() - date.getTime();
     const hours = Math.floor(diff / (1000 * 60 * 60));
     
-    if (hours < 1) return 'just now';
-    if (hours < 24) return `${hours}h ago`;
-    return `${Math.floor(hours / 24)}d ago`;
+    if (hours < 1) return 'az önce';
+    if (hours < 24) return `${hours} sa önce`;
+    return `${Math.floor(hours / 24)} gün önce`;
   };
 
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
       <View style={styles.imageContainer}>
-        <Image source={{ uri: user.photos[0] }} style={styles.image} />
+        {user.photos.length > 0
+          ? <Image source={{ uri: user.photos[0] }} style={styles.image} />
+          : <View style={[styles.image, { backgroundColor: '#F3F4F6' }]} />}
         {isNewMatch && <View style={styles.newMatchBadge} />}
       </View>
       
