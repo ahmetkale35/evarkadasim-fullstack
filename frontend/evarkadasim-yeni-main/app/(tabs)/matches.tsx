@@ -24,7 +24,7 @@ export default function MatchesScreen() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#EC4899" />
-        <Text style={styles.loadingText}>Loading your matches...</Text>
+        <Text style={styles.loadingText}>Eşleşmeler yükleniyor...</Text>
       </View>
     );
   }
@@ -38,19 +38,19 @@ export default function MatchesScreen() {
         <View style={styles.header}>
           <View style={styles.titleRow}>
             <Heart size={28} color="#EC4899" fill="#EC4899" />
-            <Text style={styles.title}>Roommate Matches</Text>
+            <Text style={styles.title}>Eşleşmelerim</Text>
           </View>
           <Text style={styles.subtitle}>
-            {matches.length} {matches.length === 1 ? 'match' : 'matches'}
+            {matches.length} eşleşme
           </Text>
         </View>
 
         {matches.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Heart size={64} color="#D1D5DB" />
-            <Text style={styles.emptyTitle}>No roommate matches yet</Text>
+            <Text style={styles.emptyTitle}>Henüz eşleşme yok</Text>
             <Text style={styles.emptySubtitle}>
-              Keep swiping to find your perfect roommate!
+              Mükemmel ev arkadaşını bulmak için kaydırmaya devam et!
             </Text>
           </View>
         ) : (
