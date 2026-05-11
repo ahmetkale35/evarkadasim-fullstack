@@ -113,10 +113,10 @@ namespace EvArkadasimV2.Application.Services
             {
                 var matchNotification = new DTOs.Chat.MatchDto
                 {
-                    Id = result.MatchedUserId!,
+                    MatchId = result.MatchedUserId!,
                     MatchedAt = DateTime.UtcNow,
                     IsNewMatch = true,
-                    User = null!
+                    MatchedUser = null!
                 };
                 await _notifications.SendMatchAsync(senderId, request.ReceiverId, matchNotification);
             }
@@ -143,6 +143,7 @@ namespace EvArkadasimV2.Application.Services
                         MatchedAt = m.MatchedAt,
                         IsNewMatch = m.MatchedAt > DateTime.UtcNow.AddHours(-24),
                         MatchedUser = matchedUser,
+                        CompatibilityScore = matchedUser.Compatibility ?? 0,
                         LastMessage = null
                     };
                 })

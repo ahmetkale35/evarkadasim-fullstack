@@ -7,5 +7,6 @@ namespace EvArkadasimV2.Application.DTOs.User
         public bool IsNewMatch { get; set; }
         public UserSummaryDto MatchedUser { get; set; } = new();
         public string? LastMessage { get; set; }
+        public double CompatibilityScore { get; set; }
     }
 }
