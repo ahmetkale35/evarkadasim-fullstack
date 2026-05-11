@@ -29,9 +29,12 @@ export default function MessagesScreen() {
   const handleSendMessage = async () => {
     if (!messageText.trim()) return;
     const text = messageText;
-    setMessageText('');
     const ok = await sendMessage(text);
-    if (!ok) Alert.alert('Hata', 'Mesaj gönderilemedi. Tekrar dene.');
+    if (ok) {
+      setMessageText('');
+    } else {
+      Alert.alert('Hata', 'Mesaj gönderilemedi. Tekrar dene.');
+    }
   };
 
   if (selectedMatchId && currentMatch) {
