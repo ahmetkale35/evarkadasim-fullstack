@@ -1,7 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Message } from '@/types';
 import { messageService } from '@/services/messageService';
+import { signalrService } from '@/services/signalrService';
 import { storage } from '@/services/storage';
+
+interface MessageDto {
+  id: number;
+  senderId: string;
+  content: string;
+  timestamp: string;
+  type: string;
+  isRead: boolean;
+}
 
 export function useMessages(matchId: string | null) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -21,8 +31,26 @@ export function useMessages(matchId: string | null) {
       .catch(() => {})
       .finally(() => setLoading(false));
 
-    // Sohbet açılınca okunmamış mesajları okundu işaretle
     messageService.markAsRead(matchId).catch(() => {});
+
+    signalrService.start().catch(() => {});
+
+    signalrService.on<MessageDto>('ReceiveMessage', (dto) => {
+      if (dto.senderId === matchId) return;
+      const msg: Message = {
+        id: dto.id.toString(),
+        senderId: dto.senderId,
+        content: dto.content,
+        timestamp: new Date(dto.timestamp),
+        type: dto.type as Message['type'],
+        isRead: dto.isRead,
+      };
+      setMessages(prev => [...prev, msg]);
+    });
+
+    return () => {
+      signalrService.off('ReceiveMessage');
+    };
   }, [matchId]);
 
   const sendMessage = useCallback(async (content: string): Promise<boolean> => {
