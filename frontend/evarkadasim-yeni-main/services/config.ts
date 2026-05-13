@@ -2,3 +2,4 @@
 const DEV_HOST = '192.168.1.5';
 
 export const API_BASE_URL = `http://${DEV_HOST}:5145/api`;
+export const HUB_BASE_URL = `http://${DEV_HOST}:5145`;
