@@ -17,6 +17,7 @@ interface MessageDto {
 export function useMessages(matchId: string | null) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   // Gönderilen mesajların "ben mi?" kontrolü için userId lazım
@@ -24,13 +25,20 @@ export function useMessages(matchId: string | null) {
     storage.getUserId().then(setCurrentUserId);
   }, []);
 
-  useEffect(() => {
+  const fetchMessages = useCallback((isRefresh = false) => {
     if (!matchId) return;
-    setLoading(true);
+    if (isRefresh) setRefreshing(true); else setLoading(true);
     messageService.getMessages(matchId)
       .then(result => setMessages(result.messages))
       .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => { setLoading(false); setRefreshing(false); });
+  }, [matchId]);
+
+  const refetch = useCallback(() => fetchMessages(true), [fetchMessages]);
+
+  useEffect(() => {
+    if (!matchId) return;
+    fetchMessages();
 
     messageService.markAsRead(matchId).catch(() => {});
 
@@ -80,5 +88,5 @@ export function useMessages(matchId: string | null) {
     }
   }, [matchId, currentUserId]);
 
-  return { messages, loading, currentUserId, sendMessage };
+  return { messages, loading, refreshing, currentUserId, sendMessage, refetch };
 }

@@ -34,13 +34,21 @@ interface MatchCreatedDto {
 export function useMatches() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchMatches = (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true); else setLoading(true);
     matchService.getMatches()
       .then(setMatches)
       .catch(() => setError('Eşleşmeler yüklenemedi.'))
-      .finally(() => setLoading(false));
+      .finally(() => { setLoading(false); setRefreshing(false); });
+  };
+
+  const refetch = () => fetchMatches(true);
+
+  useEffect(() => {
+    fetchMatches();
 
     signalrService.start().catch(() => {});
 
@@ -92,5 +100,5 @@ export function useMatches() {
     setMatches(prev => [newMatch, ...prev]);
   };
 
-  return { matches, loading, error, addMatch };
+  return { matches, loading, refreshing, error, addMatch, refetch };
 }

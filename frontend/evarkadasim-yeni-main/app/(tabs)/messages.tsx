@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, Image, RefreshControl } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Send, ArrowLeft } from 'lucide-react-native';
@@ -30,13 +30,13 @@ function MatchAvatar({ uri, name, size }: { uri?: string; name: string; size: nu
 }
 
 export default function MessagesScreen() {
-  const { matches, loading: matchesLoading } = useMatches();
+  const { matches, loading: matchesLoading, refreshing: matchesRefreshing, refetch: refetchMatches } = useMatches();
   const { matchId } = useLocalSearchParams<{ matchId?: string }>();
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(matchId ?? null);
   const [messageText, setMessageText] = useState('');
   const flatListRef = useRef<FlatList>(null);
 
-  const { messages, loading: messagesLoading, currentUserId, sendMessage } = useMessages(selectedMatchId);
+  const { messages, loading: messagesLoading, refreshing: messagesRefreshing, currentUserId, sendMessage, refetch: refetchMessages } = useMessages(selectedMatchId);
 
   const currentMatch = matches.find(m => m.id === selectedMatchId);
 
@@ -78,9 +78,13 @@ export default function MessagesScreen() {
               <ActivityIndicator size="small" color="#EC4899" />
             </View>
           ) : messages.length === 0 ? (
-            <View style={styles.emptyChat}>
+            <ScrollView
+              style={styles.messagesList}
+              contentContainerStyle={styles.emptyChat}
+              refreshControl={<RefreshControl refreshing={messagesRefreshing} onRefresh={refetchMessages} colors={['#EC4899']} tintColor="#EC4899" />}
+            >
               <Text style={styles.emptyChatText}>Henüz mesaj yok. İlk mesajı sen gönder!</Text>
-            </View>
+            </ScrollView>
           ) : (
             <FlatList
               ref={flatListRef}
@@ -92,6 +96,7 @@ export default function MessagesScreen() {
               style={styles.messagesList}
               contentContainerStyle={styles.messagesContent}
               showsVerticalScrollIndicator={false}
+              refreshControl={<RefreshControl refreshing={messagesRefreshing} onRefresh={refetchMessages} colors={['#EC4899']} tintColor="#EC4899" />}
             />
           )}
 
@@ -136,17 +141,22 @@ export default function MessagesScreen() {
             <ActivityIndicator size="large" color="#EC4899" />
           </View>
         ) : matches.length === 0 ? (
-          <View style={styles.emptyContainer}>
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={styles.emptyContainer}
+            refreshControl={<RefreshControl refreshing={matchesRefreshing} onRefresh={refetchMatches} colors={['#EC4899']} tintColor="#EC4899" />}
+          >
             <Send size={64} color="#D1D5DB" />
             <Text style={styles.emptyTitle}>Henüz sohbet yok</Text>
             <Text style={styles.emptySubtitle}>Eşleştiğin kişilerle buradan yazışabilirsin!</Text>
-          </View>
+          </ScrollView>
         ) : (
           <FlatList
             data={matches}
             keyExtractor={item => item.id}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContainer}
+            refreshControl={<RefreshControl refreshing={matchesRefreshing} onRefresh={refetchMatches} colors={['#EC4899']} tintColor="#EC4899" />}
             renderItem={({ item }) => (
               <TouchableOpacity style={styles.matchItem} onPress={() => setSelectedMatchId(item.id)}>
                 <MatchAvatar uri={item.user.photos[0]} name={item.user.name} size={52} />
@@ -194,10 +204,10 @@ const styles = StyleSheet.create({
   lastMessage: { fontSize: 14, color: '#6B7280', marginTop: 2 },
   newBadge: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#EC4899' },
   chatTitleRow: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, overflow: 'hidden' },
-  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
+  emptyContainer: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
   emptyTitle: { fontSize: 24, fontWeight: '600', color: '#374151', marginTop: 16, marginBottom: 8 },
   emptySubtitle: { fontSize: 16, color: '#9CA3AF', textAlign: 'center', lineHeight: 22 },
-  emptyChat: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
+  emptyChat: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
   emptyChatText: { fontSize: 15, color: '#9CA3AF', textAlign: 'center', paddingHorizontal: 32 },
   chatContainer: { flex: 1 },
   chatHeader: {
