@@ -24,7 +24,7 @@ import { TestResults } from '@/types';
 export default function FindRoommatesScreen() {
   const { users, loading, removeUser, refresh } = useUsers();
   const { addMatch } = useMatches();
-  const { hasCompletedBasicTest, setBasicTestResults } = useCharacterTest();
+  const { hasCompletedBasicTest, setBasicTestResults, syncBasicTestFromServer } = useCharacterTest();
   const { profile, refresh: refreshProfile } = useProfile();
   const router = useRouter();
   const [showLookingForModal, setShowLookingForModal] = useState(false);
@@ -150,6 +150,13 @@ export default function FindRoommatesScreen() {
       });
     }
   }, []);
+
+  // Backend'de test sonucu varsa (seed/başka cihaz) local'e sync et — API'ye tekrar göndermez
+  useEffect(() => {
+    if (profile?.initialBasicTestResults) {
+      syncBasicTestFromServer(profile.initialBasicTestResults);
+    }
+  }, [profile]);
 
   const dismissTestBanner = async () => {
     const uid = await storage.getUserId();
