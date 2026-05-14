@@ -91,3 +91,8 @@ backend/profile-README.md
 backend/docs/ANALIZ-PART1.md
 backend/docs/ANALIZ-PART2.md
 backend/docs/ROADMAP.md
+
+# =====================
+# Dev Utilities (Local Only)
+# =====================
+backend/seed-photos/
