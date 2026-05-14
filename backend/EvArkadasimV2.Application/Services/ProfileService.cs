@@ -52,7 +52,9 @@ namespace EvArkadasimV2.Application.Services
                 CharacterProfile = MapScores(user.Profile.FinalScores),
                 InitialBasicTestResults = MapScores(user.Profile.InitialBasicTestResults),
                 FinalScores = MapScores(user.Profile.FinalScores),
-                HasProperty = user.Properties?.Any() ?? false
+                HasProperty = user.Properties?.Any() ?? false,
+                IsOnlineStatusVisible = user.Profile.IsOnlineStatusVisible,
+                NotificationsEnabled = user.Profile.NotificationsEnabled
             };
         }
 

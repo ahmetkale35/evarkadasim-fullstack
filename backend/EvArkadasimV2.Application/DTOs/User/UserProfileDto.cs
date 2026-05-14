@@ -34,6 +34,8 @@ namespace EvArkadasimV2.Application.DTOs.User
         public int MatchesCount { get; set; }
         public double CompatibilityScore { get; set; }
         public bool HasProperty { get; set; }
+        public bool IsOnlineStatusVisible { get; set; }
+        public bool NotificationsEnabled { get; set; }
     }
 
     public class LocationDto
