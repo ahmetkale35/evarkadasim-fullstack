@@ -134,6 +134,13 @@ namespace EvArkadasimV2.Application.Services
             return result;
         }
 
+        public async Task<int> ResetFeedAsync(string userId)
+        {
+            var deleted = await _swipeRepository.DeletePassSwipesAsync(userId);
+            await _cache.RemoveAsync($"feed:{userId}");
+            return deleted;
+        }
+
         public async Task<IReadOnlyList<MatchDto>> GetMyMatchesAsync(string userId)
         {
             var currentUser = await _userRepository.GetUserWithProfileAsync(userId, tracking: false);

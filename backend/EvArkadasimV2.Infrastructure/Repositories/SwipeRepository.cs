@@ -32,5 +32,12 @@ namespace EvArkadasimV2.Infrastructure.Repositories
                     s.ReceiverId == senderId &&
                     s.SwipeType != SwipeType.Pass);
         }
+
+        public async Task<int> DeletePassSwipesAsync(string userId)
+        {
+            return await _dbSet
+                .Where(s => s.SenderId == userId && s.SwipeType == SwipeType.Pass)
+                .ExecuteDeleteAsync();
+        }
     }
 }
