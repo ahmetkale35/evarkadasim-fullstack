@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, ScrollView, RefreshControl, Animated, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -115,8 +115,6 @@ export default function FindRoommatesScreen() {
     }
   };
 
-  const canRefresh = () => Date.now() - lastRefreshAt.current > REFRESH_COOLDOWN_MS;
-
   const throttledRefresh = () => {
     if (!canRefresh()) {
       const remaining = Math.ceil((REFRESH_COOLDOWN_MS - (Date.now() - lastRefreshAt.current)) / 1000);
@@ -126,6 +124,10 @@ export default function FindRoommatesScreen() {
     lastRefreshAt.current = Date.now();
     refresh();
   };
+
+  const canRefresh = () => Date.now() - lastRefreshAt.current > REFRESH_COOLDOWN_MS;
+
+
   const [showTestPopup, setShowTestPopup] = useState(false);
   const [showTest, setShowTest] = useState(false);
   const [showTestBanner, setShowTestBanner] = useState(false);
@@ -155,13 +157,7 @@ export default function FindRoommatesScreen() {
     setShowTestBanner(false);
   };
 
-  // Backend compatibility skoruna göre sırala (yüksekten düşüğe)
-  const sortedUsers = useMemo(
-    () => [...users].sort((a, b) => (b.compatibility ?? 0) - (a.compatibility ?? 0)),
-    [users]
-  );
-
-  const currentUser = sortedUsers[currentIndex];
+  const currentUser = users[currentIndex];
 
   const handleTestComplete = (results: TestResults | null) => {
     if (results) {
@@ -194,7 +190,7 @@ export default function FindRoommatesScreen() {
   const handleLike = async () => {
     if (!currentUser) return;
     removeUser(currentUser.id);
-    setCurrentIndex(prev => Math.max(0, Math.min(prev, sortedUsers.length - 2)));
+    setCurrentIndex(prev => Math.max(0, Math.min(prev, users.length - 2)));
     try {
       const result = await userService.swipe(currentUser.id, 'like');
       if (result.isMatch) {
@@ -209,7 +205,7 @@ export default function FindRoommatesScreen() {
   const handlePass = async () => {
     if (!currentUser) return;
     removeUser(currentUser.id);
-    setCurrentIndex(prev => Math.max(0, Math.min(prev, sortedUsers.length - 2)));
+    setCurrentIndex(prev => Math.max(0, Math.min(prev, users.length - 2)));
     try {
       await userService.swipe(currentUser.id, 'pass');
     } catch {
@@ -220,7 +216,7 @@ export default function FindRoommatesScreen() {
   const handleSuperLike = async () => {
     if (!currentUser) return;
     removeUser(currentUser.id);
-    setCurrentIndex(prev => Math.max(0, Math.min(prev, sortedUsers.length - 2)));
+    setCurrentIndex(prev => Math.max(0, Math.min(prev, users.length - 2)));
     try {
       const result = await userService.swipe(currentUser.id, 'superlike');
       Alert.alert("Süper Beğeni! ⭐", `${currentUser.name} süper beğenildiğine dair bildirim alacak!`);
@@ -337,7 +333,7 @@ export default function FindRoommatesScreen() {
         </View>
         <View style={styles.subHeader}>
           <Text style={styles.subtitle}>
-            {sortedUsers.length - currentIndex} potential roommates nearby
+            {users.length - currentIndex} potential roommates nearby
           </Text>
           {profile && (
             <View style={styles.feedInfoRow}>
