@@ -15,9 +15,9 @@ namespace EvArkadasimV2.API.Services
         public Task SendMessageAsync(string recipientUserId, MessageDto message)
             => _hub.Clients.Group($"user-{recipientUserId}").ReceiveMessage(message);
 
-        public Task SendMatchAsync(string userId1, string userId2, MatchDto match)
+        public Task SendMatchAsync(string userId1, MatchDto matchForUser1, string userId2, MatchDto matchForUser2)
             => Task.WhenAll(
-                _hub.Clients.Group($"user-{userId1}").MatchCreated(match),
-                _hub.Clients.Group($"user-{userId2}").MatchCreated(match));
+                _hub.Clients.Group($"user-{userId1}").MatchCreated(matchForUser1),
+                _hub.Clients.Group($"user-{userId2}").MatchCreated(matchForUser2));
     }
 }

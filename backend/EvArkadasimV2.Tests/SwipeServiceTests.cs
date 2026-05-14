@@ -25,7 +25,7 @@ namespace EvArkadasimV2.Tests
         public SwipeServiceTests()
         {
             _cache.Setup(c => c.RemoveAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
-            _notifications.Setup(n => n.SendMatchAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<EvArkadasimV2.Application.DTOs.Chat.MatchDto>())).Returns(Task.CompletedTask);
+            _notifications.Setup(n => n.SendMatchAsync(It.IsAny<string>(), It.IsAny<EvArkadasimV2.Application.DTOs.Chat.MatchDto>(), It.IsAny<string>(), It.IsAny<EvArkadasimV2.Application.DTOs.Chat.MatchDto>())).Returns(Task.CompletedTask);
             _sut = new SwipeService(_swipeRepo.Object, _matchRepo.Object, _userRepo.Object, _compatibility.Object, _cache.Object, _notifications.Object);
         }
 

@@ -71,6 +71,9 @@ namespace EvArkadasimV2.Application.Services
                 Message = "Swipe kaydedildi."
             };
 
+            AppUser? sender = null;
+            UserMatch? newMatch = null;
+
             // 6) Match yalnızca pozitif niyetli swipe'larda (Like/SuperLike) düşünülür.
             // Pass swipe'ı asla bir match tetikleyemez.
             if (swipeType != SwipeType.Pass)
@@ -82,11 +85,11 @@ namespace EvArkadasimV2.Application.Services
                     // Sender'ın profili de tracking ile yüklenmeli ki MatchesCount değişikliği
                     // change-tracker tarafından yakalansın. Aynı DbContext üzerinde iki farklı
                     // kullanıcının profili tracking ile yüklenebilir; çakışma yaşanmaz.
-                    var sender = await _userRepository.GetUserWithProfileAsync(senderId, tracking: true);
+                    sender = await _userRepository.GetUserWithProfileAsync(senderId, tracking: true);
                     if (sender?.Profile == null)
                         throw new NotFoundException("Kullanıcı profili bulunamadı.");
 
-                    var newMatch = new UserMatch
+                    newMatch = new UserMatch
                     {
                         User1Id = senderId,
                         User2Id = request.ReceiverId
@@ -111,14 +114,21 @@ namespace EvArkadasimV2.Application.Services
 
             if (result.IsMatch)
             {
-                var matchNotification = new DTOs.Chat.MatchDto
+                var notifForSender = new DTOs.Chat.MatchDto
                 {
-                    MatchId = result.MatchedUserId!,
+                    MatchId = newMatch!.Id.ToString(),
                     MatchedAt = DateTime.UtcNow,
                     IsNewMatch = true,
-                    MatchedUser = null!
+                    MatchedUser = MapToDto(receiver)
                 };
-                await _notifications.SendMatchAsync(senderId, request.ReceiverId, matchNotification);
+                var notifForReceiver = new DTOs.Chat.MatchDto
+                {
+                    MatchId = newMatch!.Id.ToString(),
+                    MatchedAt = DateTime.UtcNow,
+                    IsNewMatch = true,
+                    MatchedUser = MapToDto(sender!)
+                };
+                await _notifications.SendMatchAsync(senderId, notifForSender, request.ReceiverId, notifForReceiver);
             }
 
             return result;
