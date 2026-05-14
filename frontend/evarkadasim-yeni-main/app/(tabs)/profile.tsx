@@ -328,7 +328,7 @@ export default function ProfileScreen() {
                   <Camera size={40} color="#9CA3AF" />
                 </View>
               )}
-              <TouchableOpacity style={styles.cameraButton}>
+              <TouchableOpacity style={[styles.cameraButton, { opacity: 0.5 }]} onPress={() => Alert.alert('Yakında', 'Fotoğraf yükleme çok yakında!')}>
                 <Camera size={20} color="#fff" />
               </TouchableOpacity>
               {profile?.isVerified && (
@@ -344,7 +344,7 @@ export default function ProfileScreen() {
                   <Image source={{ uri: photo }} style={styles.additionalPhoto} />
                 </View>
               ))}
-              <TouchableOpacity style={styles.addPhotoSlot}>
+              <TouchableOpacity style={[styles.addPhotoSlot, { opacity: 0.5 }]} onPress={() => Alert.alert('Yakında', 'Fotoğraf yükleme çok yakında!')}>
                 <Camera size={24} color="#9CA3AF" />
               </TouchableOpacity>
             </View>
@@ -556,7 +556,7 @@ export default function ProfileScreen() {
               />
             </View>
 
-            <TouchableOpacity style={styles.settingItem}>
+            <TouchableOpacity style={styles.settingItem} onPress={() => Alert.alert('Yakında', 'Gizlilik & Güvenlik ayarları çok yakında!')}>
               <View style={styles.settingInfo}>
                 <Shield size={20} color="#6B7280" />
                 <Text style={styles.settingLabel}>Gizlilik & Güvenlik</Text>
