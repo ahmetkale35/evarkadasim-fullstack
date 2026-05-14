@@ -110,7 +110,8 @@ namespace EvArkadasimV2.Application.Services
             // başarılı olur ya da hiçbiri uygulanmaz (atomik tutarlılık).
             await _swipeRepository.SaveChangesAsync();
 
-            await _cache.RemoveAsync($"feed:{senderId}");
+            await _cache.RemoveAsync($"feed:{senderId}:v2");
+            await _cache.RemoveAsync($"feed:{request.ReceiverId}:v2");
 
             if (result.IsMatch)
             {
@@ -137,7 +138,7 @@ namespace EvArkadasimV2.Application.Services
         public async Task<int> ResetFeedAsync(string userId)
         {
             var deleted = await _swipeRepository.DeletePassSwipesAsync(userId);
-            await _cache.RemoveAsync($"feed:{userId}");
+            await _cache.RemoveAsync($"feed:{userId}:v2");
             return deleted;
         }
 

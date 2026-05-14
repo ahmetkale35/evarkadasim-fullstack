@@ -96,7 +96,7 @@ namespace EvArkadasimV2.Application.Services
 
             _userRepository.Update(user);
             await _userRepository.SaveChangesAsync();
-            await _cache.RemoveAsync($"feed:{userId}");
+            await _cache.RemoveAsync($"feed:{userId}:v2");
         }
 
         private static BasicTestResultDto? MapScores(EvArkadasimV2.Domain.ValueObjects.BasicTestResults? scores) =>

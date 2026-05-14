@@ -9,13 +9,8 @@ namespace EvArkadasimV2.Application.Interfaces.Repositories
         Task<AppUser?> GetUserWithProfileAsync(string userId, bool tracking = true);
         Task<AppUser?> GetUserByEmailAsync(string email, bool tracking = true);
 
-        // Feed adaylarını döndürür: kendisi ve swipe ettikleri hariç.
-        // Sıralama: önce currentUser'a Like/SuperLike atanlar, sonra LastActive DESC.
-        // Tracking kapalı — read-only sorgu, EF change-tracking maliyetinden kaçınılır.
-        Task<List<AppUser>> GetFeedCandidatesAsync(string currentUserId, int skip, int take);
-
-        // Compatibility sıralaması için: tüm adayları HasLikedCurrentUser bilgisiyle döndürür.
-        // Sayfalama FeedService'de yapılır (compatibility hesaplandıktan sonra).
-        Task<List<(AppUser User, bool HasLikedCurrentUser)>> GetFeedCandidatesWithLikeStatusAsync(string currentUserId);
+        // Tüm adayları LikeWeight bilgisiyle döndürür. LikeWeight: 0=yok, 1=Like, 2=SuperLike.
+        // Sayfalama ve ağırlıklı sıralama FeedService'de yapılır.
+        Task<List<(AppUser User, int LikeWeight)>> GetFeedCandidatesWithLikeStatusAsync(string currentUserId);
     }
 }

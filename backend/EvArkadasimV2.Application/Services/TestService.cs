@@ -53,7 +53,7 @@ namespace EvArkadasimV2.Application.Services
             var result = await _userRepository.SaveChangesAsync();
 
             // FinalScores değişti — feed cache'i temizle, bir sonraki istekte compatibility yeniden hesaplansın
-            await _cache.RemoveAsync($"feed:{userId}");
+            await _cache.RemoveAsync($"feed:{userId}:v2");
             return result;
         }
 
@@ -97,7 +97,7 @@ namespace EvArkadasimV2.Application.Services
             var result = await _userRepository.SaveChangesAsync();
 
             // FinalScores değişti — feed cache'i temizle
-            await _cache.RemoveAsync($"feed:{userId}");
+            await _cache.RemoveAsync($"feed:{userId}:v2");
             return result;
         }
 
