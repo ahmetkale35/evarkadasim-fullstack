@@ -16,6 +16,8 @@ export interface MyProfile {
   matchesCount: number;
   lookingFor?: 'roommate' | 'room';
   hasProperty?: boolean;
+  isOnlineStatusVisible?: boolean;
+  notificationsEnabled?: boolean;
 }
 
 export interface UpdateProfilePayload {
@@ -27,6 +29,8 @@ export interface UpdateProfilePayload {
   education?: string;
   city?: string;
   lookingFor?: 'Roommate' | 'Room';
+  isOnlineStatusVisible?: boolean;
+  notificationsEnabled?: boolean;
 }
 
 export const profileService = {

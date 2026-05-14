@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Switch, ActivityIndicator, Alert, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -22,6 +22,13 @@ export default function ProfileScreen() {
 
   const [notifications, setNotifications] = useState(true);
   const [showOnline, setShowOnline] = useState(true);
+
+  useEffect(() => {
+    if (profile) {
+      setNotifications(profile.notificationsEnabled ?? true);
+      setShowOnline(profile.isOnlineStatusVisible ?? true);
+    }
+  }, [profile]);
   const [showBasicTest, setShowBasicTest] = useState(false);
   const [showDetailedTest, setShowDetailedTest] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -36,6 +43,26 @@ export default function ProfileScreen() {
     city: '',
     lookingFor: '' as 'Roommate' | 'Room' | '',
   });
+
+  const handleNotificationsChange = async (value: boolean) => {
+    setNotifications(value);
+    try {
+      await profileService.updateProfile({ notificationsEnabled: value });
+    } catch {
+      setNotifications(!value);
+      Alert.alert('Hata', 'Bildirim ayarı kaydedilemedi.');
+    }
+  };
+
+  const handleShowOnlineChange = async (value: boolean) => {
+    setShowOnline(value);
+    try {
+      await profileService.updateProfile({ isOnlineStatusVisible: value });
+    } catch {
+      setShowOnline(!value);
+      Alert.alert('Hata', 'Çevrimiçi görünme ayarı kaydedilemedi.');
+    }
+  };
 
   const openEditModal = () => {
     setEditForm({
@@ -510,7 +537,7 @@ export default function ProfileScreen() {
               </View>
               <Switch
                 value={notifications}
-                onValueChange={setNotifications}
+                onValueChange={handleNotificationsChange}
                 trackColor={{ false: '#D1D5DB', true: '#FCE7F3' }}
                 thumbColor={notifications ? '#EC4899' : '#F3F4F6'}
               />
@@ -523,7 +550,7 @@ export default function ProfileScreen() {
               </View>
               <Switch
                 value={showOnline}
-                onValueChange={setShowOnline}
+                onValueChange={handleShowOnlineChange}
                 trackColor={{ false: '#D1D5DB', true: '#FCE7F3' }}
                 thumbColor={showOnline ? '#EC4899' : '#F3F4F6'}
               />
