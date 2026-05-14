@@ -9,7 +9,7 @@ namespace EvArkadasimV2.Application.DTOs.Property
         [StringLength(200, MinimumLength = 3)]
         public string Title { get; set; } = string.Empty;
 
-        [Range(0, 1_000_000)]
+        [Range(1, 1_000_000)]
         public decimal PriceAmount { get; set; }
 
         [Required]

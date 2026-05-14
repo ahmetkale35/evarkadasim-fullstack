@@ -37,6 +37,15 @@ jobs:
       - name: Build
         run: dotnet build backend/EvArkadasimV2.slnx --no-restore -c Release
 
+      - name: Check pending EF migrations
+        run: |
+          dotnet tool install --global dotnet-ef --version 8.*
+          $HOME/.dotnet/tools/dotnet-ef migrations has-pending-model-changes \
+            --project backend/EvArkadasimV2.Infrastructure \
+            --startup-project backend/EvArkadasimV2.API \
+            --no-build \
+            --configuration Release
+
       - name: Test with coverage
         run: dotnet test backend/EvArkadasimV2.Tests/EvArkadasimV2.Tests.csproj --no-build -c Release --logger "console;verbosity=minimal" --collect:"XPlat Code Coverage" --results-directory ./coverage
 

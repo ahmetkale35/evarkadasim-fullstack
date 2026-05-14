@@ -312,7 +312,7 @@ export default function ProfileScreen() {
       <SafeAreaView style={styles.content}>
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
-            <Text style={styles.title}>Profile</Text>
+            <Text style={styles.title}>Profil</Text>
             <TouchableOpacity style={styles.settingsButton}>
               <Settings size={24} color="#6B7280" />
             </TouchableOpacity>
@@ -514,7 +514,7 @@ export default function ProfileScreen() {
 
           {/* Stats */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Statistics</Text>
+            <Text style={styles.sectionTitle}>İstatistikler</Text>
             <View style={styles.statsContainer}>
               {stats.map((stat, index) => (
                 <View key={index} style={styles.statItem}>
@@ -528,12 +528,12 @@ export default function ProfileScreen() {
 
           {/* Settings */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Settings</Text>
+            <Text style={styles.sectionTitle}>Ayarlar</Text>
 
             <View style={styles.settingItem}>
               <View style={styles.settingInfo}>
                 <Bell size={20} color="#6B7280" />
-                <Text style={styles.settingLabel}>Push Notifications</Text>
+                <Text style={styles.settingLabel}>Bildirimler</Text>
               </View>
               <Switch
                 value={notifications}
@@ -546,7 +546,7 @@ export default function ProfileScreen() {
             <View style={styles.settingItem}>
               <View style={styles.settingInfo}>
                 <Eye size={20} color="#6B7280" />
-                <Text style={styles.settingLabel}>Show when online</Text>
+                <Text style={styles.settingLabel}>Çevrimiçi görün</Text>
               </View>
               <Switch
                 value={showOnline}

@@ -36,7 +36,6 @@ export function useMessages(matchId: string | null) {
     signalrService.start().catch(() => {});
 
     signalrService.on<MessageDto>('ReceiveMessage', (dto) => {
-      if (dto.senderId === matchId) return;
       const msg: Message = {
         id: dto.id.toString(),
         senderId: dto.senderId,
