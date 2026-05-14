@@ -26,9 +26,9 @@ interface RegisterPayload {
 export const authService = {
   login: async (payload: LoginPayload): Promise<AuthResponse> => {
     const { data } = await apiClient.post<AuthResponse>('/auth/login', payload);
-    // Token ve userId cihazda saklanır; sonraki isteklerde otomatik eklenir
     await storage.saveToken(data.token);
     await storage.saveUserId(data.userId);
+    await storage.saveRefreshToken(data.refreshToken);
     return data;
   },
 
@@ -36,10 +36,19 @@ export const authService = {
     const { data } = await apiClient.post<AuthResponse>('/auth/register', payload);
     await storage.saveToken(data.token);
     await storage.saveUserId(data.userId);
+    await storage.saveRefreshToken(data.refreshToken);
     return data;
   },
 
   logout: async (): Promise<void> => {
+    const refreshToken = await storage.getRefreshToken();
+    try {
+      await apiClient.post('/auth/logout', null, {
+        headers: refreshToken ? { 'X-Refresh-Token': refreshToken } : {},
+      });
+    } catch {
+      // backend erişilemez olsa bile local temizlik yapılır
+    }
     await storage.clearAll();
   },
 

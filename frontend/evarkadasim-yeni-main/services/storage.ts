@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TOKEN_KEY = 'auth_token';
 const USER_ID_KEY = 'user_id';
+const REFRESH_TOKEN_KEY = 'refresh_token';
 
 export const storage = {
   saveToken: (token: string) => AsyncStorage.setItem(TOKEN_KEY, token),
@@ -12,6 +13,8 @@ export const storage = {
   getUserId: () => AsyncStorage.getItem(USER_ID_KEY),
   removeUserId: () => AsyncStorage.removeItem(USER_ID_KEY),
 
-  // Logout sırasında token + userId birlikte temizlenir
-  clearAll: () => AsyncStorage.multiRemove([TOKEN_KEY, USER_ID_KEY]),
+  saveRefreshToken: (token: string) => AsyncStorage.setItem(REFRESH_TOKEN_KEY, token),
+  getRefreshToken: () => AsyncStorage.getItem(REFRESH_TOKEN_KEY),
+
+  clearAll: () => AsyncStorage.multiRemove([TOKEN_KEY, USER_ID_KEY, REFRESH_TOKEN_KEY]),
 };
