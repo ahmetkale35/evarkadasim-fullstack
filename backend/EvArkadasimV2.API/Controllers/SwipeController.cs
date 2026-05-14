@@ -32,6 +32,17 @@ namespace EvArkadasimV2.API.Controllers
             return Ok(matches);
         }
 
+        /// <summary>Kullanıcının tüm Pass swipe'larını siler ve feed'i sıfırlar.</summary>
+        [HttpDelete("passes")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> ResetFeed()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var deletedCount = await _swipeService.ResetFeedAsync(userId);
+            return Ok(new { deletedCount });
+        }
+
         /// <summary>Bir kullanıcıya Like veya Pass atar. Karşılıklı Like varsa eşleşme oluşur.</summary>
         /// <remarks>
         /// Gönderen her zaman JWT token'dan belirlenir; body'den alınmaz.

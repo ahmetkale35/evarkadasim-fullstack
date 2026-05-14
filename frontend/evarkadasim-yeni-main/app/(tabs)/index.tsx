@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, ScrollView, RefreshControl, Animated, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -31,6 +31,7 @@ export default function FindRoommatesScreen() {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const lastRefreshAt = useRef(0);
   const REFRESH_COOLDOWN_MS = 15_000;
   const toastOpacity = useRef(new Animated.Value(0)).current;
@@ -96,7 +97,23 @@ export default function FindRoommatesScreen() {
     }
   };
 
-  const canRefresh = () => Date.now() - lastRefreshAt.current > REFRESH_COOLDOWN_MS;
+  const handleResetFeed = async () => {
+    setResetting(true);
+    try {
+      const { deletedCount } = await userService.resetFeed();
+      setCurrentIndex(0);
+      await refresh();
+      if (deletedCount > 0) {
+        showToast(`${deletedCount} kişi tekrar gösteriliyor`);
+      } else {
+        showToast('Bölgende şu an yeni üye yok');
+      }
+    } catch {
+      showToast('Bir hata oluştu, tekrar dene');
+    } finally {
+      setResetting(false);
+    }
+  };
 
   const throttledRefresh = () => {
     if (!canRefresh()) {
@@ -107,6 +124,10 @@ export default function FindRoommatesScreen() {
     lastRefreshAt.current = Date.now();
     refresh();
   };
+
+  const canRefresh = () => Date.now() - lastRefreshAt.current > REFRESH_COOLDOWN_MS;
+
+
   const [showTestPopup, setShowTestPopup] = useState(false);
   const [showTest, setShowTest] = useState(false);
   const [showTestBanner, setShowTestBanner] = useState(false);
@@ -136,13 +157,7 @@ export default function FindRoommatesScreen() {
     setShowTestBanner(false);
   };
 
-  // Backend compatibility skoruna göre sırala (yüksekten düşüğe)
-  const sortedUsers = useMemo(
-    () => [...users].sort((a, b) => (b.compatibility ?? 0) - (a.compatibility ?? 0)),
-    [users]
-  );
-
-  const currentUser = sortedUsers[currentIndex];
+  const currentUser = users[currentIndex];
 
   const handleTestComplete = (results: TestResults | null) => {
     if (results) {
@@ -175,7 +190,7 @@ export default function FindRoommatesScreen() {
   const handleLike = async () => {
     if (!currentUser) return;
     removeUser(currentUser.id);
-    setCurrentIndex(prev => Math.max(0, Math.min(prev, sortedUsers.length - 2)));
+    setCurrentIndex(prev => Math.max(0, Math.min(prev, users.length - 2)));
     try {
       const result = await userService.swipe(currentUser.id, 'like');
       if (result.isMatch) {
@@ -190,7 +205,7 @@ export default function FindRoommatesScreen() {
   const handlePass = async () => {
     if (!currentUser) return;
     removeUser(currentUser.id);
-    setCurrentIndex(prev => Math.max(0, Math.min(prev, sortedUsers.length - 2)));
+    setCurrentIndex(prev => Math.max(0, Math.min(prev, users.length - 2)));
     try {
       await userService.swipe(currentUser.id, 'pass');
     } catch {
@@ -201,7 +216,7 @@ export default function FindRoommatesScreen() {
   const handleSuperLike = async () => {
     if (!currentUser) return;
     removeUser(currentUser.id);
-    setCurrentIndex(prev => Math.max(0, Math.min(prev, sortedUsers.length - 2)));
+    setCurrentIndex(prev => Math.max(0, Math.min(prev, users.length - 2)));
     try {
       const result = await userService.swipe(currentUser.id, 'superlike');
       Alert.alert("Süper Beğeni! ⭐", `${currentUser.name} süper beğenildiğine dair bildirim alacak!`);
@@ -263,11 +278,25 @@ export default function FindRoommatesScreen() {
               />
             }
           >
-            <Text style={styles.emptyTitle}>{"That's everyone for now!"}</Text>
+            <Text style={styles.emptyTitle}>Herkesle tanıştın! 🎉</Text>
             <Text style={styles.emptySubtitle}>
-              Check back later for more roommate profiles, or expand your search settings.
+              Yeni üye gelince burada görünecek. Ya da geçtiklerini tekrar görmek ister misin?
             </Text>
+            <TouchableOpacity
+              style={[styles.resetButton, resetting && { opacity: 0.6 }]}
+              onPress={handleResetFeed}
+              disabled={resetting}
+            >
+              {resetting ? (
+                <ActivityIndicator color="#EC4899" size="small" />
+              ) : (
+                <Text style={styles.resetButtonText}>Başa Dön</Text>
+              )}
+            </TouchableOpacity>
           </ScrollView>
+          <Animated.View style={[styles.toast, { opacity: toastOpacity }]} pointerEvents="none">
+            <Text style={styles.toastText}>{toastMsg}</Text>
+          </Animated.View>
         </SafeAreaView>
       </LinearGradient>
     );
@@ -304,7 +333,7 @@ export default function FindRoommatesScreen() {
         </View>
         <View style={styles.subHeader}>
           <Text style={styles.subtitle}>
-            {sortedUsers.length - currentIndex} potential roommates nearby
+            {users.length - currentIndex} potential roommates nearby
           </Text>
           {profile && (
             <View style={styles.feedInfoRow}>
@@ -544,6 +573,20 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.8)',
     textAlign: 'center',
     lineHeight: 24,
+    marginBottom: 32,
+  },
+  resetButton: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 40,
+    paddingVertical: 14,
+    borderRadius: 30,
+    minWidth: 140,
+    alignItems: 'center',
+  },
+  resetButtonText: {
+    color: '#EC4899',
+    fontSize: 16,
+    fontWeight: '700',
   },
   toast: {
     position: 'absolute',

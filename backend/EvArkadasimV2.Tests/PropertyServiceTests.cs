@@ -160,7 +160,7 @@ namespace EvArkadasimV2.Tests
 
             await _sut.CreateAsync("owner1", MakeCreateDto());
 
-            _cache.Verify(c => c.RemoveAsync("feed:owner1"), Times.Once);
+            _cache.Verify(c => c.RemoveAsync("feed:owner1:v2"), Times.Once);
         }
 
         // --- UpdateAsync ---
@@ -235,7 +235,7 @@ namespace EvArkadasimV2.Tests
             await _sut.DeleteAsync(1, "owner1");
 
             _propertyRepo.Verify(r => r.Remove(property), Times.Once);
-            _cache.Verify(c => c.RemoveAsync("feed:owner1"), Times.Once);
+            _cache.Verify(c => c.RemoveAsync("feed:owner1:v2"), Times.Once);
         }
 
         // --- DeleteAllByOwnerAsync ---
@@ -266,7 +266,7 @@ namespace EvArkadasimV2.Tests
             await _sut.DeleteAllByOwnerAsync("owner1");
 
             _propertyRepo.Verify(r => r.Remove(It.IsAny<Property>()), Times.Exactly(2));
-            _cache.Verify(c => c.RemoveAsync("feed:owner1"), Times.Once);
+            _cache.Verify(c => c.RemoveAsync("feed:owner1:v2"), Times.Once);
         }
 
         // --- GetMapPinsAsync ---

@@ -32,10 +32,10 @@ namespace EvArkadasimV2.Application.Services
             if (take <= 0) take = DefaultTake;
             if (take > MaxTake) take = MaxTake;
 
-            var cacheKey = $"feed:{currentUserId}";
-            var sorted = await _cache.GetAsync<List<(UserSummaryDto Dto, bool HasLikedCurrentUser)>>(cacheKey);
+            var cacheKey = $"feed:{currentUserId}:v2";
+            var sortedDtos = await _cache.GetAsync<List<UserSummaryDto>>(cacheKey);
 
-            if (sorted is null)
+            if (sortedDtos is null)
             {
                 var currentUser = await _userRepository.GetUserWithProfileAsync(currentUserId, tracking: false);
                 var currentScores = currentUser?.Profile?.FinalScores;
@@ -52,23 +52,42 @@ namespace EvArkadasimV2.Application.Services
                 if (currentLookingFor == LookingFor.Roommate)
                     filtered = filtered.Where(x => x.User.Profile?.LookingFor == LookingFor.Room);
 
-                sorted = filtered
+                sortedDtos = filtered
                     .Select(item =>
                     {
                         var dto = MapToDto(item.User);
                         dto.Compatibility = _compatibilityService.Calculate(currentScores, item.User.Profile?.FinalScores);
-                        return (Dto: dto, item.HasLikedCurrentUser);
+
+                        var daysSinceActive = (DateTime.UtcNow - item.User.Profile!.LastActive).TotalDays;
+                        var activityScore = daysSinceActive switch
+                        {
+                            < 7   => 1.0,
+                            < 30  => 0.5,
+                            < 90  => 0.25,
+                            _     => 0.0
+                        };
+
+                        var photos = item.User.Profile.Photos ?? new List<string>();
+                        var profileScore = (photos.Count > 0 ? 5 : 0)
+                                         + (!string.IsNullOrEmpty(item.User.Profile.Bio) ? 3 : 0)
+                                         + ((item.User.Profile.Interests?.Count ?? 0) >= 3 ? 2 : 0);
+
+                        var finalScore = item.LikeWeight * 40.0
+                                       + (dto.Compatibility ?? 0) * 0.35
+                                       + activityScore * 15.0
+                                       + profileScore;
+
+                        return (Dto: dto, Score: finalScore);
                     })
-                    .OrderByDescending(x => x.HasLikedCurrentUser)
-                    .ThenByDescending(x => x.Dto.Compatibility)
-                    .ThenByDescending(x => x.Dto.LastActive)
+                    .OrderByDescending(x => x.Score)
+                    .Select(x => x.Dto)
                     .ToList();
 
-                await _cache.SetAsync(cacheKey, sorted, CacheExpiry);
+                await _cache.SetAsync(cacheKey, sortedDtos, CacheExpiry);
             }
 
-            var totalCount = sorted.Count;
-            var users = sorted.Skip(skip).Take(take).Select(x => x.Dto).ToList();
+            var totalCount = sortedDtos.Count;
+            var users = sortedDtos.Skip(skip).Take(take).ToList();
 
             return new PagedFeedDto
             {

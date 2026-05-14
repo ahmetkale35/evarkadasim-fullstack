@@ -43,14 +43,14 @@ namespace EvArkadasimV2.Tests
 
             _userRepo.Setup(r => r.GetUserWithProfileAsync("current", false)).ReturnsAsync(currentUser);
             _userRepo.Setup(r => r.GetFeedCandidatesWithLikeStatusAsync("current"))
-                     .ReturnsAsync(new List<(AppUser, bool)> { (other, false) });
+                     .ReturnsAsync(new List<(AppUser, int)> { (other, 0) });
 
             var result = await _sut.GetFeedAsync("current", 0, 20);
 
             Assert.DoesNotContain(result.Users, u => u.Id == "current");
         }
 
-        // Like atan kullanıcı (HasLikedCurrentUser=true) sıralamada öne geçmeli.
+        // Like atan kullanıcı (LikeWeight=1) sıralamada öne geçmeli.
         [Fact]
         public async Task GetFeedAsync_LikerAppearsBeforeNonLiker()
         {
@@ -60,10 +60,10 @@ namespace EvArkadasimV2.Tests
 
             _userRepo.Setup(r => r.GetUserWithProfileAsync("current", false)).ReturnsAsync(current);
             _userRepo.Setup(r => r.GetFeedCandidatesWithLikeStatusAsync("current"))
-                     .ReturnsAsync(new List<(AppUser, bool)>
+                     .ReturnsAsync(new List<(AppUser, int)>
                      {
-                         (nonLiker, false), // DB'den önce gelse de...
-                         (liker, true)      // ...Like boost onu öne taşımalı.
+                         (nonLiker, 0), // DB'den önce gelse de...
+                         (liker, 1)     // ...Like boost onu öne taşımalı.
                      });
 
             var result = await _sut.GetFeedAsync("current", 0, 20);
@@ -80,11 +80,12 @@ namespace EvArkadasimV2.Tests
             var current = MakeUser("current", "current@test.com");
             _userRepo.Setup(r => r.GetUserWithProfileAsync("current", false)).ReturnsAsync(current);
             _userRepo.Setup(r => r.GetFeedCandidatesWithLikeStatusAsync("current"))
-                     .ReturnsAsync(new List<(AppUser, bool)>());
+                     .ReturnsAsync(new List<(AppUser, int)>());
 
             var result = await _sut.GetFeedAsync("current", 0, 20);
 
             Assert.Empty(result.Users);
+
             Assert.Equal(0, result.TotalCount);
             Assert.False(result.HasMore);
         }
@@ -95,8 +96,8 @@ namespace EvArkadasimV2.Tests
         {
             var current = MakeUser("current", "current@test.com");
             var candidates = Enumerable.Range(1, 10)
-                .Select(i => (MakeUser($"u{i}", $"u{i}@test.com"), false))
-                .ToList<(AppUser, bool)>();
+                .Select(i => (MakeUser($"u{i}", $"u{i}@test.com"), 0))
+                .ToList<(AppUser, int)>();
 
             _userRepo.Setup(r => r.GetUserWithProfileAsync("current", false)).ReturnsAsync(current);
             _userRepo.Setup(r => r.GetFeedCandidatesWithLikeStatusAsync("current")).ReturnsAsync(candidates);
@@ -114,8 +115,8 @@ namespace EvArkadasimV2.Tests
         {
             var current = MakeUser("current", "current@test.com");
             var candidates = Enumerable.Range(1, 5)
-                .Select(i => (MakeUser($"u{i}", $"u{i}@test.com"), false))
-                .ToList<(AppUser, bool)>();
+                .Select(i => (MakeUser($"u{i}", $"u{i}@test.com"), 0))
+                .ToList<(AppUser, int)>();
 
             _userRepo.Setup(r => r.GetUserWithProfileAsync("current", false)).ReturnsAsync(current);
             _userRepo.Setup(r => r.GetFeedCandidatesWithLikeStatusAsync("current")).ReturnsAsync(candidates);
@@ -131,8 +132,8 @@ namespace EvArkadasimV2.Tests
         {
             var current = MakeUser("current", "current@test.com");
             var candidates = Enumerable.Range(1, 100)
-                .Select(i => (MakeUser($"u{i}", $"u{i}@test.com"), false))
-                .ToList<(AppUser, bool)>();
+                .Select(i => (MakeUser($"u{i}", $"u{i}@test.com"), 0))
+                .ToList<(AppUser, int)>();
 
             _userRepo.Setup(r => r.GetUserWithProfileAsync("current", false)).ReturnsAsync(current);
             _userRepo.Setup(r => r.GetFeedCandidatesWithLikeStatusAsync("current")).ReturnsAsync(candidates);
@@ -151,7 +152,7 @@ namespace EvArkadasimV2.Tests
 
             _userRepo.Setup(r => r.GetUserWithProfileAsync("current", false)).ReturnsAsync(current);
             _userRepo.Setup(r => r.GetFeedCandidatesWithLikeStatusAsync("current"))
-                     .ReturnsAsync(new List<(AppUser, bool)> { (other, false) });
+                     .ReturnsAsync(new List<(AppUser, int)> { (other, 0) });
 
             var result = await _sut.GetFeedAsync("current", -5, 20);
 
@@ -185,7 +186,7 @@ namespace EvArkadasimV2.Tests
 
             _userRepo.Setup(r => r.GetUserWithProfileAsync("owner", false)).ReturnsAsync(current);
             _userRepo.Setup(r => r.GetFeedCandidatesWithLikeStatusAsync("owner"))
-                     .ReturnsAsync(new List<(AppUser, bool)> { (roomSeeker, false), (otherOwner, false) });
+                     .ReturnsAsync(new List<(AppUser, int)> { (roomSeeker, 0), (otherOwner, 0) });
 
             var result = await _sut.GetFeedAsync("owner", 0, 20);
 
@@ -221,7 +222,7 @@ namespace EvArkadasimV2.Tests
 
             _userRepo.Setup(r => r.GetUserWithProfileAsync("current", false)).ReturnsAsync(current);
             _userRepo.Setup(r => r.GetFeedCandidatesWithLikeStatusAsync("current"))
-                     .ReturnsAsync(new List<(AppUser, bool)> { (istanbul, false), (ankara, false) });
+                     .ReturnsAsync(new List<(AppUser, int)> { (istanbul, 0), (ankara, 0) });
 
             var result = await _sut.GetFeedAsync("current", 0, 20);
 
@@ -243,7 +244,7 @@ namespace EvArkadasimV2.Tests
 
             _userRepo.Setup(r => r.GetUserWithProfileAsync("current", false)).ReturnsAsync(current);
             _userRepo.Setup(r => r.GetFeedCandidatesWithLikeStatusAsync("current"))
-                     .ReturnsAsync(new List<(AppUser, bool)> { (u1, false), (u2, false) });
+                     .ReturnsAsync(new List<(AppUser, int)> { (u1, 0), (u2, 0) });
 
             var result = await _sut.GetFeedAsync("current", 0, 20);
 

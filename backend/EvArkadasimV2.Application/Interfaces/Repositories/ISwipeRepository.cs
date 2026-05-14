@@ -15,5 +15,9 @@ namespace EvArkadasimV2.Application.Interfaces.Repositories
         // Karşı tarafın daha önce sender'a Like/SuperLike (Pass hariç) atıp atmadığını
         // kontrol eder. Match koşulu: iki tarafın da pozitif niyetli olması.
         Task<UserSwipe?> GetReciprocalPositiveSwipeAsync(string senderId, string receiverId);
+
+        // Kullanıcının attığı tüm Pass swipe'larını siler ve silinen satır sayısını döner.
+        // Like/SuperLike'a dokunulmaz — match mantığı korunur.
+        Task<int> DeletePassSwipesAsync(string userId);
     }
 }

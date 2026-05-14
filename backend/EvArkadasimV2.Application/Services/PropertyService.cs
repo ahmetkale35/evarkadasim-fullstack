@@ -85,7 +85,7 @@ namespace EvArkadasimV2.Application.Services
                 await _userRepository.SaveChangesAsync();
             }
 
-            await _cache.RemoveAsync($"feed:{ownerId}");
+            await _cache.RemoveAsync($"feed:{ownerId}:v2");
 
             // Owner navigation property olmadan dönmemek için tekrar çek
             var created = await _propertyRepository.GetByIdWithOwnerAsync(property.Id);
@@ -137,7 +137,7 @@ namespace EvArkadasimV2.Application.Services
 
             _propertyRepository.Remove(property);
             await _propertyRepository.SaveChangesAsync();
-            await _cache.RemoveAsync($"feed:{property.OwnerId}");
+            await _cache.RemoveAsync($"feed:{property.OwnerId}:v2");
         }
 
         public async Task DeleteAllByOwnerAsync(string ownerId)
@@ -147,7 +147,7 @@ namespace EvArkadasimV2.Application.Services
             foreach (var p in properties)
                 _propertyRepository.Remove(p);
             await _propertyRepository.SaveChangesAsync();
-            await _cache.RemoveAsync($"feed:{ownerId}");
+            await _cache.RemoveAsync($"feed:{ownerId}:v2");
         }
 
         public async Task<IEnumerable<PropertyMapPinDto>> GetMapPinsAsync(string? city = null)

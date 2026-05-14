@@ -100,6 +100,11 @@ export const userService = {
     }
   },
 
+  resetFeed: async (): Promise<{ deletedCount: number }> => {
+    const { data } = await apiClient.delete<{ deletedCount: number }>('/swipe/passes');
+    return data;
+  },
+
   swipe: async (receiverId: string, action: 'like' | 'pass' | 'superlike'): Promise<SwipeResultDto> => {
     // Frontend lowercase → backend PascalCase
     const swipeTypeMap: Record<string, string> = {

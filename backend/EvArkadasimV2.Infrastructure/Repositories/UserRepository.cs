@@ -32,26 +32,7 @@ namespace EvArkadasimV2.Infrastructure.Repositories
             return await query.FirstOrDefaultAsync(u => u.Email == email);
         }
 
-        public async Task<List<AppUser>> GetFeedCandidatesAsync(string currentUserId, int skip, int take)
-        {
-            return await _context.Users
-                .AsNoTracking()
-                .Include(u => u.Profile)
-                .Where(u => u.Id != currentUserId)
-                .Where(u => u.Profile != null)
-                .Where(u => !_context.UserSwipes
-                    .Any(s => s.SenderId == currentUserId && s.ReceiverId == u.Id))
-                .OrderByDescending(u => _context.UserSwipes
-                    .Any(s => s.SenderId == u.Id
-                              && s.ReceiverId == currentUserId
-                              && (s.SwipeType == SwipeType.Like || s.SwipeType == SwipeType.SuperLike)))
-                .ThenByDescending(u => u.Profile.LastActive)
-                .Skip(skip)
-                .Take(take)
-                .ToListAsync();
-        }
-
-        public async Task<List<(AppUser User, bool HasLikedCurrentUser)>> GetFeedCandidatesWithLikeStatusAsync(string currentUserId)
+        public async Task<List<(AppUser User, int LikeWeight)>> GetFeedCandidatesWithLikeStatusAsync(string currentUserId)
         {
             var candidates = await _context.Users
                 .AsNoTracking()
@@ -63,15 +44,20 @@ namespace EvArkadasimV2.Infrastructure.Repositories
                     .Any(s => s.SenderId == currentUserId && s.ReceiverId == u.Id))
                 .ToListAsync();
 
-            var likedMeIds = new HashSet<string>(await _context.UserSwipes
+            var incomingSwipes = await _context.UserSwipes
                 .AsNoTracking()
                 .Where(s => s.ReceiverId == currentUserId &&
                             (s.SwipeType == SwipeType.Like || s.SwipeType == SwipeType.SuperLike))
-                .Select(s => s.SenderId)
-                .ToListAsync());
+                .Select(s => new { s.SenderId, s.SwipeType })
+                .ToListAsync();
+
+            var weightLookup = incomingSwipes.ToDictionary(
+                x => x.SenderId,
+                x => x.SwipeType == SwipeType.SuperLike ? 2 : 1
+            );
 
             return candidates
-                .Select(u => (User: u, HasLikedCurrentUser: likedMeIds.Contains(u.Id)))
+                .Select(u => (User: u, LikeWeight: weightLookup.GetValueOrDefault(u.Id, 0)))
                 .ToList();
         }
     }
