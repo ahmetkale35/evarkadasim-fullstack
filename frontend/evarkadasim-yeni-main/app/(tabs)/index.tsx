@@ -31,6 +31,7 @@ export default function FindRoommatesScreen() {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const lastRefreshAt = useRef(0);
   const REFRESH_COOLDOWN_MS = 15_000;
   const toastOpacity = useRef(new Animated.Value(0)).current;
@@ -93,6 +94,24 @@ export default function FindRoommatesScreen() {
         refreshProfile();
         refresh();
       });
+    }
+  };
+
+  const handleResetFeed = async () => {
+    setResetting(true);
+    try {
+      const { deletedCount } = await userService.resetFeed();
+      setCurrentIndex(0);
+      await refresh();
+      if (deletedCount > 0) {
+        showToast(`${deletedCount} kişi tekrar gösteriliyor`);
+      } else {
+        showToast('Bölgende şu an yeni üye yok');
+      }
+    } catch {
+      showToast('Bir hata oluştu, tekrar dene');
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -263,11 +282,25 @@ export default function FindRoommatesScreen() {
               />
             }
           >
-            <Text style={styles.emptyTitle}>{"That's everyone for now!"}</Text>
+            <Text style={styles.emptyTitle}>Herkesle tanıştın! 🎉</Text>
             <Text style={styles.emptySubtitle}>
-              Check back later for more roommate profiles, or expand your search settings.
+              Yeni üye gelince burada görünecek. Ya da geçtiklerini tekrar görmek ister misin?
             </Text>
+            <TouchableOpacity
+              style={[styles.resetButton, resetting && { opacity: 0.6 }]}
+              onPress={handleResetFeed}
+              disabled={resetting}
+            >
+              {resetting ? (
+                <ActivityIndicator color="#EC4899" size="small" />
+              ) : (
+                <Text style={styles.resetButtonText}>Başa Dön</Text>
+              )}
+            </TouchableOpacity>
           </ScrollView>
+          <Animated.View style={[styles.toast, { opacity: toastOpacity }]} pointerEvents="none">
+            <Text style={styles.toastText}>{toastMsg}</Text>
+          </Animated.View>
         </SafeAreaView>
       </LinearGradient>
     );
@@ -544,6 +577,20 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.8)',
     textAlign: 'center',
     lineHeight: 24,
+    marginBottom: 32,
+  },
+  resetButton: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 40,
+    paddingVertical: 14,
+    borderRadius: 30,
+    minWidth: 140,
+    alignItems: 'center',
+  },
+  resetButtonText: {
+    color: '#EC4899',
+    fontSize: 16,
+    fontWeight: '700',
   },
   toast: {
     position: 'absolute',
