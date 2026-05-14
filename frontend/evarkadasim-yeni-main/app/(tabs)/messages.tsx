@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Send, ArrowLeft } from 'lucide-react-native';
@@ -7,6 +7,27 @@ import { useLocalSearchParams } from 'expo-router';
 import { ChatMessage } from '@/components/ChatMessage';
 import { useMatches } from '@/hooks/useMatches';
 import { useMessages } from '@/hooks/useMessages';
+
+function MatchAvatar({ uri, name, size }: { uri?: string; name: string; size: number }) {
+  const [error, setError] = useState(false);
+  const isCircle = size / 2;
+  if (uri && !error) {
+    return (
+      <Image
+        source={{ uri }}
+        style={{ width: size, height: size, borderRadius: isCircle }}
+        onError={() => setError(true)}
+      />
+    );
+  }
+  return (
+    <View style={{ width: size, height: size, borderRadius: isCircle, backgroundColor: '#FCE7F3', alignItems: 'center', justifyContent: 'center' }}>
+      <Text style={{ fontSize: size * 0.38, fontWeight: '700', color: '#EC4899' }}>
+        {name[0]?.toUpperCase()}
+      </Text>
+    </View>
+  );
+}
 
 export default function MessagesScreen() {
   const { matches, loading: matchesLoading } = useMatches();
@@ -45,7 +66,10 @@ export default function MessagesScreen() {
             <TouchableOpacity style={styles.backButton} onPress={() => setSelectedMatchId(null)}>
               <ArrowLeft size={24} color="#111827" />
             </TouchableOpacity>
-            <Text style={styles.chatTitle}>{currentMatch.user.name}</Text>
+            <View style={styles.chatTitleRow}>
+              <MatchAvatar uri={currentMatch.user.photos[0]} name={currentMatch.user.name} size={36} />
+              <Text style={styles.chatTitle} numberOfLines={1}>{currentMatch.user.name}</Text>
+            </View>
             <View style={styles.placeholder} />
           </View>
 
@@ -125,12 +149,15 @@ export default function MessagesScreen() {
             contentContainerStyle={styles.listContainer}
             renderItem={({ item }) => (
               <TouchableOpacity style={styles.matchItem} onPress={() => setSelectedMatchId(item.id)}>
-                <Text style={styles.matchName}>{item.user.name}</Text>
-                {item.lastMessage && (
-                  <Text style={styles.lastMessage} numberOfLines={1}>
-                    {item.lastMessage.content}
-                  </Text>
-                )}
+                <MatchAvatar uri={item.user.photos[0]} name={item.user.name} size={52} />
+                <View style={styles.matchInfo}>
+                  <Text style={styles.matchName}>{item.user.name}</Text>
+                  {item.lastMessage && (
+                    <Text style={styles.lastMessage} numberOfLines={1}>
+                      {item.lastMessage.content}
+                    </Text>
+                  )}
+                </View>
                 {item.isNewMatch && <View style={styles.newBadge} />}
               </TouchableOpacity>
             )}
@@ -150,7 +177,7 @@ const styles = StyleSheet.create({
   listContainer: { paddingBottom: 20 },
   matchItem: {
     backgroundColor: '#fff',
-    padding: 16,
+    padding: 12,
     borderRadius: 12,
     marginBottom: 8,
     shadowColor: '#000',
@@ -160,11 +187,13 @@ const styles = StyleSheet.create({
     elevation: 2,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 12,
   },
-  matchName: { fontSize: 16, fontWeight: '600', color: '#111827', flex: 1 },
-  lastMessage: { fontSize: 14, color: '#6B7280', flex: 2, marginLeft: 8 },
-  newBadge: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#EC4899', marginLeft: 8 },
+  matchInfo: { flex: 1 },
+  matchName: { fontSize: 16, fontWeight: '600', color: '#111827' },
+  lastMessage: { fontSize: 14, color: '#6B7280', marginTop: 2 },
+  newBadge: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#EC4899' },
+  chatTitleRow: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, overflow: 'hidden' },
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
   emptyTitle: { fontSize: 24, fontWeight: '600', color: '#374151', marginTop: 16, marginBottom: 8 },
   emptySubtitle: { fontSize: 16, color: '#9CA3AF', textAlign: 'center', lineHeight: 22 },

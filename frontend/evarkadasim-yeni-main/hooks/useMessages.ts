@@ -6,6 +6,7 @@ import { storage } from '@/services/storage';
 
 interface MessageDto {
   id: number;
+  matchId: number;
   senderId: string;
   content: string;
   timestamp: string;
@@ -36,6 +37,7 @@ export function useMessages(matchId: string | null) {
     signalrService.start().catch(() => {});
 
     signalrService.on<MessageDto>('ReceiveMessage', (dto) => {
+      if (dto.matchId.toString() !== matchId) return;
       const msg: Message = {
         id: dto.id.toString(),
         senderId: dto.senderId,

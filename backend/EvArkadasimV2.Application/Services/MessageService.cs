@@ -98,6 +98,7 @@ namespace EvArkadasimV2.Application.Services
         private static MessageDto MapToDto(Message m) => new()
         {
             Id = m.Id,
+            MatchId = m.UserMatchId,
             SenderId = m.SenderId,
             Content = m.Content,
             Timestamp = m.Timestamp,
