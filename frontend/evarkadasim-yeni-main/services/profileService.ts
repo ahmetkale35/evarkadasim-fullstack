@@ -18,6 +18,14 @@ export interface MyProfile {
   hasProperty?: boolean;
   isOnlineStatusVisible?: boolean;
   notificationsEnabled?: boolean;
+  initialBasicTestResults?: {
+    socialEnergy: number;
+    orderApproach: number;
+    conflictManagement: number;
+    sharingStyle: number;
+    lifeRhythm: number;
+    communicationStyle: number;
+  };
 }
 
 export interface UpdateProfilePayload {

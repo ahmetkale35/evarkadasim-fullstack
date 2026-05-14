@@ -83,6 +83,18 @@ export function useCharacterTest() {
         if (results) testService.submitDetailed(results).catch(() => {});
     };
 
+    // Backend'den gelen sonucu local'e sync eder — API'ye tekrar göndermez
+    const syncBasicTestFromServer = async (results: TestResults) => {
+        if (globalBasicTestResults !== null) return;
+        globalBasicTestResults = results;
+        setBasicTestResults(results);
+        notifyListeners();
+        try {
+            const userId = await storage.getUserId();
+            if (userId) await AsyncStorage.setItem(userKey('char_test_basic', userId), JSON.stringify(results));
+        } catch {}
+    };
+
     const hasCompletedBasicTest = (): boolean => globalBasicTestResults !== null;
     const hasCompletedDetailedTest = (): boolean => globalDetailedTestResults !== null;
 
@@ -112,6 +124,7 @@ export function useCharacterTest() {
         detailedTestResults,
         setBasicTestResults: setBasicTestResultsGlobal,
         setDetailedTestResults: setDetailedTestResultsGlobal,
+        syncBasicTestFromServer,
         hasCompletedBasicTest,
         hasCompletedDetailedTest,
         getPersonalityType,
