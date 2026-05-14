@@ -38,12 +38,13 @@ export interface DetailedTestResults {
   // İskelet test sonuçları
   basicResults: TestResults;
 
-  // Detaylı test sonuçları (her kategori için ek 5 soru)
-  detailedSocialEnergy: number[];      // DS1-DS6
-  detailedOrderApproach: number[];     // DS7-DS12 
-  detailedConflictManagement: number[]; // DS13-DS18
-  detailedSharingStyle: number[];      // DS19-DS24
-  detailedLifeRhythm: number[];        // DS25-DS30
+  // Detaylı test sonuçları (her kategori için 6 soru)
+  detailedSocialEnergy: number[];        // DS1-DS6
+  detailedOrderApproach: number[];       // DS7-DS12
+  detailedConflictManagement: number[];  // DS13-DS18
+  detailedSharingStyle: number[];        // DS19-DS24
+  detailedLifeRhythm: number[];          // DS25-DS30
+  detailedCommunicationStyle: number[];  // DS31-DS36
 
   // Birleştirilmiş nihai skorlar
   finalScores: TestResults;

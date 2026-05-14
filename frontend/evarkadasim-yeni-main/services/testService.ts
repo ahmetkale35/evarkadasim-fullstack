@@ -15,15 +15,13 @@ export const testService = {
   },
 
   submitDetailed: async (results: DetailedTestResults): Promise<void> => {
-    // Backend sadece ham cevap dizilerini alıyor; frontend'in finalScores hesaplama
-    // formülü ((basicResult×2 + detailedAverage)/3) backend'e yansıtılmıyor.
-    // İleride formül tutarlılığı sağlandığında bu endpoint güncellenecek.
     await apiClient.post('/test/Detailed', {
       detailedSocialEnergy: results.detailedSocialEnergy,
       detailedOrderApproach: results.detailedOrderApproach,
       detailedConflictManagement: results.detailedConflictManagement,
       detailedSharingStyle: results.detailedSharingStyle,
       detailedLifeRhythm: results.detailedLifeRhythm,
+      detailedCommunicationStyle: results.detailedCommunicationStyle,
     });
   },
 };

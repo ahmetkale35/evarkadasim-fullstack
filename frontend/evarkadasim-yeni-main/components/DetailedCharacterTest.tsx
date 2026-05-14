@@ -9,6 +9,7 @@ import { DetailedTestResults, TestResults } from '@/types';
 interface DetailedCharacterTestProps {
     onComplete: (results: DetailedTestResults) => void;
     onBack: () => void;
+    basicResults: TestResults;
 }
 
 interface DetailedQuestion {
@@ -246,6 +247,53 @@ const detailedQuestions: DetailedQuestion[] = [
         categoryName: 'Yaşam Ritmi',
         icon: <Calendar size={24} color="#3B82F6" />,
         isReverse: true
+    },
+
+    // İletişim Tarzı (6 soru)
+    {
+        id: 'DS31',
+        text: 'Ev arkadaşımla sorun yaşadığımda doğrudan konuşmayı tercih ederim.',
+        category: 'communicationStyle',
+        categoryName: 'İletişim Tarzı',
+        icon: <MessageSquare size={24} color="#EC4899" />
+    },
+    {
+        id: 'DS32',
+        text: 'Ev arkadaşımın beni rahatsız eden bir davranışı olsa bile genellikle söylemem.',
+        category: 'communicationStyle',
+        categoryName: 'İletişim Tarzı',
+        icon: <MessageSquare size={24} color="#EC4899" />,
+        isReverse: true
+    },
+    {
+        id: 'DS33',
+        text: 'İhtiyaçlarımı ve sınırlarımı ev arkadaşıma açıkça ifade edebilirim.',
+        category: 'communicationStyle',
+        categoryName: 'İletişim Tarzı',
+        icon: <MessageSquare size={24} color="#EC4899" />
+    },
+    {
+        id: 'DS34',
+        text: 'Ev içi anlaşmazlıklarda ne hissettiğimi paylaşmakta zorlanırım.',
+        category: 'communicationStyle',
+        categoryName: 'İletişim Tarzı',
+        icon: <MessageSquare size={24} color="#EC4899" />,
+        isReverse: true
+    },
+    {
+        id: 'DS35',
+        text: 'Ev kuralları konusunda net ve açık konuşmalar yapmayı tercih ederim.',
+        category: 'communicationStyle',
+        categoryName: 'İletişim Tarzı',
+        icon: <MessageSquare size={24} color="#EC4899" />
+    },
+    {
+        id: 'DS36',
+        text: 'Ev arkadaşımla aramızdaki gerginlikleri konuşmak yerine zamanla geçmesini beklerim.',
+        category: 'communicationStyle',
+        categoryName: 'İletişim Tarzı',
+        icon: <MessageSquare size={24} color="#EC4899" />,
+        isReverse: true
     }
 ];
 
@@ -257,7 +305,7 @@ const scaleLabels = [
     'Kesinlikle\nKatılıyorum'
 ];
 
-export function DetailedCharacterTest({ onComplete, onBack }: DetailedCharacterTestProps) {
+export function DetailedCharacterTest({ onComplete, onBack, basicResults }: DetailedCharacterTestProps) {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [answers, setAnswers] = useState<Record<string, number>>({});
 
@@ -309,7 +357,8 @@ export function DetailedCharacterTest({ onComplete, onBack }: DetailedCharacterT
             orderApproach: [],
             conflictManagement: [],
             sharingStyle: [],
-            lifeRhythm: []
+            lifeRhythm: [],
+            communicationStyle: []
         };
 
         detailedQuestions.forEach(question => {
@@ -318,24 +367,16 @@ export function DetailedCharacterTest({ onComplete, onBack }: DetailedCharacterT
             categoryAnswers[question.category].push(score);
         });
 
-        // Demo için basit test sonuçları (normalde ana sayfadan gelecek)
-        const basicResults: TestResults = {
-            socialEnergy: 3.5,
-            orderApproach: 4.0,
-            conflictManagement: 3.5,
-            sharingStyle: 3.0,
-            lifeRhythm: 3.5,
-            communicationStyle: 3.0
-        };
+        const avg = (arr: number[]) => arr.reduce((a, b) => a + b, 0) / arr.length;
 
-        // Detaylı sonuçları hesapla
+        // Backend ile tutarlı: detaylı test basic testi geçersiz kılar, 6 sorunun ortalaması final skordur
         const finalScores: TestResults = {
-            socialEnergy: (basicResults.socialEnergy * 2 + categoryAnswers.socialEnergy.reduce((a, b) => a + b, 0) / categoryAnswers.socialEnergy.length) / 3,
-            orderApproach: (basicResults.orderApproach * 2 + categoryAnswers.orderApproach.reduce((a, b) => a + b, 0) / categoryAnswers.orderApproach.length) / 3,
-            conflictManagement: (basicResults.conflictManagement * 2 + categoryAnswers.conflictManagement.reduce((a, b) => a + b, 0) / categoryAnswers.conflictManagement.length) / 3,
-            sharingStyle: (basicResults.sharingStyle * 2 + categoryAnswers.sharingStyle.reduce((a, b) => a + b, 0) / categoryAnswers.sharingStyle.length) / 3,
-            lifeRhythm: (basicResults.lifeRhythm * 2 + categoryAnswers.lifeRhythm.reduce((a, b) => a + b, 0) / categoryAnswers.lifeRhythm.length) / 3,
-            communicationStyle: basicResults.communicationStyle // İletişim detayda yok
+            socialEnergy: avg(categoryAnswers.socialEnergy),
+            orderApproach: avg(categoryAnswers.orderApproach),
+            conflictManagement: avg(categoryAnswers.conflictManagement),
+            sharingStyle: avg(categoryAnswers.sharingStyle),
+            lifeRhythm: avg(categoryAnswers.lifeRhythm),
+            communicationStyle: avg(categoryAnswers.communicationStyle),
         };
 
         // Kişilik tipi hesapla
@@ -351,6 +392,7 @@ export function DetailedCharacterTest({ onComplete, onBack }: DetailedCharacterT
             detailedConflictManagement: categoryAnswers.conflictManagement,
             detailedSharingStyle: categoryAnswers.sharingStyle,
             detailedLifeRhythm: categoryAnswers.lifeRhythm,
+            detailedCommunicationStyle: categoryAnswers.communicationStyle,
             finalScores,
             personalityType
         };

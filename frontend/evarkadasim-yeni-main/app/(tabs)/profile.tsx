@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Settings, Camera, MapPin, Heart, Star, Shield, Bell, Eye, CreditCard as Edit, Shield as Verified, Brain, Lock, CheckCircle2, LogOut, X, Home, Search } from 'lucide-react-native';
 import { CharacterTest } from '@/components/CharacterTest';
+import { DetailedCharacterTest } from '@/components/DetailedCharacterTest';
 import { useCharacterTest, clearCharacterTestStorage } from '@/hooks/useCharacterTest';
 import { useProfile } from '@/hooks/useProfile';
 import { profileService } from '@/services/profileService';
@@ -139,15 +140,15 @@ export default function ProfileScreen() {
     );
   }
 
-  // Detaylı test geçici olarak devre dışı
-  // if (showDetailedTest) {
-  //   return (
-  //     <DetailedCharacterTest
-  //       onComplete={handleDetailedTestComplete}
-  //       onBack={handleBackFromTest}
-  //     />
-  //   );
-  // }
+  if (showDetailedTest && basicTestResults) {
+    return (
+      <DetailedCharacterTest
+        onComplete={handleDetailedTestComplete}
+        onBack={handleBackFromTest}
+        basicResults={basicTestResults}
+      />
+    );
+  }
 
   return (
     <>
@@ -459,7 +460,7 @@ export default function ProfileScreen() {
                       <Text style={styles.testButtonSubtitle}>
                         {!hasCompletedBasicTest()
                           ? 'Önce basit testi tamamlayın'
-                          : '30 soru • 5-7 dakika • Hassas profil'
+                          : '36 soru • 6-8 dakika • Hassas profil'
                         }
                       </Text>
                     </View>
