@@ -12,8 +12,9 @@ import {
 import MapView, { Marker } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MapPin, X, ChevronRight, User, Home, Lock } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
-import { useFocusEffect } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { storage } from '@/services/storage';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { usePropertyMapPins } from '@/hooks/usePropertyMapPins';
 import { useProfile } from '@/hooks/useProfile';
@@ -71,13 +72,28 @@ export default function ExploreScreen() {
   const [ownerLoading, setOwnerLoading] = useState(false);
   const [ownerModalVisible, setOwnerModalVisible] = useState(false);
   const [showTestBanner, setShowTestBanner] = useState(false);
+  const [testBannerDismissed, setTestBannerDismissed] = useState(false);
   const swipedRef = useRef(false);
   const [swipeKey, setSwipeKey] = useState(0);
   const router = useRouter();
   const { hasCompletedBasicTest, setBasicTestResults } = useCharacterTest();
   const [showTest, setShowTest] = useState(false);
 
-  const dismissTestBanner = () => setShowTestBanner(false);
+  useEffect(() => {
+    storage.getUserId().then(uid => {
+      if (!uid) return;
+      AsyncStorage.getItem(`test_banner_dismissed_${uid}`).then(val => {
+        if (val) setTestBannerDismissed(true);
+      });
+    });
+  }, []);
+
+  const dismissTestBanner = async () => {
+    const uid = await storage.getUserId();
+    if (uid) await AsyncStorage.setItem(`test_banner_dismissed_${uid}`, '1');
+    setTestBannerDismissed(true);
+    setShowTestBanner(false);
+  };
 
   const handleTestComplete = (results: TestResults | null) => {
     if (results) setBasicTestResults(results);
@@ -94,7 +110,7 @@ export default function ExploreScreen() {
     setOwnerUser(null);
     swipedRef.current = false;
     setSwipeKey((k) => k + 1);
-    setShowTestBanner(!hasCompletedBasicTest());
+    setShowTestBanner(!hasCompletedBasicTest() && !testBannerDismissed);
     setOwnerModalVisible(true);
     setOwnerLoading(true);
     const user = await userService.getById(pin.ownerId);
