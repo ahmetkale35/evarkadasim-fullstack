@@ -1,18 +1,18 @@
 # EvArkadaşım — Backend API
 
 <p align="left">
-  <img src="https://img.shields.io/badge/.NET-6.0-512BD4?style=flat&logo=dotnet" />
+  <img src="https://img.shields.io/badge/.NET-8.0-512BD4?style=flat&logo=dotnet" />
   <img src="https://img.shields.io/badge/Architecture-Clean_Architecture-brightgreen" />
-  <img src="https://img.shields.io/badge/Database-SQLite_%26_EF_Core-003B57?style=flat&logo=sqlite" />
+  <img src="https://img.shields.io/badge/Database-PostgreSQL_%26_EF_Core-336791?style=flat&logo=postgresql" />
   <img src="https://img.shields.io/badge/Cache-Redis-DC382D?style=flat&logo=redis" />
   <img src="https://img.shields.io/badge/Realtime-SignalR-512BD4?style=flat" />
   <img src="https://img.shields.io/badge/Auth-JWT_Bearer-orange?style=flat&logo=jsonwebtokens" />
   <img src="https://img.shields.io/badge/Logging-Serilog-004880?style=flat" />
   <img src="https://img.shields.io/badge/Postman-78_Tests-EF5B25?style=flat&logo=postman" />
-  <img src="https://img.shields.io/badge/xUnit-49_Tests-512BD4?style=flat&logo=dotnet" />
+  <img src="https://img.shields.io/badge/xUnit-73_Tests-512BD4?style=flat&logo=dotnet" />
 </p>
 
-ASP.NET Core 6 Web API for a personality-driven roommate matchmaking platform. Built with Clean Architecture, Repository Pattern, JWT authentication with refresh token rotation, Redis distributed cache, SignalR real-time messaging, and role-based feed filtering (property owners ↔ room seekers).
+ASP.NET Core 8 Web API for a personality-driven roommate matchmaking platform. Built with Clean Architecture, Repository Pattern, JWT authentication with refresh token rotation, Redis distributed cache, SignalR real-time messaging, and role-based feed filtering (property owners ↔ room seekers).
 
 ---
 
@@ -20,17 +20,17 @@ ASP.NET Core 6 Web API for a personality-driven roommate matchmaking platform. B
 
 | Layer | Technology |
 |-------|-----------|
-| Framework | ASP.NET Core 6 Web API |
+| Framework | ASP.NET Core 8 Web API |
 | Architecture | Clean Architecture (4 layers) |
-| ORM | Entity Framework Core 6 |
-| Database | SQLite (dev) |
+| ORM | Entity Framework Core 8 |
+| Database | PostgreSQL 16 (via Npgsql) |
 | Cache | Redis via `StackExchange.Redis` (5-min feed TTL) |
 | Real-time | ASP.NET Core SignalR (WebSocket hub) |
 | Auth | ASP.NET Identity + JWT Bearer + Refresh Token |
 | Security | Rate Limiting (`AspNetCoreRateLimit`), Token Revocation |
 | Logging | Serilog (console + rolling file sinks) |
 | API Docs | Swagger / OpenAPI (XML doc comments) |
-| Testing | xUnit + Moq (49 tests) |
+| Testing | xUnit + Moq (73 tests) |
 
 ---
 
@@ -49,7 +49,7 @@ API: `http://localhost:5000` | Swagger: `http://localhost:5000/swagger`
 
 ### Option B — Local
 
-**Prerequisites:** .NET 6 SDK, Redis (optional — app degrades gracefully without it)
+**Prerequisites:** .NET 8 SDK, PostgreSQL 16, Redis (optional — app degrades gracefully without it)
 
 ```bash
 cd EvArkadasimV2.API
@@ -143,7 +143,7 @@ The hub authenticates via JWT query string (`access_token`) because WebSocket co
 | `JwtSettings__Secret` | JWT signing key (min 32 chars) |
 | `JwtSettings__Issuer` | Token issuer identifier |
 | `JwtSettings__Audience` | Token audience identifier |
-| `ConnectionStrings__DefaultConnection` | SQLite file path |
+| `ConnectionStrings__DefaultConnection` | PostgreSQL connection string (e.g. `Host=localhost;Port=5432;Database=evarkadasimv2;Username=postgres;Password=...`) |
 | `ConnectionStrings__Redis` | Redis connection string (e.g. `localhost:6379`) |
 
 Development defaults are in `appsettings.Development.json` (not committed). Create this file locally with a `JwtSettings.Secret` value of at least 32 characters. Redis is optional; the feed falls through to direct DB query if Redis is unavailable.
@@ -163,18 +163,19 @@ The collection includes 78 tests across 10 groups (Auth, Profile, Feed, Swipe, T
 ```bash
 cd ..   # backend/ root
 dotnet test EvArkadasimV2.slnx -c Release
-# Passed! 49/49
+# Passed! 73/73
 ```
 
-49 tests across 6 service classes:
+73 tests across 6 service classes:
 
 | Test Class | Tests | What It Covers |
 |------------|-------|----------------|
 | `CompatibilityServiceTests` | 8 | Manhattan Distance algorithm, null → null, boundary values, symmetry |
-| `FeedServiceTests` | 7 | Sorting priority (likers first), pagination (skip/take), DoS clamp, edge cases |
-| `SwipeServiceTests` | 8 | Self-swipe guard, invalid type, duplicate swipe, mutual match creation, MatchesCount, SignalR dispatch |
+| `FeedServiceTests` | 10 | Sorting priority (likers first), pagination (skip/take), DoS clamp, edge cases |
+| `SwipeServiceTests` | 10 | Self-swipe guard, invalid type, duplicate swipe, mutual match creation, MatchesCount, SignalR dispatch |
 | `MessageServiceTests` | 13 | Auth (NotFoundException, ForbiddenException), send direction, HTML encoding, mark-as-read, invalid type fallback |
-| `ProfileServiceTests` | 6 | Score mapping (Initial/Final/CharacterProfile), null guards, cache invalidation |
+| `ProfileServiceTests` | 7 | Score mapping (Initial/Final/CharacterProfile), null guards, cache invalidation |
+| `PropertyServiceTests` | 18 | CRUD operations, ownership validation, filters, price validation |
 | `TestServiceTests` | 7 | Basic/Detailed test submission, score averaging, prerequisite validation |
 
 All repository and service dependencies are mocked with Moq — no database required.

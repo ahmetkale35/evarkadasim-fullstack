@@ -47,7 +47,7 @@ builder.Host.UseSerilog((ctx, services, config) => config
 
 // --- VERİTABANI ---
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(
+    options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection")!,
         b => b.MigrationsAssembly("EvArkadasimV2.Infrastructure")));
 
@@ -209,17 +209,16 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// --- DATA SEEDING (yalnızca Development) ---clac
-if (app.Environment.IsDevelopment())
+// --- MIGRATION + SEEDING ---
 {
     using var scope = app.Services.CreateScope();
     var sp = scope.ServiceProvider;
 
-    // Migration önce: seed sırasında şema uyuşmazlığından kaynaklanan hataları önler.
     var db = sp.GetRequiredService<EvArkadasimV2.Infrastructure.Data.AppDbContext>();
     await db.Database.MigrateAsync();
 
-    await EvArkadasimV2.Infrastructure.Data.DataSeeder.SeedAsync(sp);
+    if (app.Environment.IsDevelopment())
+        await EvArkadasimV2.Infrastructure.Data.DataSeeder.SeedAsync(sp);
 }
 
 // --- MIDDLEWARE PIPELINE ---

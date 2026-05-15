@@ -15,8 +15,6 @@ RUN dotnet publish "EvArkadasimV2.API/EvArkadasimV2.API.csproj" -c Release -o /a
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 
-RUN mkdir -p /data && chmod 777 /data
-
 COPY --from=build /app/publish .
 
 ENV ASPNETCORE_URLS=http://+:80

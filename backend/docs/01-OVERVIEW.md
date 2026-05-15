@@ -16,7 +16,7 @@
 | Bileşen | Teknoloji | Neden Bu? |
 |---------|-----------|-----------|
 | Framework | ASP.NET Core 8.0 | Microsoft'un modern web framework'ü. Cross-platform, yüksek performans, geniş ekosistem |
-| Veritabanı | SQLite | Geliştirme için ideal: kurulum gerektirmez, tek dosya. Üretimde PostgreSQL'e geçilmeli (Görev N0) |
+| Veritabanı | PostgreSQL 16 (Npgsql) | Üretim ölçeğinde veritabanı. Eş zamanlı yazma, bağlantı havuzu, JSONB desteği |
 | ORM | Entity Framework Core 8 | C# ile SQL yazmadan veritabanı işlemleri. LINQ sorguları SQL'e çevrilir |
 | Cache | Redis (`StackExchange.Redis`) | Feed sonuçları 5-dk TTL ile cache'lenir; swipe sonrası otomatik invalidate |
 | Gerçek Zamanlı | ASP.NET Core SignalR | WebSocket tabanlı hub; match ve mesaj bildirimleri anlık push edilir |
@@ -51,9 +51,9 @@ dotnet run
 ```
 
 **İlk çalıştırmada otomatik olarak:**
-- Veritabanı oluşturulur (`evarkadasimv2.db` dosyası)
+- PostgreSQL'e bağlanılır (Docker: `localhost:5432`)
 - Tüm migration'lar uygulanır (tablolar yaratılır)
-- 50 sahte kullanıcı seed edilir
+- 50+ sahte kullanıcı seed edilir
 
 **Swagger UI**: `https://localhost:7xxx/swagger` adresine git (port numarası konsol çıktısında yazar)
 
@@ -208,10 +208,10 @@ SwipeRepository (Infrastructure)
     │
     │  EF Core ile veritabanına yazar
     ▼
-SQLite Veritabanı
+PostgreSQL Veritabanı
 ```
 
-**Kritik nokta**: `SwipeService` asla `SwipeRepository`'yi doğrudan bilmez. `ISwipeRepository` interface'ine bağımlıdır. Yarın PostgreSQL'e geçsen, yeni bir `PostgresSwipeRepository` yazarsın ve DI kaydını değiştirirsin — `SwipeService`'e dokunmazsın.
+**Kritik nokta**: `SwipeService` asla `SwipeRepository`'yi doğrudan bilmez. `ISwipeRepository` interface'ine bağımlıdır. DB provider değişse bile `SwipeService`'e dokunulmaz.
 
 ### Proje Referans Zinciri (.csproj dosyaları)
 
@@ -346,11 +346,10 @@ Bu otomatik zincirleme "dependency resolution" olarak bilinir.
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Data Source=evarkadasimv2.db"
-    // SQLite bağlantı dizesi. "Data Source" = dosya yolu.
-    // Göreceli yol: API projesinin çalışma dizininde oluşur.
-    // Üretimde: "Data Source=/var/data/evarkadasimv2.db" gibi mutlak yol
-    // veya PostgreSQL: "Host=localhost;Database=evarkadasim;Username=app;Password=..."
+    "DefaultConnection": "Host=localhost;Port=5432;Database=evarkadasimv2;Username=postgres;Password=postgres"
+    // PostgreSQL bağlantı dizesi.
+    // Docker (prod): Host=postgres (service adı), env var ile override edilir.
+    // Lokal (dev): appsettings.Development.json'da evarkadasimv2_dev DB'si kullanılır.
   },
   "JwtSettings": {
     "Secret": "REPLACE_WITH_SECURE_SECRET_VIA_ENV_OR_USER_SECRETS",

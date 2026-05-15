@@ -7,7 +7,7 @@
 ```
 ┌─────────┐                     ┌──────────┐                    ┌──────────┐
 │  Client  │                     │   API    │                    │    DB    │
-│ (Mobil)  │                     │ (Server) │                    │ (SQLite) │
+│ (Mobil)  │                     │ (Server) │                    │ (Postgres)│
 └────┬─────┘                     └────┬─────┘                    └────┬─────┘
      │                                │                               │
      │ POST /api/auth/login           │                               │
@@ -397,7 +397,7 @@ dotnet ef migrations add AddUserBlocks ...
 | Paket | Neden? |
 |-------|--------|
 | Microsoft.EntityFrameworkCore | ORM — C# ile SQL yazmadan DB işlemleri |
-| Microsoft.EntityFrameworkCore.Sqlite | SQLite database provider (geliştirme; üretimde Npgsql/PostgreSQL'e geçilecek) |
+| Npgsql.EntityFrameworkCore.PostgreSQL | PostgreSQL database provider |
 | Microsoft.EntityFrameworkCore.Tools | `dotnet ef migrations` CLI komutları |
 | Microsoft.AspNetCore.Identity.EntityFrameworkCore | Identity tablolarını EF Core ile yönet |
 
@@ -443,14 +443,14 @@ dotnet ef migrations add AddUserBlocks ...
 | **Property Mine** | ✅ Tamamlandı | Kendi ilanını görüntuleme/silme (`GET/DELETE /api/property/mine`) |
 | **User Detail** | ✅ Tamamlandı | Tekil kullanıcı profili + uyumluluk skoru (`GET /api/users/{id}`) |
 | **Frontend Bağlama** | ✅ Tamamlandı | Mock'tan gerçek API'ye geçiş (Faz 6) — Expo React Native |
-| **Unit Tests** | ✅ Tamamlandı | 49 test — xUnit + Moq (6 servis sınıfı) |
+| **Unit Tests** | ✅ Tamamlandı | 73 test — xUnit + Moq (7 servis sınıfı) |
 | **Seed Verisi** | ✅ Tamamlandı | 50 kullanıcı, 10 ilan, 3 match, 18 mesaj |
 
 ### Devam Eden / Planlanan Özellikler
 
 | Özellik | Durum | Zorluk | Etki |
 |---------|-------|--------|------|
-| **PostgreSQL Geçişi** | Planlandı (N0) | Orta | SQLite prod'da scale etmez; dosya upload öncesi yapılmalı |
+| **PostgreSQL Geçişi** | ✅ Tamamlandı (N0) | Orta | Npgsql 8.0.10, docker-compose postgres:16-alpine, migration yeniden üretildi |
 | **Fotoğraf Upload** | Planlandı (N) | Orta | Gerçek dosya depolama; N0 blokeri |
 | **FCM Push Bildirimleri** | Planlandı (P) | Yüksek | Eşleşme/mesaj bildirimi; N sonrası |
 | **Keşfet Harita Refactor** | Planlandı (O) | Orta | Koordinat DTO eksik, swipe sync yok |
