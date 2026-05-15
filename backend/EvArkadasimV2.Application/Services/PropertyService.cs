@@ -67,7 +67,7 @@ namespace EvArkadasimV2.Application.Services
                 Images = dto.Images,
                 Description = dto.Description ?? string.Empty,
                 Amenities = dto.Amenities,
-                AvailableFrom = dto.AvailableFrom,
+                AvailableFrom = DateTime.SpecifyKind(dto.AvailableFrom, DateTimeKind.Utc),
                 PropertyType = dto.PropertyType,
                 Furnished = dto.Furnished,
                 PetsAllowed = dto.PetsAllowed,
@@ -116,7 +116,7 @@ namespace EvArkadasimV2.Application.Services
             property.Images = dto.Images ?? new List<string>();
             property.Description = dto.Description ?? string.Empty;
             property.Amenities = dto.Amenities;
-            property.AvailableFrom = dto.AvailableFrom;
+            property.AvailableFrom = DateTime.SpecifyKind(dto.AvailableFrom, DateTimeKind.Utc);
             property.PropertyType = dto.PropertyType;
             property.Furnished = dto.Furnished;
             property.PetsAllowed = dto.PetsAllowed;
