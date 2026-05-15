@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
 using AspNetCoreRateLimit;
+using Microsoft.AspNetCore.Http.Features;
 using Serilog;
 using EvArkadasimV2.API.Middleware;
 using EvArkadasimV2.Application.Interfaces.Repositories;
@@ -65,6 +66,8 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 
 // --- YAPILANDIRMA ---
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
+builder.Services.Configure<FormOptions>(o => o.MultipartBodyLengthLimit = 10 * 1024 * 1024);
 
 // --- JWT KİMLİK DOĞRULAMA ---
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()!;
@@ -117,6 +120,7 @@ builder.Services.AddScoped<IPropertyRepository, PropertyRepository>();
 builder.Services.AddScoped<IPropertyService, PropertyService>();
 builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<IMessageService, MessageService>();
+builder.Services.AddSingleton<IFileStorageService, CloudinaryFileStorageService>();
 
 // --- API ARAÇLARI ---
 builder.Services.AddControllers()
