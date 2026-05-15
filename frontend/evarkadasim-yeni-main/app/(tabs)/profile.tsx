@@ -165,16 +165,18 @@ export default function ProfileScreen() {
     { label: 'Eşleşme', value: profile?.matchesCount?.toString() ?? '—', icon: Star },
   ];
 
-  const handleBasicTestComplete = (results: typeof basicTestResults) => {
+  const handleBasicTestComplete = async (results: typeof basicTestResults) => {
     if (results) {
-      setBasicTestResults(results);
+      await setBasicTestResults(results);
+      feedEvents.emitRefreshNeeded();
     }
     setShowBasicTest(false);
   };
 
-  const handleDetailedTestComplete = (results: typeof detailedTestResults) => {
+  const handleDetailedTestComplete = async (results: typeof detailedTestResults) => {
     if (results) {
-      setDetailedTestResults(results);
+      await setDetailedTestResults(results);
+      feedEvents.emitRefreshNeeded();
     }
     setShowDetailedTest(false);
   };

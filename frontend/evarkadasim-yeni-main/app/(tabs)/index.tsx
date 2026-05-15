@@ -166,9 +166,9 @@ export default function FindRoommatesScreen() {
 
   const currentUser = users[currentIndex];
 
-  const handleTestComplete = (results: TestResults | null) => {
+  const handleTestComplete = async (results: TestResults | null) => {
     if (results) {
-      setBasicTestResults(results);
+      await setBasicTestResults(results);
     }
     setShowTest(false);
     setCurrentIndex(0);

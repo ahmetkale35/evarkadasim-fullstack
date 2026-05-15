@@ -63,7 +63,7 @@ export function useCharacterTest() {
                 }
             }
         } catch {}
-        if (results) testService.submitBasic(results).catch(() => {});
+        if (results) await testService.submitBasic(results).catch(() => {});
     };
 
     const setDetailedTestResultsGlobal = async (results: DetailedTestResults | null) => {
@@ -80,7 +80,7 @@ export function useCharacterTest() {
                 }
             }
         } catch {}
-        if (results) testService.submitDetailed(results).catch(() => {});
+        if (results) await testService.submitDetailed(results).catch(() => {});
     };
 
     // Backend'den gelen sonucu local'e sync eder — API'ye tekrar göndermez
