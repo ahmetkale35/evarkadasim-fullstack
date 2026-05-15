@@ -54,7 +54,9 @@ export function useMessages(matchId: string | null) {
         type: dto.type as Message['type'],
         isRead: dto.isRead,
       };
-      setMessages(prev => [...prev, msg]);
+      setMessages(prev =>
+        prev.some(m => m.id === msg.id) ? prev : [...prev, msg]
+      );
     });
 
     return () => {
@@ -78,8 +80,11 @@ export function useMessages(matchId: string | null) {
 
     try {
       const sent = await messageService.send(matchId, content.trim());
-      // Temp mesajı gerçek sunucu yanıtıyla değiştir
-      setMessages(prev => prev.map(m => m.id === tempMessage.id ? sent : m));
+      // Temp mesajı gerçek sunucu yanıtıyla değiştir; SignalR aynı ID'yi çoktan eklediyse onu da temizle
+      setMessages(prev => [
+        ...prev.filter(m => m.id !== tempMessage.id && m.id !== sent.id),
+        sent,
+      ]);
       return true;
     } catch {
       // Gönderim başarısız — temp mesajı kaldır
