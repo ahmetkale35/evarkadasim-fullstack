@@ -17,11 +17,12 @@ namespace EvArkadasimV2.Tests
     {
         private readonly Mock<IUserRepository> _userRepo = new();
         private readonly Mock<ICacheService> _cache = new();
+        private readonly Mock<IFileStorageService> _storage = new();
         private readonly ProfileService _sut;
 
         public ProfileServiceTests()
         {
-            _sut = new ProfileService(_userRepo.Object, _cache.Object);
+            _sut = new ProfileService(_userRepo.Object, _cache.Object, _storage.Object);
         }
 
         // Hem InitialBasicTestResults hem FinalScores dolu kullanıcı için

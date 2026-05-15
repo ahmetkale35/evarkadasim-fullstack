@@ -12,11 +12,13 @@ namespace EvArkadasimV2.Application.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly ICacheService _cache;
+        private readonly IFileStorageService _storage;
 
-        public ProfileService(IUserRepository userRepository, ICacheService cache)
+        public ProfileService(IUserRepository userRepository, ICacheService cache, IFileStorageService storage)
         {
             _userRepository = userRepository;
             _cache = cache;
+            _storage = storage;
         }
 
         public async Task<UserProfileDto> GetProfileAsync(string userId)
@@ -82,7 +84,14 @@ namespace EvArkadasimV2.Application.Services
             if (updateDto.MoveInDate != null) user.Profile.MoveInDate = updateDto.MoveInDate;
             if (updateDto.Lifestyle != null) user.Profile.Lifestyle = updateDto.Lifestyle;
             if (updateDto.Interests != null) user.Profile.Interests = updateDto.Interests;
-            if (updateDto.Photos != null) user.Profile.Photos = updateDto.Photos;
+            if (updateDto.Photos != null)
+            {
+                var removed = (user.Profile.Photos ?? new List<string>())
+                    .Except(updateDto.Photos).ToList();
+                user.Profile.Photos = updateDto.Photos;
+                foreach (var url in removed)
+                    await _storage.DeleteAsync(url);
+            }
             if (updateDto.Cleanliness.HasValue) user.Profile.Cleanliness = updateDto.Cleanliness.Value;
             if (updateDto.SocialLevel.HasValue) user.Profile.SocialLevel = updateDto.SocialLevel.Value;
             if (updateDto.IsOnlineStatusVisible.HasValue) user.Profile.IsOnlineStatusVisible = updateDto.IsOnlineStatusVisible.Value;

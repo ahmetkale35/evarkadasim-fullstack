@@ -16,6 +16,7 @@ namespace EvArkadasimV2.Tests
         private readonly Mock<IPropertyRepository> _propertyRepo = new();
         private readonly Mock<IUserRepository> _userRepo = new();
         private readonly Mock<ICacheService> _cache = new();
+        private readonly Mock<IFileStorageService> _storage = new();
         private readonly PropertyService _sut;
 
         public PropertyServiceTests()
@@ -23,7 +24,8 @@ namespace EvArkadasimV2.Tests
             _cache.Setup(c => c.RemoveAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
             _propertyRepo.Setup(r => r.SaveChangesAsync()).ReturnsAsync(true);
             _userRepo.Setup(r => r.SaveChangesAsync()).ReturnsAsync(true);
-            _sut = new PropertyService(_propertyRepo.Object, _userRepo.Object, _cache.Object);
+            _storage.Setup(s => s.DeleteAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
+            _sut = new PropertyService(_propertyRepo.Object, _userRepo.Object, _cache.Object, _storage.Object);
         }
 
         private static Property MakeProperty(int id, string ownerId, string location = "İstanbul, Beşiktaş") => new()
