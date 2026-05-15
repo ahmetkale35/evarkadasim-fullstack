@@ -34,6 +34,7 @@ export default function MessagesScreen() {
   const { matchId } = useLocalSearchParams<{ matchId?: string }>();
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(matchId ?? null);
   const [messageText, setMessageText] = useState('');
+  const [sending, setSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
   const { messages, loading: messagesLoading, refreshing: messagesRefreshing, currentUserId, sendMessage, refetch: refetchMessages } = useMessages(selectedMatchId);
@@ -48,12 +49,13 @@ export default function MessagesScreen() {
   }, [messages.length]);
 
   const handleSendMessage = async () => {
-    if (!messageText.trim()) return;
+    if (!messageText.trim() || sending) return;
     const text = messageText;
+    setMessageText('');
+    setSending(true);
     const ok = await sendMessage(text);
-    if (ok) {
-      setMessageText('');
-    } else {
+    setSending(false);
+    if (!ok) {
       Alert.alert('Hata', 'Mesaj gönderilemedi. Tekrar dene.');
     }
   };
@@ -115,11 +117,11 @@ export default function MessagesScreen() {
                 maxLength={500}
               />
               <TouchableOpacity
-                style={[styles.sendButton, !messageText.trim() && styles.sendButtonDisabled]}
+                style={[styles.sendButton, (!messageText.trim() || sending) && styles.sendButtonDisabled]}
                 onPress={handleSendMessage}
-                disabled={!messageText.trim()}
+                disabled={!messageText.trim() || sending}
               >
-                <Send size={20} color={messageText.trim() ? '#fff' : '#9CA3AF'} />
+                <Send size={20} color={messageText.trim() && !sending ? '#fff' : '#9CA3AF'} />
               </TouchableOpacity>
             </View>
           </KeyboardAvoidingView>

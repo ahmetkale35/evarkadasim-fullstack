@@ -3,11 +3,13 @@ import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Switch, Ac
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Settings, Camera, MapPin, Heart, Star, Shield, Bell, Eye, CreditCard as Edit, Shield as Verified, Brain, Lock, CheckCircle2, LogOut, X, Home, Search } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { CharacterTest } from '@/components/CharacterTest';
 import { DetailedCharacterTest } from '@/components/DetailedCharacterTest';
 import { useCharacterTest, clearCharacterTestStorage } from '@/hooks/useCharacterTest';
 import { useProfile } from '@/hooks/useProfile';
 import { profileService } from '@/services/profileService';
+import { uploadService } from '@/services/uploadService';
 import { authService } from '@/services/authService';
 import { CityPicker } from '@/components/CityPicker';
 import { authEvents } from '@/services/authEvents';
@@ -29,6 +31,7 @@ export default function ProfileScreen() {
       setShowOnline(profile.isOnlineStatusVisible ?? true);
     }
   }, [profile]);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [showBasicTest, setShowBasicTest] = useState(false);
   const [showDetailedTest, setShowDetailedTest] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -43,6 +46,37 @@ export default function ProfileScreen() {
     city: '',
     lookingFor: '' as 'Roommate' | 'Room' | '',
   });
+
+  const handlePickPhoto = async (replaceIndex?: number) => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('İzin Gerekli', 'Fotoğraf seçmek için galeri iznine ihtiyaç var.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (result.canceled) return;
+
+    const uri = result.assets[0].uri;
+    setUploadingPhoto(true);
+    try {
+      const url = await uploadService.uploadPhoto(uri);
+      const current = profile?.photos ?? [];
+      const updated = replaceIndex !== undefined && replaceIndex < current.length
+        ? current.map((p, i) => (i === replaceIndex ? url : p))
+        : [...current, url];
+      await profileService.updateProfile({ photos: updated });
+      refresh();
+    } catch {
+      Alert.alert('Hata', 'Fotoğraf yüklenemedi. Lütfen tekrar dene.');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
 
   const handleNotificationsChange = async (value: boolean) => {
     setNotifications(value);
@@ -131,16 +165,18 @@ export default function ProfileScreen() {
     { label: 'Eşleşme', value: profile?.matchesCount?.toString() ?? '—', icon: Star },
   ];
 
-  const handleBasicTestComplete = (results: typeof basicTestResults) => {
+  const handleBasicTestComplete = async (results: typeof basicTestResults) => {
     if (results) {
-      setBasicTestResults(results);
+      await setBasicTestResults(results);
+      feedEvents.emitRefreshNeeded();
     }
     setShowBasicTest(false);
   };
 
-  const handleDetailedTestComplete = (results: typeof detailedTestResults) => {
+  const handleDetailedTestComplete = async (results: typeof detailedTestResults) => {
     if (results) {
-      setDetailedTestResults(results);
+      await setDetailedTestResults(results);
+      feedEvents.emitRefreshNeeded();
     }
     setShowDetailedTest(false);
   };
@@ -328,8 +364,12 @@ export default function ProfileScreen() {
                   <Camera size={40} color="#9CA3AF" />
                 </View>
               )}
-              <TouchableOpacity style={[styles.cameraButton, { opacity: 0.5 }]} onPress={() => Alert.alert('Yakında', 'Fotoğraf yükleme çok yakında!')}>
-                <Camera size={20} color="#fff" />
+              <TouchableOpacity
+                style={[styles.cameraButton, uploadingPhoto && { opacity: 0.5 }]}
+                onPress={() => handlePickPhoto(0)}
+                disabled={uploadingPhoto}
+              >
+                {uploadingPhoto ? <ActivityIndicator size="small" color="#fff" /> : <Camera size={20} color="#fff" />}
               </TouchableOpacity>
               {profile?.isVerified && (
                 <View style={styles.verifiedBadge}>
@@ -344,7 +384,11 @@ export default function ProfileScreen() {
                   <Image source={{ uri: photo }} style={styles.additionalPhoto} />
                 </View>
               ))}
-              <TouchableOpacity style={[styles.addPhotoSlot, { opacity: 0.5 }]} onPress={() => Alert.alert('Yakında', 'Fotoğraf yükleme çok yakında!')}>
+              <TouchableOpacity
+                style={[styles.addPhotoSlot, uploadingPhoto && { opacity: 0.5 }]}
+                onPress={() => handlePickPhoto()}
+                disabled={uploadingPhoto}
+              >
                 <Camera size={24} color="#9CA3AF" />
               </TouchableOpacity>
             </View>

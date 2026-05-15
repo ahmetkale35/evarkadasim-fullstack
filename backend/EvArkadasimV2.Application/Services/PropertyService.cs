@@ -15,12 +15,14 @@ namespace EvArkadasimV2.Application.Services
         private readonly IPropertyRepository _propertyRepository;
         private readonly IUserRepository _userRepository;
         private readonly ICacheService _cache;
+        private readonly IFileStorageService _storage;
 
-        public PropertyService(IPropertyRepository propertyRepository, IUserRepository userRepository, ICacheService cache)
+        public PropertyService(IPropertyRepository propertyRepository, IUserRepository userRepository, ICacheService cache, IFileStorageService storage)
         {
             _propertyRepository = propertyRepository;
             _userRepository = userRepository;
             _cache = cache;
+            _storage = storage;
         }
 
         public async Task<IEnumerable<PropertyDto>> GetListAsync(
@@ -65,7 +67,7 @@ namespace EvArkadasimV2.Application.Services
                 Images = dto.Images,
                 Description = dto.Description ?? string.Empty,
                 Amenities = dto.Amenities,
-                AvailableFrom = dto.AvailableFrom,
+                AvailableFrom = DateTime.SpecifyKind(dto.AvailableFrom, DateTimeKind.Utc),
                 PropertyType = dto.PropertyType,
                 Furnished = dto.Furnished,
                 PetsAllowed = dto.PetsAllowed,
@@ -101,6 +103,9 @@ namespace EvArkadasimV2.Application.Services
             if (property.OwnerId != currentUserId)
                 throw new ForbiddenException("Bu ilanı düzenleme yetkiniz yok.");
 
+            var removedImages = (property.Images ?? new List<string>())
+                .Except(dto.Images ?? new List<string>()).ToList();
+
             property.Title = dto.Title;
             property.PriceAmount = dto.PriceAmount;
             property.Currency = dto.Currency;
@@ -108,10 +113,10 @@ namespace EvArkadasimV2.Application.Services
             property.Location = dto.Location;
             property.Bedrooms = dto.Bedrooms;
             property.Bathrooms = dto.Bathrooms;
-            property.Images = dto.Images;
+            property.Images = dto.Images ?? new List<string>();
             property.Description = dto.Description ?? string.Empty;
             property.Amenities = dto.Amenities;
-            property.AvailableFrom = dto.AvailableFrom;
+            property.AvailableFrom = DateTime.SpecifyKind(dto.AvailableFrom, DateTimeKind.Utc);
             property.PropertyType = dto.PropertyType;
             property.Furnished = dto.Furnished;
             property.PetsAllowed = dto.PetsAllowed;
@@ -121,6 +126,9 @@ namespace EvArkadasimV2.Application.Services
 
             _propertyRepository.Update(property);
             await _propertyRepository.SaveChangesAsync();
+
+            foreach (var url in removedImages)
+                await _storage.DeleteAsync(url);
 
             var updated = await _propertyRepository.GetByIdWithOwnerAsync(id);
             return MapToDto(updated!);
@@ -135,19 +143,25 @@ namespace EvArkadasimV2.Application.Services
             if (property.OwnerId != currentUserId)
                 throw new ForbiddenException("Bu ilanı silme yetkiniz yok.");
 
+            var images = property.Images?.ToList() ?? new List<string>();
             _propertyRepository.Remove(property);
             await _propertyRepository.SaveChangesAsync();
             await _cache.RemoveAsync($"feed:{property.OwnerId}:v2");
+            foreach (var url in images)
+                await _storage.DeleteAsync(url);
         }
 
         public async Task DeleteAllByOwnerAsync(string ownerId)
         {
             var properties = await _propertyRepository.GetByOwnerAsync(ownerId);
             if (!properties.Any()) return;
+            var allImages = properties.SelectMany(p => p.Images ?? new List<string>()).ToList();
             foreach (var p in properties)
                 _propertyRepository.Remove(p);
             await _propertyRepository.SaveChangesAsync();
             await _cache.RemoveAsync($"feed:{ownerId}:v2");
+            foreach (var url in allImages)
+                await _storage.DeleteAsync(url);
         }
 
         public async Task<IEnumerable<PropertyMapPinDto>> GetMapPinsAsync(string? city = null)
