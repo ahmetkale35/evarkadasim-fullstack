@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TextInput,
+  View, Text, StyleSheet, ScrollView, TextInput, Image,
   TouchableOpacity, Alert, ActivityIndicator, Switch,
   KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ChevronLeft, MapPin, X } from 'lucide-react-native';
+import { ChevronLeft, MapPin, X, Camera, Plus } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as ImagePicker from 'expo-image-picker';
 import { propertyService, PropertyFormData, PropertyDto } from '@/services/propertyService';
+import { uploadService } from '@/services/uploadService';
 import { profileService } from '@/services/profileService';
 import { profileEvents } from '@/services/profileEvents';
 import { feedEvents } from '@/services/feedEvents';
@@ -46,6 +48,8 @@ export default function PropertyNewScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  const [images, setImages] = useState<string[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState<{ display: string; lat: number; lng: number; city: string } | null>(null);
   const [doorNo, setDoorNo] = useState('');
@@ -55,6 +59,7 @@ export default function PropertyNewScreen() {
       .then((data: PropertyDto | null) => {
         if (data) {
           setExistingId(data.id);
+          if (data.images?.length) setImages(data.images);
           if (data.latitude && data.longitude) {
             setSelectedAddress({ display: data.location, lat: data.latitude, lng: data.longitude, city: '' });
           }
@@ -83,6 +88,31 @@ export default function PropertyNewScreen() {
 
   const handleClearAddress = () => { setSelectedAddress(null); setDoorNo(''); };
 
+  const handlePickImages = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('İzin Gerekli', 'Fotoğraf seçmek için galeri iznine ihtiyaç var.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsMultipleSelection: true,
+      quality: 0.8,
+      selectionLimit: 5 - images.length,
+    });
+    if (result.canceled) return;
+
+    setUploadingImages(true);
+    try {
+      const urls = await Promise.all(result.assets.map(a => uploadService.uploadPropertyImage(a.uri)));
+      setImages(prev => [...prev, ...urls]);
+    } catch {
+      Alert.alert('Hata', 'Fotoğraf yüklenemedi. Lütfen tekrar dene.');
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
   const set = (key: keyof PropertyFormData, value: any) =>
     setForm(f => ({ ...f, [key]: value }));
 
@@ -103,6 +133,7 @@ export default function PropertyNewScreen() {
         location: fullDisplay,
         latitude: selectedAddress.lat,
         longitude: selectedAddress.lng,
+        images,
       };
 
       if (existingId) {
@@ -221,6 +252,33 @@ export default function PropertyNewScreen() {
                 placeholder="2025-06-01" placeholderTextColor="#9CA3AF" />
             </Field>
 
+            <Field label={`Fotoğraflar (${images.length}/5)`}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {images.map((uri, i) => (
+                  <View key={i} style={s.imgThumb}>
+                    <Image source={{ uri }} style={s.imgThumbImg} />
+                    <TouchableOpacity
+                      style={s.imgRemove}
+                      onPress={() => setImages(prev => prev.filter((_, idx) => idx !== i))}
+                    >
+                      <X size={12} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+                {images.length < 5 && (
+                  <TouchableOpacity
+                    style={[s.imgAdd, uploadingImages && { opacity: 0.5 }]}
+                    onPress={handlePickImages}
+                    disabled={uploadingImages}
+                  >
+                    {uploadingImages
+                      ? <ActivityIndicator size="small" color="#EC4899" />
+                      : <Plus size={24} color="#9CA3AF" />}
+                  </TouchableOpacity>
+                )}
+              </View>
+            </Field>
+
             <Field label="Açıklama">
               <TextInput style={[s.input, s.inputMultiline]} value={form.description}
                 onChangeText={v => set('description', v)}
@@ -246,9 +304,9 @@ export default function PropertyNewScreen() {
 
         <View style={s.footer}>
           <TouchableOpacity
-            style={[s.saveBtn, (saving || loading) && { opacity: 0.6 }]}
+            style={[s.saveBtn, (saving || loading || uploadingImages) && { opacity: 0.6 }]}
             onPress={handleSave}
-            disabled={saving || loading}
+            disabled={saving || loading || uploadingImages}
           >
             <LinearGradient colors={['#EC4899', '#8B5CF6']} style={s.saveBtnGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
               <Text style={s.saveBtnText}>{saving ? 'Kaydediliyor...' : existingId ? 'Güncelle' : 'İlan Oluştur'}</Text>
@@ -311,6 +369,17 @@ const s = StyleSheet.create({
   chipTextActive: { color: '#fff' },
   toggleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
   toggleLabel: { fontSize: 15, color: '#374151' },
+  imgThumb: { width: 80, height: 80, borderRadius: 8, overflow: 'hidden' },
+  imgThumbImg: { width: 80, height: 80 },
+  imgRemove: {
+    position: 'absolute', top: 4, right: 4,
+    backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 10, padding: 2,
+  },
+  imgAdd: {
+    width: 80, height: 80, borderRadius: 8,
+    borderWidth: 1.5, borderColor: '#E5E7EB', borderStyle: 'dashed',
+    backgroundColor: '#F9FAFB', justifyContent: 'center', alignItems: 'center',
+  },
   footer: { padding: 20, borderTopWidth: 1, borderTopColor: '#F3F4F6' },
   saveBtn: { borderRadius: 14, overflow: 'hidden' },
   saveBtnGradient: { paddingVertical: 16, alignItems: 'center' },

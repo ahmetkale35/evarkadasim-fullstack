@@ -100,6 +100,7 @@ export interface PropertyFormData {
   smokingAllowed: boolean;
   description: string;
   availableFrom: string;
+  images?: string[];
   latitude?: number;
   longitude?: number;
 }
@@ -141,7 +142,7 @@ export const propertyService = {
       smokingAllowed: form.smokingAllowed,
       description: form.description,
       availableFrom: form.availableFrom,
-      images: [],
+      images: form.images ?? [],
       amenities: [],
       latitude: form.latitude,
       longitude: form.longitude,
@@ -164,7 +165,7 @@ export const propertyService = {
       smokingAllowed: form.smokingAllowed,
       description: form.description,
       availableFrom: form.availableFrom,
-      images: [],
+      images: form.images ?? [],
       amenities: [],
       latitude: form.latitude,
       longitude: form.longitude,
