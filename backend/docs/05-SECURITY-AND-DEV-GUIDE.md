@@ -397,7 +397,7 @@ dotnet ef migrations add AddUserBlocks ...
 | Paket | Neden? |
 |-------|--------|
 | Microsoft.EntityFrameworkCore | ORM — C# ile SQL yazmadan DB işlemleri |
-| Microsoft.EntityFrameworkCore.Sqlite | SQLite database provider |
+| Microsoft.EntityFrameworkCore.Sqlite | SQLite database provider (geliştirme; üretimde Npgsql/PostgreSQL'e geçilecek) |
 | Microsoft.EntityFrameworkCore.Tools | `dotnet ef migrations` CLI komutları |
 | Microsoft.AspNetCore.Identity.EntityFrameworkCore | Identity tablolarını EF Core ile yönet |
 
@@ -450,11 +450,13 @@ dotnet ef migrations add AddUserBlocks ...
 
 | Özellik | Durum | Zorluk | Etki |
 |---------|-------|--------|------|
-| **Fotoğraf Upload** | Planlandı | Orta | Gerçek dosya depolama (Azure Blob / S3) |
-| **Email Doğrulama** | Planlandı | Orta | Sahte hesap engelleme |
-| **Push Notification** | Planlandı | Yüksek | Eşleşme/mesaj bildirimi (FCM/APNs) |
-| **API Versioning** | Planlandı | Düşük | Geriye dönük uyumluluk |
+| **PostgreSQL Geçişi** | Planlandı (N0) | Orta | SQLite prod'da scale etmez; dosya upload öncesi yapılmalı |
+| **Fotoğraf Upload** | Planlandı (N) | Orta | Gerçek dosya depolama; N0 blokeri |
+| **FCM Push Bildirimleri** | Planlandı (P) | Yüksek | Eşleşme/mesaj bildirimi; N sonrası |
+| **Keşfet Harita Refactor** | Planlandı (O) | Orta | Koordinat DTO eksik, swipe sync yok |
+| **Feed Sıralama Faz 2** | Planlandı (T) | Orta | 1K kullanıcıda bütçe/taşınma uyumu |
+| **Feed Aday Havuzu** | Planlandı (U) | Yüksek | 5K+ kullanıcıda max 200 aday havuzu |
+| **CodeQL** | Planlandı (V) | XS | Repo public olunca aktif et |
 | **Kullanıcı Engelleme** | Planlandı | Orta | Feed ve mesajlaşmada filtreleme |
-| **Bildirim Tercihleri** | Alan var, logic yok | Düşük | Kullanıcı bildirim ayarları |
+| **Email Doğrulama** | Planlandı | Orta | Sahte hesap engelleme |
 | **Soft Delete** | Planlandı | Düşük | Property/User için |
-| **Audit Log** | Planlandı | Orta | Kullanıcı aksiyonları takibi |

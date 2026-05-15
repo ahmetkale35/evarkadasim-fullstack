@@ -327,76 +327,50 @@ public double? Calculate(BasicTestResults? current, BasicTestResults? candidate)
 
 ## 4. Feed Sıralama Algoritması — Detaylı
 
+### Ağırlıklı Skor Formülü (Faz 1)
+
+Her aday için tek bir `finalScore` hesaplanır; tüm adaylar bu skora göre `OrderByDescending` ile sıralanır:
+
+```
+finalScore = likeWeight × 40 + uyumluluk × 0.35 + activityScore × 15 + profileScore
+```
+
+| Bileşen | Değer | Açıklama |
+|---------|-------|----------|
+| `likeWeight` | 0 / 1 / 2 | Pass=0, Like=1, SuperLike=2 — aday bizi beğenmişse kaç swipe atmış? |
+| `uyumluluk` | 0-100 | Kişilik skoru farkı (Manhattan distance) |
+| `activityScore` | 0.0-1.0 | Son aktif zamana göre: <7gün=1.0, <30gün=0.5, <90gün=0.25, >=90gün=0.0 |
+| `profileScore` | 0-10 | Foto (+5), bio (+3), ≥3 ilgi alanı (+2) |
+
+**Neden bu ağırlıklar?**
+- `likeWeight × 40`: Bizi SuperLike atan biri skorda 80 puan öne çıkar — karşılıklı ilgi en güçlü sinyal.
+- `uyumluluk × 0.35`: %100 uyumlu biri 35 puan kazanır — anlamlı ama tek başına belirleyici değil.
+- `activityScore × 15`: Aktif kullanıcılar öne çıkar; 90+ gün giriş yapmamış kullanıcılar sıfır bonus.
+- `profileScore`: Dolu profil küçük bir katsayı — kaliteli profilleri hafifçe öne alır.
+
 ```csharp
-public async Task<PagedFeedDto> GetFeedAsync(string currentUserId, int skip, int take)
-{
-    // Güvenlik: Sayfalama parametrelerini clamp et
-    if (skip < 0) skip = 0;           // Negatif skip anlamsız → 0 olarak işle
-    if (take <= 0) take = 20;         // Varsayılan
-    if (take > 50) take = 50;         // DoS koruması: max 50 kayıt
-
-    // Redis cache kontrolü
-    var cacheKey = $"feed:{currentUserId}";
-    var sorted = await _cache.GetAsync<List<(UserSummaryDto Dto, bool HasLikedCurrentUser)>>(cacheKey);
-
-    if (sorted is null)
-    {
-        var currentUser = await _userRepository.GetUserWithProfileAsync(currentUserId, tracking: false);
-        var currentScores = currentUser?.Profile?.FinalScores;
-        var currentCity = currentUser?.Profile?.Location?.City;
-        var currentLookingFor = currentUser?.Profile?.LookingFor;
-        var candidates = await _userRepository.GetFeedCandidatesWithLikeStatusAsync(currentUserId);
-
-        // 1. ŞEHİR FİLTRESİ: Kullanıcının şehriyle eşleşen adaylar (şehir yoksa tümü)
-        var filtered = string.IsNullOrEmpty(currentCity)
-            ? candidates
-            : candidates.Where(x => string.Equals(
-                x.User.Profile?.Location?.City, currentCity, StringComparison.OrdinalIgnoreCase));
-
-        // 2. ROL FİLTRESİ: Ev sahibi (Roommate) sadece ev arayanları (Room) görür
-        if (currentLookingFor == LookingFor.Roommate)
-            filtered = filtered.Where(x => x.User.Profile?.LookingFor == LookingFor.Room);
-
-        sorted = filtered
-            .Select(item =>
-            {
-                var dto = MapToDto(item.User);
-                dto.Compatibility = _compatibilityService.Calculate(currentScores, item.User.Profile?.FinalScores);
-                return (Dto: dto, item.HasLikedCurrentUser);
-            })
-            .OrderByDescending(x => x.HasLikedCurrentUser)  // 1. SIRALAMA: Beni beğenenler ÖNCE
-            .ThenByDescending(x => x.Dto.Compatibility)       // 2. SIRALAMA: Uyumluluk yüksek → önce
-            .ThenByDescending(x => x.Dto.LastActive)           // 3. SIRALAMA: Son aktif → önce
-            .ToList();
-
-        // 5 dakika TTL ile Redis'e yaz. Swipe sonrası cache otomatik invalidate edilir.
-        await _cache.SetAsync(cacheKey, sorted, TimeSpan.FromMinutes(5));
-    }
-
-    var totalCount = sorted.Count;
-    var users = sorted.Skip(skip).Take(take).Select(x => x.Dto).ToList();
-
-    return new PagedFeedDto { Users = users, Skip = skip, Take = take, TotalCount = totalCount, HasMore = skip + take < totalCount };
-}
+var finalScore = item.LikeWeight * 40.0
+               + (dto.Compatibility ?? 0) * 0.35
+               + activityScore * 15.0
+               + profileScore;
 ```
 
-**Sıralama görselleştirmesi:**
+Cache key: `feed:{userId}:v2` (v1'den schema değişikliği nedeniyle güncellendi). 5 dk TTL. Swipe sonrası otomatik invalidate.
+
+**Skor karşılaştırma örneği:**
 
 ```
-Tüm adaylar (filtreleme sonrası):
-┌──────────────┬─────────────────┬──────────────┬─────────────┐
-│ Kullanıcı    │ BeniBeğenmiş?   │ Uyumluluk    │ SonAktif    │
-├──────────────┼─────────────────┼──────────────┼─────────────┤
-│ Zeynep       │ ✅ Evet          │ %85          │ 2 saat önce │ ← 1. sıra
-│ Merve        │ ✅ Evet          │ %72          │ 1 gün önce  │ ← 2. sıra
-│ Ali          │ ❌ Hayır         │ %91          │ 30 dk önce  │ ← 3. sıra
-│ Burak        │ ❌ Hayır         │ %78          │ 3 saat önce │ ← 4. sıra
-│ Ece          │ ❌ Hayır         │ %78          │ 1 hafta önce│ ← 5. sıra
-│ Deniz        │ ❌ Hayır         │ %45          │ 10 dk önce  │ ← 6. sıra
-└──────────────┴─────────────────┴──────────────┴─────────────┘
+┌──────────────┬────────────┬───────────┬──────────────┬─────────────┬───────────┐
+│ Kullanıcı    │ LikeWeight │ Uyumluluk │ ActivityScore│ ProfileScore│ finalScore│
+├──────────────┼────────────┼───────────┼──────────────┼─────────────┼───────────┤
+│ Zeynep       │ 2 (SLike)  │ %85       │ 1.0 (2 saat) │ 10          │ 80+29.75+15+10 = 134.75 │
+│ Ali          │ 0          │ %91       │ 1.0 (30 dk)  │ 8           │ 0+31.85+15+8  = 54.85  │
+│ Merve        │ 1 (Like)   │ %72       │ 0.5 (1 gün)  │ 5           │ 40+25.20+7.5+5 = 77.70 │
+└──────────────┴────────────┴───────────┴──────────────┴─────────────┴───────────┘
+Sıralama: Zeynep (134.75) → Merve (77.70) → Ali (54.85)
 ```
 
-Zeynep ve Merve seni beğenmiş → en üste çıkarlar. Aralarında uyumluluğa göre sıralanırlar.
+SuperLike atan Zeynep, %91 uyumlu Ali'nin önüne geçer — karşılıklı ilgi uyumluluktan ağır basar.
 
 ---
 

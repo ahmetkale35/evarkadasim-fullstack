@@ -15,9 +15,9 @@
 
 | Bileşen | Teknoloji | Neden Bu? |
 |---------|-----------|-----------|
-| Framework | ASP.NET Core 6.0 | Microsoft'un modern web framework'ü. Cross-platform, yüksek performans, geniş ekosistem |
-| Veritabanı | SQLite | Geliştirme için ideal: kurulum gerektirmez, tek dosya. Üretimde PostgreSQL'e geçilmeli |
-| ORM | Entity Framework Core 6 | C# ile SQL yazmadan veritabanı işlemleri. LINQ sorguları SQL'e çevrilir |
+| Framework | ASP.NET Core 8.0 | Microsoft'un modern web framework'ü. Cross-platform, yüksek performans, geniş ekosistem |
+| Veritabanı | SQLite | Geliştirme için ideal: kurulum gerektirmez, tek dosya. Üretimde PostgreSQL'e geçilmeli (Görev N0) |
+| ORM | Entity Framework Core 8 | C# ile SQL yazmadan veritabanı işlemleri. LINQ sorguları SQL'e çevrilir |
 | Cache | Redis (`StackExchange.Redis`) | Feed sonuçları 5-dk TTL ile cache'lenir; swipe sonrası otomatik invalidate |
 | Gerçek Zamanlı | ASP.NET Core SignalR | WebSocket tabanlı hub; match ve mesaj bildirimleri anlık push edilir |
 | Kimlik Doğrulama | JWT Bearer + Refresh Token | Access token (kısa ömürlü) + refresh token (uzun ömürlü) ikili sistem |
@@ -32,7 +32,7 @@
 
 ### Gereksinimler
 
-- **.NET 6 SDK**: [dotnet.microsoft.com](https://dotnet.microsoft.com/download/dotnet/6.0) adresinden indir
+- **.NET 8 SDK**: [dotnet.microsoft.com](https://dotnet.microsoft.com/download/dotnet/8.0) adresinden indir
 - **(Opsiyonel)** Visual Studio 2022+ veya VS Code + C# extension
 
 ### Kurulum ve Çalıştırma

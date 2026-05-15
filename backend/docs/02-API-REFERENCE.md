@@ -252,10 +252,13 @@ Swipe edilecek aday kullanıcı listesini döndürür.
 - **Şehir filtresi**: Kullanıcının şehriyle eşleşen adaylar gösterilir (şehir yoksa tümü)
 - **Rol filtresi**: `LookingFor = Roommate` olan kullanıcılar yalnızca `Room` arayanları görür
 
-**Sıralama Önceliği**:
-1. Kullanıcıyı beğenmiş kişiler önce (like-boost)
-2. Uyumluluk skoru yüksek olanlar (compatibility DESC)
-3. Son aktif olanlar (lastActive DESC)
+**Sıralama (Ağırlıklı Skor)**:
+```
+finalScore = likeWeight × 40 + uyumluluk × 0.35 + activityScore × 15 + profileScore
+```
+- `likeWeight`: Pass=0, Like=1, SuperLike=2 (bizi beğenmişse)
+- `activityScore`: <7gün=1.0, <30gün=0.5, <90gün=0.25, >=90gün=0.0
+- `profileScore`: foto(+5) + bio(+3) + ≥3 ilgi(+2)
 
 **200 OK**:
 ```json
@@ -575,6 +578,21 @@ Oturum açan kullanıcının tüm ilanlarını siler.
 **Auth**: Bearer Token (Zorunlu)
 
 **204 No Content**: Başarılı silme.
+
+---
+
+### DELETE `/api/swipe/passes`
+
+Kullanıcının tüm "Pass" swipe'larını siler. Feed boşaldığında "Başa Dön" özelliği için kullanılır. Like/SuperLike swipe'larına dokunmaz (match mantığı korunur).
+
+**Auth**: Bearer Token (Zorunlu)
+
+**200 OK**:
+```json
+{ "deletedCount": 42 }
+```
+
+**Yan etki**: `feed:{userId}:v2` Redis cache invalidate edilir — kullanıcı aynı adayları tekrar görür.
 
 ---
 

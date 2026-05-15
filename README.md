@@ -1,10 +1,10 @@
 # EvArkadaşım — Roommate Matchmaking Platform
 
 <p align="center">
-  <img src="https://img.shields.io/badge/.NET-6.0-512BD4?style=flat&logo=dotnet" alt=".NET 6" />
-  <img src="https://img.shields.io/badge/React_Native-Expo_SDK_53-61DAFB?style=flat&logo=react" alt="React Native" />
+  <img src="https://img.shields.io/badge/.NET-8.0-512BD4?style=flat&logo=dotnet" alt=".NET 8" />
+  <img src="https://img.shields.io/badge/React_Native-Expo_SDK_54-61DAFB?style=flat&logo=react" alt="React Native" />
   <img src="https://img.shields.io/badge/Architecture-Clean_Architecture-brightgreen" alt="Clean Architecture" />
-  <img src="https://img.shields.io/badge/Database-SQLite_&_EF_Core-003B57?style=flat&logo=sqlite" alt="SQLite" />
+  <img src="https://img.shields.io/badge/Database-SQLite_%26_EF_Core_8-003B57?style=flat&logo=sqlite" alt="SQLite" />
   <img src="https://img.shields.io/badge/Cache-Redis-DC382D?style=flat&logo=redis" alt="Redis" />
   <img src="https://img.shields.io/badge/Realtime-SignalR-512BD4?style=flat" alt="SignalR" />
   <img src="https://github.com/ahmetkale35/evarkadasim-fullstack/actions/workflows/ci-backend.yml/badge.svg" alt="CI Backend" />
@@ -20,7 +20,7 @@ EvArkadaşım is a personality-driven roommate matchmaking platform. It uses a *
 - **Smart Matching** — Manhattan Distance compatibility score (0–100%) across 6 personality dimensions; `null` returned for users who haven't completed their personality test
 - **Role-Based Feed** — Property owners see only room seekers; room seekers see all candidates in their city
 - **Swipe Mechanics** — Like / Pass / SuperLike with automatic mutual match detection
-- **Intelligent Feed** — Three-tier sorting: Like boosts → compatibility score → last active. Results cached in Redis (5-min TTL); invalidated on swipe
+- **Intelligent Feed** — Weighted score formula: `likeWeight×40 + compatibility×0.35 + activityScore×15 + profileScore`. Results cached in Redis (5-min TTL); invalidated on swipe
 - **City Filtering** — Feed automatically filtered by user's city; property map pins filterable by city
 - **Real-time Messaging** — SignalR WebSocket hub; match notifications and new messages pushed instantly
 - **Property Listings** — Full CRUD with map view (lat/lng coordinates), city/price/type/pets filters, owner's own listing endpoint
@@ -37,9 +37,9 @@ EvArkadaşım is a personality-driven roommate matchmaking platform. It uses a *
 ### Backend
 | Layer | Technology |
 |-------|-----------|
-| Framework | ASP.NET Core 6 Web API |
+| Framework | ASP.NET Core 8 Web API |
 | Architecture | Clean Architecture (Domain / Application / Infrastructure / API) |
-| Database | SQLite + Entity Framework Core 6 |
+| Database | SQLite + Entity Framework Core 8 |
 | Cache | Redis via `StackExchange.Redis` |
 | Real-time | ASP.NET Core SignalR |
 | Auth | ASP.NET Identity + JWT Bearer + Refresh Token |
@@ -50,7 +50,7 @@ EvArkadaşım is a personality-driven roommate matchmaking platform. It uses a *
 ### Frontend
 | Layer | Technology |
 |-------|-----------|
-| Framework | React Native 0.79 + Expo SDK 53 |
+| Framework | React Native 0.79 + Expo SDK 54 |
 | Routing | Expo Router (file-based) |
 | HTTP | Axios with JWT interceptor + auto-refresh |
 | Maps | `react-native-maps` with city-filtered property pins |
@@ -102,7 +102,7 @@ API available at `http://localhost:5000`. Swagger UI at `http://localhost:5000/s
 
 ### Option B — Local
 
-**Prerequisites:** .NET 6 SDK, Node.js 22+, Redis (optional — app starts without it)
+**Prerequisites:** .NET 8 SDK, Node.js 22+, Redis (optional — app starts without it)
 
 ```bash
 # Backend
@@ -120,9 +120,12 @@ cd frontend/evarkadasim-yeni-main
 npm install
 ```
 
-Edit `services/config.ts` — set `DEV_HOST` to your machine's local IP, then:
+Create a `.env` file from the example and set your machine's local IP:
 
 ```bash
+cp .env.example .env
+# Edit .env: set EXPO_PUBLIC_DEV_HOST to your machine's local IP (e.g. 192.168.1.x)
+# Android emulator: use EXPO_PUBLIC_DEV_HOST=10.0.2.2
 npx expo start
 ```
 
