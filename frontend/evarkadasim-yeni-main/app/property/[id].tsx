@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,10 @@ import {
   ScrollView,
   ActivityIndicator,
   TouchableOpacity,
+  FlatList,
+  Dimensions,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,10 +18,19 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, MapPin, DollarSign, Calendar, CheckCircle, XCircle } from 'lucide-react-native';
 import { useProperties } from '@/hooks/useProperties';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const IMAGE_HEIGHT = 260;
+
 export default function PropertyDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { properties, loading } = useProperties();
   const router = useRouter();
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+    setActiveIndex(index);
+  };
 
   const property = properties.find(p => p.id === id);
 
@@ -56,10 +69,34 @@ export default function PropertyDetailScreen() {
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false}>
-          {property.images.length > 0
-            ? <Image source={{ uri: property.images[0] }} style={styles.image} />
-            : <View style={[styles.image, styles.imagePlaceholder]} />
-          }
+          {property.images.length > 0 ? (
+            <View style={styles.carouselContainer}>
+              <FlatList
+                data={property.images}
+                keyExtractor={(_, i) => i.toString()}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onScroll={onScroll}
+                scrollEventThrottle={16}
+                renderItem={({ item }) => (
+                  <Image source={{ uri: item }} style={styles.image} />
+                )}
+              />
+              {property.images.length > 1 && (
+                <View style={styles.dots}>
+                  {property.images.map((_, i) => (
+                    <View
+                      key={i}
+                      style={[styles.dot, i === activeIndex && styles.dotActive]}
+                    />
+                  ))}
+                </View>
+              )}
+            </View>
+          ) : (
+            <View style={[styles.image, styles.imagePlaceholder]} />
+          )}
 
           <View style={styles.content}>
             <Text style={styles.title}>{property.title}</Text>
@@ -167,8 +204,28 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
   },
   placeholder: { width: 40 },
-  image: { width: '100%', height: 240, resizeMode: 'cover' },
+  carouselContainer: { position: 'relative' },
+  image: { width: SCREEN_WIDTH, height: IMAGE_HEIGHT, resizeMode: 'cover' },
   imagePlaceholder: { backgroundColor: '#E5E7EB' },
+  dots: {
+    position: 'absolute',
+    bottom: 10,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.5)',
+  },
+  dotActive: {
+    backgroundColor: '#fff',
+    width: 18,
+  },
   content: { padding: 20 },
   title: { fontSize: 22, fontWeight: '700', color: '#111827', marginBottom: 12 },
   row: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
