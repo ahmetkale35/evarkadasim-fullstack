@@ -4,9 +4,11 @@
   <img src="https://img.shields.io/badge/.NET-8.0-512BD4?style=flat&logo=dotnet" alt=".NET 8" />
   <img src="https://img.shields.io/badge/React_Native-Expo_SDK_54-61DAFB?style=flat&logo=react" alt="React Native" />
   <img src="https://img.shields.io/badge/Architecture-Clean_Architecture-brightgreen" alt="Clean Architecture" />
-  <img src="https://img.shields.io/badge/Database-SQLite_%26_EF_Core_8-003B57?style=flat&logo=sqlite" alt="SQLite" />
+  <img src="https://img.shields.io/badge/Database-PostgreSQL_%26_EF_Core_8-316192?style=flat&logo=postgresql" alt="PostgreSQL" />
   <img src="https://img.shields.io/badge/Cache-Redis-DC382D?style=flat&logo=redis" alt="Redis" />
   <img src="https://img.shields.io/badge/Realtime-SignalR-512BD4?style=flat" alt="SignalR" />
+  <img src="https://img.shields.io/badge/Docker-Compose-2496ED?style=flat&logo=docker" alt="Docker" />
+  <img src="https://img.shields.io/badge/TypeScript-5.8-3178C6?style=flat&logo=typescript" alt="TypeScript" />
   <img src="https://github.com/ahmetkale35/evarkadasim-fullstack/actions/workflows/ci-backend.yml/badge.svg" alt="CI Backend" />
   <img src="https://github.com/ahmetkale35/evarkadasim-fullstack/actions/workflows/ci-frontend.yml/badge.svg" alt="CI Frontend" />
 </p>
@@ -39,7 +41,7 @@ EvArkadaşım is a personality-driven roommate matchmaking platform. It uses a *
 |-------|-----------|
 | Framework | ASP.NET Core 8 Web API |
 | Architecture | Clean Architecture (Domain / Application / Infrastructure / API) |
-| Database | SQLite + Entity Framework Core 8 |
+| Database | PostgreSQL + Entity Framework Core 8 |
 | Cache | Redis via `StackExchange.Redis` |
 | Real-time | ASP.NET Core SignalR |
 | Auth | ASP.NET Identity + JWT Bearer + Refresh Token |
@@ -75,7 +77,7 @@ EvArkadaşım is a personality-driven roommate matchmaking platform. It uses a *
 │   ├── EvArkadasimV2.Infrastructure/  # EF Core, Repositories, Redis, Migrations
 │   ├── EvArkadasimV2.API/             # Controllers, Hubs, Middleware, DI config
 │   ├── EvArkadasimV2.Tests/           # 49 xUnit unit tests (no DB required)
-│   ├── Dockerfile                     # Multi-stage build (SDK → aspnet:6.0 runtime)
+│   ├── Dockerfile                     # Multi-stage build (SDK → aspnet:8.0 runtime)
 │   └── postman/                       # Postman collection + environment
 ├── frontend/
 │   └── evarkadasim-yeni-main/         # Expo React Native app
@@ -188,7 +190,7 @@ WebSocket endpoint: `ws://host/hubs/chat?access_token={jwt}`
 JWT_SECRET=your-32-char-minimum-secret-here
 ```
 
-`appsettings.Development.json` handles all other local config (SQLite path, Redis connection, JWT issuer/audience).
+`appsettings.Development.json` handles all other local config (PostgreSQL connection string, Redis connection, JWT issuer/audience).
 
 ---
 
