@@ -39,6 +39,7 @@ export interface UpdateProfilePayload {
   lookingFor?: 'Roommate' | 'Room';
   isOnlineStatusVisible?: boolean;
   notificationsEnabled?: boolean;
+  photos?: string[];
 }
 
 export const profileService = {
