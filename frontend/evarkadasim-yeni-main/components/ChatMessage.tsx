@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Check, CheckCheck } from 'lucide-react-native';
 import { Message } from '@/types';
 
 interface ChatMessageProps {
@@ -23,9 +24,14 @@ export function ChatMessage({ message, isOwnMessage }: ChatMessageProps) {
           {message.content}
         </Text>
       </View>
-      <Text style={[styles.time, isOwnMessage && styles.ownTime]}>
-        {formatTime(message.timestamp)}
-      </Text>
+      <View style={[styles.meta, isOwnMessage ? styles.ownMeta : styles.otherMeta]}>
+        <Text style={styles.time}>{formatTime(message.timestamp)}</Text>
+        {isOwnMessage && (
+          message.isRead
+            ? <CheckCheck size={14} color="#EC4899" style={styles.tick} />
+            : <Check size={14} color="#9CA3AF" style={styles.tick} />
+        )}
+      </View>
     </View>
   );
 }
@@ -63,13 +69,21 @@ const styles = StyleSheet.create({
   otherText: {
     color: '#111827',
   },
+  meta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  otherMeta: {
+    marginLeft: 16,
+  },
+  ownMeta: {
+    marginRight: 16,
+  },
   time: {
     fontSize: 12,
     color: '#9CA3AF',
-    marginLeft: 16,
   },
-  ownTime: {
-    marginLeft: 0,
-    marginRight: 16,
+  tick: {
+    marginLeft: 4,
   },
 });
