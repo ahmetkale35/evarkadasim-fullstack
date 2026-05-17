@@ -6,6 +6,6 @@ namespace EvArkadasimV2.Application.Interfaces.Services
     {
         Task<PagedMessagesDto> GetMessagesAsync(int matchId, string currentUserId, int page, int pageSize);
         Task<MessageDto> SendMessageAsync(SendMessageDto dto, string senderId);
-        Task MarkAsReadAsync(int matchId, string currentUserId);
+        Task<string?> MarkAsReadAsync(int matchId, string currentUserId);
     }
 }

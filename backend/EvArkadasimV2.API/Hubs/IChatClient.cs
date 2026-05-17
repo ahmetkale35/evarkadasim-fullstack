@@ -6,5 +6,6 @@ namespace EvArkadasimV2.API.Hubs
     {
         Task ReceiveMessage(MessageDto message);
         Task MatchCreated(MatchDto match);
+        Task MessagesRead(int matchId);
     }
 }

@@ -75,15 +75,16 @@ namespace EvArkadasimV2.Application.Services
             return messageDto;
         }
 
-        public async Task MarkAsReadAsync(int matchId, string currentUserId)
+        public async Task<string?> MarkAsReadAsync(int matchId, string currentUserId)
         {
-            await AuthorizeMatchAccessAsync(matchId, currentUserId);
+            var match = await AuthorizeMatchAccessAsync(matchId, currentUserId);
             await _messageRepository.MarkAsReadAsync(matchId, currentUserId);
+            return match.User1Id == currentUserId ? match.User2Id : match.User1Id;
         }
 
         // Kullanıcının bu match'e dahil olup olmadığını kontrol eder.
         // Her üç public metot aynı kontrole ihtiyaç duyduğu için private metoda çıkarıldı.
-        private async Task AuthorizeMatchAccessAsync(int matchId, string userId)
+        private async Task<UserMatch> AuthorizeMatchAccessAsync(int matchId, string userId)
         {
             var match = await _matchRepository.GetByIdAsync(matchId);
 
@@ -93,6 +94,8 @@ namespace EvArkadasimV2.Application.Services
             // User1 veya User2 olmayan biri başkasının sohbetine erişmeye çalışıyor.
             if (match.User1Id != userId && match.User2Id != userId)
                 throw new ForbiddenException("Bu sohbete erişim yetkiniz yok.");
+
+            return match;
         }
 
         private static MessageDto MapToDto(Message m) => new()

@@ -1,7 +1,9 @@
 using EvArkadasimV2.Application.DTOs.Chat;
 using EvArkadasimV2.Application.Interfaces.Services;
+using EvArkadasimV2.API.Hubs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 
 namespace EvArkadasimV2.API.Controllers
@@ -14,10 +16,12 @@ namespace EvArkadasimV2.API.Controllers
     public class MessageController : ControllerBase
     {
         private readonly IMessageService _messageService;
+        private readonly IHubContext<ChatHub, IChatClient> _hubContext;
 
-        public MessageController(IMessageService messageService)
+        public MessageController(IMessageService messageService, IHubContext<ChatHub, IChatClient> hubContext)
         {
             _messageService = messageService;
+            _hubContext = hubContext;
         }
 
         /// <summary>Bir eşleşmeye ait mesajları kronolojik sırayla sayfalı döner.</summary>
@@ -66,7 +70,9 @@ namespace EvArkadasimV2.API.Controllers
         public async Task<IActionResult> MarkAsRead(int matchId)
         {
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-            await _messageService.MarkAsReadAsync(matchId, currentUserId);
+            var otherUserId = await _messageService.MarkAsReadAsync(matchId, currentUserId);
+            if (otherUserId is not null)
+                await _hubContext.Clients.Group($"user-{otherUserId}").MessagesRead(matchId);
             return NoContent();
         }
     }
