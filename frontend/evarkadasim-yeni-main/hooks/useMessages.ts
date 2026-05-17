@@ -57,10 +57,17 @@ export function useMessages(matchId: string | null) {
       setMessages(prev =>
         prev.some(m => m.id === msg.id) ? prev : [...prev, msg]
       );
+      messageService.markAsRead(matchId).catch(() => {});
+    });
+
+    signalrService.on<number>('MessagesRead', (readMatchId) => {
+      if (readMatchId.toString() !== matchId) return;
+      setMessages(prev => prev.map(m => ({ ...m, isRead: true })));
     });
 
     return () => {
       signalrService.off('ReceiveMessage');
+      signalrService.off('MessagesRead');
     };
   }, [matchId]);
 
