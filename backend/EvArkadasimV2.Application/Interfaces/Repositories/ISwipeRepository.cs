@@ -19,5 +19,8 @@ namespace EvArkadasimV2.Application.Interfaces.Repositories
         // Kullanıcının attığı tüm Pass swipe'larını siler ve silinen satır sayısını döner.
         // Like/SuperLike'a dokunulmaz — match mantığı korunur.
         Task<int> DeletePassSwipesAsync(string userId);
+
+        // Kullanıcıya gelen Like + SuperLike swipe sayısını döner.
+        Task<int> CountLikesMeAsync(string userId);
     }
 }

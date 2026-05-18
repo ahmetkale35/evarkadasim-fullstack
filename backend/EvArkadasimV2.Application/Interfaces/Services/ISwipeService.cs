@@ -14,5 +14,8 @@ namespace EvArkadasimV2.Application.Interfaces.Services
 
         // Kullanıcının Pass swipe'larını siler, feed cache'ini temizler ve silinen sayıyı döner.
         Task<int> ResetFeedAsync(string userId);
+
+        // Kullanıcıya gelen Like + SuperLike sayısını döner.
+        Task<int> CountLikesMeAsync(string userId);
     }
 }

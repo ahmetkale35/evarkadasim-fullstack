@@ -39,5 +39,12 @@ namespace EvArkadasimV2.Infrastructure.Repositories
                 .Where(s => s.SenderId == userId && s.SwipeType == SwipeType.Pass)
                 .ExecuteDeleteAsync();
         }
+
+        public async Task<int> CountLikesMeAsync(string userId)
+        {
+            return await _dbSet
+                .AsNoTracking()
+                .CountAsync(s => s.ReceiverId == userId && s.SwipeType != SwipeType.Pass);
+        }
     }
 }

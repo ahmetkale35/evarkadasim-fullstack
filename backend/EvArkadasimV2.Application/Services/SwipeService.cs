@@ -142,6 +142,9 @@ namespace EvArkadasimV2.Application.Services
             return deleted;
         }
 
+        public Task<int> CountLikesMeAsync(string userId)
+            => _swipeRepository.CountLikesMeAsync(userId);
+
         public async Task<IReadOnlyList<MatchDto>> GetMyMatchesAsync(string userId)
         {
             var currentUser = await _userRepository.GetUserWithProfileAsync(userId, tracking: false);

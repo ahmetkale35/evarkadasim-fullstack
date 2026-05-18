@@ -43,6 +43,17 @@ namespace EvArkadasimV2.API.Controllers
             return Ok(new { deletedCount });
         }
 
+        /// <summary>Kullanıcıya gelen Like ve SuperLike sayısını döner.</summary>
+        [HttpGet("likes-me/count")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetLikesMeCount()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var count = await _swipeService.CountLikesMeAsync(userId);
+            return Ok(new { count });
+        }
+
         /// <summary>Bir kullanıcıya Like veya Pass atar. Karşılıklı Like varsa eşleşme oluşur.</summary>
         /// <remarks>
         /// Gönderen her zaman JWT token'dan belirlenir; body'den alınmaz.
