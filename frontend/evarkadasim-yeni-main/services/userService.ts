@@ -100,6 +100,11 @@ export const userService = {
     }
   },
 
+  getLikesMeCount: async (): Promise<number> => {
+    const { data } = await apiClient.get<{ count: number }>('/swipe/likes-me/count');
+    return data.count;
+  },
+
   resetFeed: async (): Promise<{ deletedCount: number }> => {
     const { data } = await apiClient.delete<{ deletedCount: number }>('/swipe/passes');
     return data;

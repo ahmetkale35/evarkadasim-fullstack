@@ -10,6 +10,7 @@ import { useCharacterTest, clearCharacterTestStorage } from '@/hooks/useCharacte
 import { useProfile } from '@/hooks/useProfile';
 import { profileService } from '@/services/profileService';
 import { uploadService } from '@/services/uploadService';
+import { userService } from '@/services/userService';
 import { authService } from '@/services/authService';
 import { CityPicker } from '@/components/CityPicker';
 import { authEvents } from '@/services/authEvents';
@@ -24,14 +25,8 @@ export default function ProfileScreen() {
 
   const [notifications, setNotifications] = useState(true);
   const [showOnline, setShowOnline] = useState(true);
-
-  useEffect(() => {
-    if (profile) {
-      setNotifications(profile.notificationsEnabled ?? true);
-      setShowOnline(profile.isOnlineStatusVisible ?? true);
-    }
-  }, [profile]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [likesMeCount, setLikesMeCount] = useState<number | null>(null);
   const [showBasicTest, setShowBasicTest] = useState(false);
   const [showDetailedTest, setShowDetailedTest] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -46,6 +41,17 @@ export default function ProfileScreen() {
     city: '',
     lookingFor: '' as 'Roommate' | 'Room' | '',
   });
+
+  useEffect(() => {
+    if (profile) {
+      setNotifications(profile.notificationsEnabled ?? true);
+      setShowOnline(profile.isOnlineStatusVisible ?? true);
+    }
+  }, [profile]);
+
+  useEffect(() => {
+    userService.getLikesMeCount().then(setLikesMeCount).catch(() => {});
+  }, []);
 
   const handlePickPhoto = async (replaceIndex?: number) => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -163,6 +169,7 @@ export default function ProfileScreen() {
   const stats = [
     { label: 'Beğenilen', value: profile?.likedProfilesCount?.toString() ?? '—', icon: Heart },
     { label: 'Eşleşme', value: profile?.matchesCount?.toString() ?? '—', icon: Star },
+    { label: 'Beğendi', value: likesMeCount !== null ? `${likesMeCount}` : '—', icon: Lock },
   ];
 
   const handleBasicTestComplete = async (results: typeof basicTestResults) => {
