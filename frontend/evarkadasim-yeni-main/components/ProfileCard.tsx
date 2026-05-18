@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { View, Text, Image, StyleSheet, Dimensions, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MapPin, Shield as Verified, Star, DollarSign, Calendar, Chrome as Home, Sparkles, Search, Lock } from 'lucide-react-native';
+import { MapPin, Shield as Verified, Star, DollarSign, Calendar, Chrome as Home, Sparkles, Search, Lock, Clock } from 'lucide-react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -17,6 +17,17 @@ import { User } from '@/types';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 const IMAGE_H = SCREEN_H * 0.28;
+
+function formatLastActive(date: Date): string {
+  const diffMs = Date.now() - new Date(date).getTime();
+  const hours = diffMs / 3_600_000;
+  const days = Math.floor(diffMs / 86_400_000);
+  if (hours < 1) return 'Az önce aktif';
+  if (hours < 24) return 'Bugün aktif';
+  if (days === 1) return 'Dün aktif';
+  if (days < 7) return `${days} gün önce aktif`;
+  return `${Math.floor(days / 7)} hafta önce aktif`;
+}
 const SWIPE_THRESHOLD = SCREEN_W * 0.28;
 
 interface ProfileCardProps {
@@ -152,6 +163,10 @@ export function ProfileCard({ user, compatibility, onSwipeLeft, onSwipeRight, on
             )}
           </View>
         )}
+        <View style={styles.activeRow}>
+          <Clock size={12} color="rgba(255,255,255,0.7)" />
+          <Text style={styles.activeText}>{formatLastActive(user.lastActive)}</Text>
+        </View>
       </View>
 
       {/* Uyumluluk badge — sağ üst */}
@@ -321,6 +336,8 @@ const styles = StyleSheet.create({
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   imageLocation: { fontSize: 13, color: 'rgba(255,255,255,0.85)' },
   imageDistance: { fontSize: 13, color: 'rgba(255,255,255,0.65)' },
+  activeRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  activeText: { fontSize: 11, color: 'rgba(255,255,255,0.7)' },
 
   // Uyumluluk badge
   compatBadge: {
