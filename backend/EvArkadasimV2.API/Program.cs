@@ -258,6 +258,7 @@ if (!app.Environment.IsDevelopment())
 app.UseAuthentication();
 // UseAuthentication sonrası, UseAuthorization öncesi: revoke edilmiş token [Authorize]'a ulaşmadan 401 alır.
 app.UseMiddleware<TokenRevocationMiddleware>();
+app.UseMiddleware<LastActiveMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHub<ChatHub>("/hubs/chat");
