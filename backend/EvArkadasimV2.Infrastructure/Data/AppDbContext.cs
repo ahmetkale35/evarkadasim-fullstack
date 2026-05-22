@@ -78,7 +78,7 @@ namespace EvArkadasimV2.Infrastructure.Data
                                    v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new());
 
                 // Owned Types (Alt Sınıflar)
-                entity.OwnsOne(p => p.Location);
+                entity.OwnsOne(p => p.Location, loc => loc.HasIndex(l => l.City));
                 entity.OwnsOne(p => p.InitialBasicTestResults);
                 entity.OwnsOne(p => p.FinalScores);
 
@@ -131,6 +131,11 @@ namespace EvArkadasimV2.Infrastructure.Data
             builder.Entity<UserProfile>()
                 .HasIndex(p => p.AppUserId)
                 .IsUnique();
+
+            // --- 7. PERFORMANS İNDEKSLERİ ---
+            // Message sorgularında WHERE UserMatchId = X filtresi kullanılır.
+            builder.Entity<Message>()
+                .HasIndex(m => m.UserMatchId);
 
             // --- 6. PROPERTY CONFIGURATION ---
             builder.Entity<Property>(entity =>
