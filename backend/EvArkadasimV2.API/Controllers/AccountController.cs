@@ -32,6 +32,11 @@ namespace EvArkadasimV2.API.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return NotFound();
+
+            await using var transaction = await _db.Database.BeginTransactionAsync();
+
             // RESTRICT FK'lar nedeniyle önce bağımlı kayıtlar silinmeli.
             await _db.UserSwipes
                 .Where(s => s.SenderId == userId || s.ReceiverId == userId)
@@ -42,14 +47,15 @@ namespace EvArkadasimV2.API.Controllers
                 .Where(m => m.User1Id == userId || m.User2Id == userId)
                 .ExecuteDeleteAsync();
 
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null) return NotFound();
-
             // Profile, RefreshTokens, RevokedTokens → AppUser üzerinden Cascade ile silinir.
             var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded)
+            {
+                await transaction.RollbackAsync();
                 return StatusCode(500, new { message = "Hesap silinemedi." });
+            }
 
+            await transaction.CommitAsync();
             return NoContent();
         }
     }
