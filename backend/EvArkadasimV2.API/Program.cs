@@ -226,12 +226,13 @@ var app = builder.Build();
 }
 
 // --- MIDDLEWARE PIPELINE ---
-// Pipeline'ın en dışunda: tüm katmanlardan fırlayan exception'ları yakalar.
-app.UseMiddleware<GlobalExceptionMiddleware>();
+// Serilog en dışta: GlobalExceptionMiddleware 4xx/5xx'e dönüştürdükten sonra doğru status code'u görür.
 app.UseSerilogRequestLogging(options =>
 {
     options.MessageTemplate = "{RequestMethod} {RequestPath} → {StatusCode} ({Elapsed:0.0}ms)";
 });
+// GlobalExceptionMiddleware: Serilog'un içinde, tüm exception'ları yakalar ve uygun HTTP kodu döner.
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
