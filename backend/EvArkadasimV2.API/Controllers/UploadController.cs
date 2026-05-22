@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using EvArkadasimV2.Application.Interfaces.Repositories;
 using EvArkadasimV2.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,12 +15,15 @@ namespace EvArkadasimV2.API.Controllers
         private static readonly HashSet<string> AllowedMimeTypes =
             ["image/jpeg", "image/png", "image/webp"];
         private const long MaxFileSize = 5 * 1024 * 1024; // 5 MB
+        private const int MaxPhotos = 6;
 
         private readonly IFileStorageService _storage;
+        private readonly IUserRepository _userRepo;
 
-        public UploadController(IFileStorageService storage)
+        public UploadController(IFileStorageService storage, IUserRepository userRepo)
         {
             _storage = storage;
+            _userRepo = userRepo;
         }
 
         /// <summary>Profil fotoğrafı yükler. Döner: { url }</summary>
@@ -30,6 +34,10 @@ namespace EvArkadasimV2.API.Controllers
             if (error != null) return BadRequest(new { message = error });
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var user = await _userRepo.GetUserWithProfileAsync(userId, tracking: false);
+            if (user?.Profile?.Photos?.Count >= MaxPhotos)
+                return BadRequest(new { message = $"En fazla {MaxPhotos} fotoğraf yükleyebilirsiniz." });
+
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
             var fileName = $"{userId}_{Guid.NewGuid()}{ext}";
 
