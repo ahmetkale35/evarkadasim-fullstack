@@ -172,8 +172,7 @@ builder.Services.AddSwaggerGen(c =>
 // --- SIGNALR ---
 var redisConn = builder.Configuration.GetConnectionString("Redis");
 var signalrBuilder = builder.Services.AddSignalR();
-// Redis backplane sadece prod'da aktif — dev'de Redis çalışmıyor.
-if (!builder.Environment.IsDevelopment() && !string.IsNullOrEmpty(redisConn))
+if (!string.IsNullOrEmpty(redisConn))
     signalrBuilder.AddStackExchangeRedis(redisConn,
         opts => opts.Configuration.ChannelPrefix = RedisChannel.Literal("EvArkadasim"));
 builder.Services.AddScoped<INotificationService, SignalRNotificationService>();
