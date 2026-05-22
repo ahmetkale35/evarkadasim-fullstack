@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
 using AspNetCoreRateLimit;
+using StackExchange.Redis;
 using Microsoft.AspNetCore.Http.Features;
 using Serilog;
 using EvArkadasimV2.API.Middleware;
@@ -169,7 +170,11 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // --- SIGNALR ---
-builder.Services.AddSignalR();
+var redisConn = builder.Configuration.GetConnectionString("Redis");
+var signalrBuilder = builder.Services.AddSignalR();
+if (!string.IsNullOrEmpty(redisConn))
+    signalrBuilder.AddStackExchangeRedis(redisConn,
+        opts => opts.Configuration.ChannelPrefix = RedisChannel.Literal("EvArkadasim"));
 builder.Services.AddScoped<INotificationService, SignalRNotificationService>();
 
 // --- REDIS CACHE ---
@@ -191,6 +196,10 @@ builder.Services.AddInMemoryRateLimiting();
 
 // --- HEALTH CHECK ---
 builder.Services.AddHealthChecks();
+
+// --- GRACEFUL SHUTDOWN ---
+builder.Services.Configure<HostOptions>(opts =>
+    opts.ShutdownTimeout = TimeSpan.FromSeconds(30));
 
 // --- CORS ---
 // Geliştirme: her kaynağa açık (emülatör ve yerel tarayıcı testleri için).
@@ -231,6 +240,7 @@ app.UseSerilogRequestLogging(options =>
 {
     options.MessageTemplate = "{RequestMethod} {RequestPath} → {StatusCode} ({Elapsed:0.0}ms)";
 });
+app.UseMiddleware<SecurityHeadersMiddleware>();
 // GlobalExceptionMiddleware: Serilog'un içinde, tüm exception'ları yakalar ve uygun HTTP kodu döner.
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
